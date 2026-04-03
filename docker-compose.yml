@@ -13,9 +13,9 @@ services:
     environment:
       SERVICE_NAME: app
       SERVICE_TAGS: dev
-    working_dir: /var/www
+    working_dir: /var/www/banking_co_efficient
     volumes:
-      - ./:/var/www
+      - ./:/var/www/banking_co_efficient
       - ./docker-compose/php/php.ini:/usr/local/etc/php/conf.d/local.ini
     networks:
       - app-network
