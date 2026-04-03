@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+            <html>
+                <head>
+                    <meta name='viewport' content='width=device-width, initial-scale=1'>
+                    <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css'>
+                    <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
+                    <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js'></script>
+                    <style>
+                        body{ font-size:16px; }
+                        .main_div { background: #efefef;border-bottom: 4px solid #D32121;box-shadow: 0 -1px 2px #B89595; }
+                        .request_div { background:#93E0EA;padding:10px 10px; }
+                        .req_span{ background: #93EAA8; }
+                        .req_para { background: #93E0EA;margin-top:10px;margin-bottom:5px; overflow-wrap: break-word;}
+                        .res{ background: #93EAA8;padding: 10px; overflow-wrap: break-word;}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <h2>Banking Co Efficient Api Log :</h2>
+                        <div class='panel-group'>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260309110033" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-09 11:00:33</span>
+                                <span class="btn btn-success">https://1e33-2402-a00-192-16ae-598a-ccfd-324a-e848.ngrok-free.app/banking_co_efficient/api/user/get_profile</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260309110033" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"authorization":["Bearer 518b34f161c05babd47279856f2964f4e41542eeaf842ea08f38e082cd4643fa"],"host":["1e33-2402-a00-192-16ae-598a-ccfd-324a-e848.ngrok-free.app"],"user-agent":["okhttp\/4.11.0"],"content-length":["13"],"accept":["application\/json"],"accept-encoding":["gzip"],"accept-language":["en-US"],"api-key":["BANKING-CO-EFFICIENT"],"content-type":["application\/json"],"platform":["WEB"],"x-forwarded-for":["2409:40c1:3112:9a6a:8000::"],"x-forwarded-host":["1e33-2402-a00-192-16ae-598a-ccfd-324a-e848.ngrok-free.app"],"x-forwarded-proto":["https"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"user_id":2}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Profile get successfully.","data":{"id":2,"user_type":2,"name":"Updated Name","email":"test@example.com","username":"testuser123","country_code":null,"phone_no":null,"profile_image":null,"email_verified_at":null,"api_token":"9d329bcf659912e2c7d903f5efd0f45ab628b194dd7123b471518d3942687844","platform":null,"device_token":null,"status":1,"subscribe_newsletter":0,"job_title":null,"institution":null,"department":null,"year_of_experience":null,"business_id":null}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260309105726" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-09 10:57:26</span>
+                                <span class="btn btn-success">https://1e33-2402-a00-192-16ae-598a-ccfd-324a-e848.ngrok-free.app/banking_co_efficient/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260309105726" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["1e33-2402-a00-192-16ae-598a-ccfd-324a-e848.ngrok-free.app"],"user-agent":["PostmanRuntime\/7.52.0"],"content-length":["135"],"accept":["application\/json"],"accept-encoding":["gzip, deflate, br"],"api-key":["BANKING-CO-EFFICIENT"],"content-type":["application\/json"],"platform":["WEB"],"postman-token":["0f606b3b-4409-41da-ad43-e7a4e5601668"],"x-forwarded-for":["2402:a00:192:16ae:3cfb:2ec3:4649:1964"],"x-forwarded-host":["1e33-2402-a00-192-16ae-598a-ccfd-324a-e848.ngrok-free.app"],"x-forwarded-proto":["https"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"test6@example.com","password":"password123","device_token":"test_device_token","platform":"android"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"You have successfully login!","data":{"id":6,"user_type":2,"name":"Test User","email":"test6@example.com","username":"testsuser2123","country_code":null,"phone_no":null,"profile_image":null,"email_verified_at":null,"api_token":"4c0ca298a48654a534b53bceaa85f0577e0d25abccff492bd86797d097f0087e","platform":"android","device_token":"test_device_token","status":1,"subscribe_newsletter":0,"job_title":null,"institution":null,"department":null,"year_of_experience":null,"business_id":null}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260309045537" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-09 04:55:37</span>
+                                <span class="btn btn-success">https://1e33-2402-a00-192-16ae-598a-ccfd-324a-e848.ngrok-free.app/banking_co_efficient/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260309045537" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["1e33-2402-a00-192-16ae-598a-ccfd-324a-e848.ngrok-free.app"],"user-agent":["okhttp\/4.11.0"],"content-length":["105"],"accept":["application\/json"],"accept-encoding":["gzip"],"accept-language":["en-US"],"api-key":["BANKING-CO-EFFICIENT"],"content-type":["application\/json"],"platform":["WEB"],"x-forwarded-for":["2409:40c1:3112:9a6a:8000::"],"x-forwarded-host":["1e33-2402-a00-192-16ae-598a-ccfd-324a-e848.ngrok-free.app"],"x-forwarded-proto":["https"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"device_token":"default_device_token","email":"niraj@gmail.com","password":"niraj1234","platform":"WEB"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"You have successfully login!","data":{"id":10,"user_type":2,"name":"Test User","email":"niraj@gmail.com","username":"Niraj","country_code":null,"phone_no":"","profile_image":null,"email_verified_at":null,"api_token":"518b34f161c05babd47279856f2964f4e41542eeaf842ea08f38e082cd4643fa","platform":"WEB","device_token":"default_device_token","status":1,"subscribe_newsletter":0,"job_title":"","institution":"","department":null,"year_of_experience":"","business_id":null}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260309045426" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-09 04:54:26</span>
+                                <span class="btn btn-success">https://1e33-2402-a00-192-16ae-598a-ccfd-324a-e848.ngrok-free.app/banking_co_efficient/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260309045426" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["1e33-2402-a00-192-16ae-598a-ccfd-324a-e848.ngrok-free.app"],"user-agent":["okhttp\/4.11.0"],"content-length":["104"],"accept":["application\/json"],"accept-encoding":["gzip"],"accept-language":["en-US"],"api-key":["BANKING-CO-EFFICIENT"],"content-type":["application\/json"],"platform":["WEB"],"x-forwarded-for":["2409:40c1:3112:9a6a:8000::"],"x-forwarded-host":["1e33-2402-a00-192-16ae-598a-ccfd-324a-e848.ngrok-free.app"],"x-forwarded-proto":["https"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"device_token":"default_device_token","email":"niraj@gmail.com","password":"niraj123","platform":"WEB"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Email or password is incorrect.","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                        </div>
+                    </div>
+                </body>
+            </html>

@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+            <html>
+                <head>
+                    <meta name='viewport' content='width=device-width, initial-scale=1'>
+                    <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css'>
+                    <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
+                    <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js'></script>
+                    <style>
+                        body{ font-size:16px; }
+                        .main_div { background: #efefef;border-bottom: 4px solid #D32121;box-shadow: 0 -1px 2px #B89595; }
+                        .request_div { background:#93E0EA;padding:10px 10px; }
+                        .req_span{ background: #93EAA8; }
+                        .req_para { background: #93E0EA;margin-top:10px;margin-bottom:5px; overflow-wrap: break-word;}
+                        .res{ background: #93EAA8;padding: 10px; overflow-wrap: break-word;}
+                    </style>
+                </head>
+                <body>
+                    <div class='container'>
+                        <h2>Banking Co Efficient Api Log :</h2>
+                        <div class='panel-group'>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324102755" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 10:27:55</span>
+                                <span class="btn btn-success">https://localhost/banking_co_efficient/api/user/get_profile</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324102755" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"authorization":["Bearer db6eec705adbd4dc3563881ac887262cad97fdad39c2252b31eecea9bb13efbc"],"accept":["application\/json"],"content-type":["application\/json"],"platform":["WEB"],"api-key":["BANKING-CO-EFFICIENT"],"user-agent":["PostmanRuntime\/7.52.0"],"postman-token":["7256f26a-7ae0-473f-9847-da8d9abc7e8c"],"host":["localhost"],"accept-encoding":["gzip, deflate, br"],"connection":["keep-alive"],"content-length":["20"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"user_id":4}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Profile get successfully.","data":{"id":4,"user_type":"2","name":"Harshit","surname":"Ta","email":"test@gmail.com","phone_no":"9499787561","profile_image":null,"username":"test123","email_verified_at":null,"api_token":"ec30b87e1ba7b916c1ec41320d3598901b83aa6b7b1870db8ae259fb6725e869","device_token":"test_device_token","platform":"android","dob":null,"country_code":null,"apple_id":null,"google_id":null,"business_id":null,"status":"active","subscribe_newsletter":0,"job_title":null,"institution":null,"department":null,"year_of_experience":null}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324102743" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 10:27:43</span>
+                                <span class="btn btn-success">https://localhost/banking_co_efficient/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324102743" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"accept":["application\/json"],"content-type":["application\/json"],"platform":["WEB"],"api-key":["BANKING-CO-EFFICIENT"],"user-agent":["PostmanRuntime\/7.52.0"],"postman-token":["79b5225b-04c3-426c-a212-bee61f5537ae"],"host":["localhost"],"accept-encoding":["gzip, deflate, br"],"connection":["keep-alive"],"content-length":["129"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"test@gmail.com","password":"12345678","device_token":"test_device_token","platform":"android"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"You have successfully login!","data":{"id":4,"user_type":"2","name":"Harshit","surname":"Ta","email":"test@gmail.com","phone_no":"9499787561","profile_image":null,"username":"test123","email_verified_at":null,"api_token":"db6eec705adbd4dc3563881ac887262cad97fdad39c2252b31eecea9bb13efbc","device_token":"test_device_token","platform":"android","dob":null,"country_code":null,"apple_id":null,"google_id":null,"business_id":null,"status":"active","subscribe_newsletter":0,"job_title":null,"institution":null,"department":null,"year_of_experience":null}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324102730" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 10:27:30</span>
+                                <span class="btn btn-success">https://localhost/banking_co_efficient/api/user/get_profile</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324102730" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"authorization":["Bearer 236f97e293d5390e2c35f7288dcb90672858b8c40c7ae2c6143ab81f87fd4002"],"accept":["application\/json"],"content-type":["application\/json"],"platform":["WEB"],"api-key":["BANKING-CO-EFFICIENT"],"user-agent":["PostmanRuntime\/7.52.0"],"postman-token":["ded9bf38-71c2-46bb-9a20-e2f1b87b4d65"],"host":["localhost"],"accept-encoding":["gzip, deflate, br"],"connection":["keep-alive"],"content-length":["20"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"user_id":2}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"User not found!","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324100707" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 10:07:07</span>
+                                <span class="btn btn-success">https://localhost/banking_co_efficient/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324100707" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"accept":["application\/json"],"content-type":["application\/json"],"platform":["WEB"],"api-key":["BANKING-CO-EFFICIENT"],"user-agent":["PostmanRuntime\/7.52.0"],"postman-token":["9235c324-375a-4e9c-9b10-729a90ef3f50"],"host":["localhost"],"accept-encoding":["gzip, deflate, br"],"connection":["keep-alive"],"content-length":["129"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"test@gmail.com","password":"12345678","device_token":"test_device_token","platform":"android"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"You have successfully login!","data":{"id":4,"user_type":"2","name":"Harshit","surname":"Ta","email":"test@gmail.com","phone_no":"9499787561","profile_image":null,"username":"test123","email_verified_at":null,"api_token":"236f97e293d5390e2c35f7288dcb90672858b8c40c7ae2c6143ab81f87fd4002","device_token":"test_device_token","platform":"android","dob":null,"country_code":null,"apple_id":null,"google_id":null,"business_id":null,"status":"active","subscribe_newsletter":0,"job_title":null,"institution":null,"department":null,"year_of_experience":null}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324100650" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 10:06:50</span>
+                                <span class="btn btn-success">https://localhost/banking_co_efficient/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324100650" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"accept":["application\/json"],"content-type":["application\/json"],"platform":["WEB"],"api-key":["BANKING-CO-EFFICIENT"],"user-agent":["PostmanRuntime\/7.52.0"],"postman-token":["287513da-9cb1-4643-bf3a-1d99632389c0"],"host":["localhost"],"accept-encoding":["gzip, deflate, br"],"connection":["keep-alive"],"content-length":["129"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"test@gmail.com","password":"12345678","device_token":"test_device_token","platform":"android"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Email or password is incorrect.","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324100147" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 10:01:47</span>
+                                <span class="btn btn-success">https://localhost/banking_co_efficient/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324100147" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"accept":["application\/json"],"content-type":["application\/json"],"platform":["WEB"],"api-key":["BANKING-CO-EFFICIENT"],"user-agent":["PostmanRuntime\/7.52.0"],"postman-token":["7459b083-e29e-464d-9b09-0148fb305b6a"],"host":["localhost"],"accept-encoding":["gzip, deflate, br"],"connection":["keep-alive"],"content-length":["129"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"test@gmail.com","password":"12345678","device_token":"test_device_token","platform":"android"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Email or password is incorrect.","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324100042" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 10:00:42</span>
+                                <span class="btn btn-success">http://localhost/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324100042" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en-us,en;q=0.5"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["102"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"],"platform":["WEB"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"rejected@example.com","password":"password123","platform":"WEB","device_token":"test-token"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Your account has been rejected. Please contact the business administrator.","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324100042" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 10:00:42</span>
+                                <span class="btn btn-success">http://localhost/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324100042" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en-us,en;q=0.5"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["101"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"],"platform":["WEB"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"pending@example.com","password":"password123","platform":"WEB","device_token":"test-token"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Your account is pending approval from the business administrator.","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324100042" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 10:00:42</span>
+                                <span class="btn btn-success">http://localhost/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324100042" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en-us,en;q=0.5"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["100"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"],"platform":["WEB"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"active@example.com","password":"password123","platform":"WEB","device_token":"test-token"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"You have successfully login!","data":{"id":1,"user_type":"2","name":"Active User","surname":null,"email":"active@example.com","phone_no":null,"profile_image":null,"username":"activeuser","email_verified_at":null,"api_token":"1bf094e718949b8dbfc73dbe9a4f4aea4c49fed04f2d7d0dd93e0d40f503e6e4","device_token":"test-token","platform":"WEB","dob":null,"country_code":null,"apple_id":null,"google_id":null,"business_id":null,"status":"active","subscribe_newsletter":0,"job_title":null,"institution":null,"department":null,"year_of_experience":null}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324095921" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 09:59:21</span>
+                                <span class="btn btn-success">http://localhost/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324095921" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en-us,en;q=0.5"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["85"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"],"platform":["WEB"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"rejected@example.com","password":"password123","device_token":"test-token"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Your account has been rejected. Please contact the business administrator.","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324095921" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 09:59:21</span>
+                                <span class="btn btn-success">http://localhost/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324095921" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en-us,en;q=0.5"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["84"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"],"platform":["WEB"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"pending@example.com","password":"password123","device_token":"test-token"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Your account is pending approval from the business administrator.","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324095921" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 09:59:21</span>
+                                <span class="btn btn-success">http://localhost/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324095921" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en-us,en;q=0.5"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["83"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"],"platform":["WEB"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"active@example.com","password":"password123","device_token":"test-token"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Undefined array key \"platform\"","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324095447" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 09:54:47</span>
+                                <span class="btn btn-success">http://localhost/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324095447" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en-us,en;q=0.5"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["83"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"],"platform":["WEB"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"active@example.com","password":"password123","device_token":"test-token"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Undefined array key \"platform\"","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324095259" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 09:52:59</span>
+                                <span class="btn btn-success">http://localhost/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324095259" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en-us,en;q=0.5"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["85"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"],"platform":["WEB"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"rejected@example.com","password":"password123","device_token":"test-token"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Your account has been rejected. Please contact the business administrator.","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324095259" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 09:52:59</span>
+                                <span class="btn btn-success">http://localhost/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324095259" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en-us,en;q=0.5"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["84"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"],"platform":["WEB"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"pending@example.com","password":"password123","device_token":"test-token"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Your account is pending approval from the business administrator.","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324095259" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 09:52:59</span>
+                                <span class="btn btn-success">http://localhost/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324095259" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en-us,en;q=0.5"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["83"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"],"platform":["WEB"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"active@example.com","password":"password123","device_token":"test-token"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Undefined array key \"platform\"","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324095139" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 09:51:39</span>
+                                <span class="btn btn-success">http://localhost/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324095139" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en-us,en;q=0.5"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["100"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"active@example.com","password":"password123","platform":"WEB","device_token":"test-token"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Access denied, invalid platform string is used","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324094946" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 09:49:46</span>
+                                <span class="btn btn-success">http://localhost/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324094946" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en-us,en;q=0.5"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["102"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"rejected@example.com","password":"password123","platform":"WEB","device_token":"test-token"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Access denied, invalid platform string is used","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324094946" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 09:49:46</span>
+                                <span class="btn btn-success">http://localhost/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324094946" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en-us,en;q=0.5"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["101"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"pending@example.com","password":"password123","platform":"WEB","device_token":"test-token"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Access denied, invalid platform string is used","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324094946" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 09:49:46</span>
+                                <span class="btn btn-success">http://localhost/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324094946" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en-us,en;q=0.5"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["100"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"active@example.com","password":"password123","platform":"WEB","device_token":"test-token"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Access denied, invalid platform string is used","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324094927" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 09:49:27</span>
+                                <span class="btn btn-success">https://localhost/banking_co_efficient/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324094927" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"accept":["application\/json"],"content-type":["application\/json"],"platform":["WEB"],"api-key":["BANKING-CO-EFFICIENT"],"user-agent":["PostmanRuntime\/7.52.0"],"postman-token":["e3a56537-e4d5-43d7-889d-857ed00fddee"],"host":["localhost"],"accept-encoding":["gzip, deflate, br"],"connection":["keep-alive"],"content-length":["129"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"test@gmail.com","password":"12345678","device_token":"test_device_token","platform":"android"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"SQLSTATE[42S22]: Column not found: 1054 Unknown column 'device_token' in 'field list' (Connection: mysql, SQL: update `users` set `device_token` = test_device_token, `platform` = android, `users`.`updated_at` = 2026-03-24 09:49:27 where `id` = 3)","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324093618" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 09:36:18</span>
+                                <span class="btn btn-success">https://localhost/banking_co_efficient/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324093618" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"accept":["application\/json"],"content-type":["application\/json"],"platform":["WEB"],"api-key":["BANKING-CO-EFFICIENT"],"user-agent":["PostmanRuntime\/7.52.0"],"postman-token":["68b0ae4a-4b5e-48fd-ba16-9092838bf1f8"],"host":["localhost"],"accept-encoding":["gzip, deflate, br"],"connection":["keep-alive"],"content-length":["129"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"test@gmail.com","password":"12345678","device_token":"test_device_token","platform":"android"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Your account is inactive please contact to admin.","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324093533" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">POST</span>
+                                <span class="btn btn-primary">2026-03-24 09:35:33</span>
+                                <span class="btn btn-success">https://localhost/banking_co_efficient/api/user/login</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324093533" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"accept":["application\/json"],"content-type":["application\/json"],"platform":["WEB"],"api-key":["BANKING-CO-EFFICIENT"],"user-agent":["PostmanRuntime\/7.52.0"],"postman-token":["d611e630-9635-4850-91c9-82564e91ffa2"],"host":["localhost"],"accept-encoding":["gzip, deflate, br"],"connection":["keep-alive"],"content-length":["129"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>{"email":"test@gmail.com","password":"12345678","device_token":"test_device_token","platform":"android"}</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Your account is inactive please contact to admin.","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324072626" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">GET</span>
+                                <span class="btn btn-primary">2026-03-24 07:26:26</span>
+                                <span class="btn btn-success">http://localhost/api/case-study-sections</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324072626" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["fr"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["2"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"],"platform":["WEB"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>[]</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Case study sections retrieved successfully.","data":[{"section_name":"Section A","questions":[{"id":3,"question":"French Question","options":[]}]}]}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324072626" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">GET</span>
+                                <span class="btn btn-primary">2026-03-24 07:26:26</span>
+                                <span class="btn btn-success">http://localhost/api/case-study-sections</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324072626" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["2"],"content-type":["application\/json"],"api-key":["BANKING-CO-EFFICIENT"],"platform":["WEB"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>[]</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Case study sections retrieved successfully.","data":[{"section_name":"Section A","questions":[{"id":1,"question":"English Question 1","options":[{"id":1,"option_text":"English Option 1","is_correct":true}]}]},{"section_name":"Section B","questions":[{"id":2,"question":"English Question 2","options":[]}]}]}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324071933" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">GET</span>
+                                <span class="btn btn-primary">2026-03-24 07:19:33</span>
+                                <span class="btn btn-success">http://localhost/api/case-study-sections</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324071933" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["fr"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["2"],"content-type":["application\/json"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>[]</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Access denied, invalid api key","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+<div class="panel panel-default">
+                    <div class="panel-heading">
+                        <a data-toggle="collapse" href="#20260324071933" style="text-decoration:none; cursor:pointer;">
+                            <h4 class="panel-title">
+                                <span class="btn btn-danger">GET</span>
+                                <span class="btn btn-primary">2026-03-24 07:19:33</span>
+                                <span class="btn btn-success">http://localhost/api/case-study-sections</span>
+                            </h4>
+                        </a>
+                    </div>
+                    <div id="20260324071933" class="panel-collapse collapse in">
+                        <div class="panel-body" style="padding:0;">
+                            <div class="text-white bg-info" style="margin-bottom:2px;padding:15px;">
+                                <div style="margin-bottom:10px;"><b> Request Headers :</b><br>{"host":["localhost"],"user-agent":["Symfony"],"accept":["application\/json"],"accept-language":["en"],"accept-charset":["ISO-8859-1,utf-8;q=0.7,*;q=0.7"],"content-length":["2"],"content-type":["application\/json"]}</div>
+                                <div style="margin-bottom:10px;"><b>GET Request : </b><br>[]</div>
+                                <div style="margin-bottom:10px;"> <b>POST Request :</b><br>[]</div>
+                            </div>
+                            <div class="text-white bg-success" style="padding:15px;">
+                                <b>Json Response :</b> <br>{"message":"Access denied, invalid api key","data":{}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                        </div>
+                    </div>
+                </body>
+            </html>

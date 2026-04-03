@@ -1,0 +1,134 @@
+[
+  {
+    "page": 1,
+    "image_file": "page_1_img_1.png"
+  },
+  {
+    "page": 2,
+    "image_file": "page_2_img_1.png"
+  },
+  {
+    "page": 3,
+    "image_file": "page_3_img_1.png"
+  },
+  {
+    "page": 3,
+    "image_file": "page_3_img_2.png"
+  },
+  {
+    "page": 4,
+    "image_file": "page_4_img_1.png"
+  },
+  {
+    "page": 4,
+    "image_file": "page_4_img_2.png"
+  },
+  {
+    "page": 4,
+    "image_file": "page_4_img_3.png"
+  },
+  {
+    "page": 4,
+    "image_file": "page_4_img_4.png"
+  },
+  {
+    "page": 4,
+    "image_file": "page_4_img_5.png"
+  },
+  {
+    "page": 4,
+    "image_file": "page_4_img_6.png"
+  },
+  {
+    "page": 5,
+    "image_file": "page_5_img_1.png"
+  },
+  {
+    "page": 5,
+    "image_file": "page_5_img_2.png"
+  },
+  {
+    "page": 6,
+    "image_file": "page_6_img_1.png"
+  },
+  {
+    "page": 6,
+    "image_file": "page_6_img_2.png"
+  },
+  {
+    "page": 6,
+    "image_file": "page_6_img_3.png"
+  },
+  {
+    "page": 7,
+    "image_file": "page_7_img_1.png"
+  },
+  {
+    "page": 7,
+    "image_file": "page_7_img_2.png"
+  },
+  {
+    "page": 7,
+    "image_file": "page_7_img_3.png"
+  },
+  {
+    "page": 8,
+    "image_file": "page_8_img_1.png"
+  },
+  {
+    "page": 8,
+    "image_file": "page_8_img_2.png"
+  },
+  {
+    "page": 9,
+    "image_file": "page_9_img_1.png"
+  },
+  {
+    "page": 9,
+    "image_file": "page_9_img_2.png"
+  },
+  {
+    "page": 9,
+    "image_file": "page_9_img_3.png"
+  },
+  {
+    "page": 10,
+    "image_file": "page_10_img_1.png"
+  },
+  {
+    "page": 10,
+    "image_file": "page_10_img_2.png"
+  },
+  {
+    "page": 10,
+    "image_file": "page_10_img_3.png"
+  },
+  {
+    "page": 11,
+    "image_file": "page_11_img_1.png"
+  },
+  {
+    "page": 11,
+    "image_file": "page_11_img_2.png"
+  },
+  {
+    "page": 11,
+    "image_file": "page_11_img_3.png"
+  },
+  {
+    "page": 12,
+    "image_file": "page_12_img_1.png"
+  },
+  {
+    "page": 12,
+    "image_file": "page_12_img_2.png"
+  },
+  {
+    "page": 12,
+    "image_file": "page_12_img_3.png"
+  },
+  {
+    "page": 13,
+    "image_file": "page_13_img_1.png"
+  }
+]
