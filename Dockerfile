@@ -2,7 +2,7 @@
 FROM php:8.2-fpm
 
 # Set working directory
-WORKDIR /var/www
+WORKDIR /var/www/banking-coefficient
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -33,10 +33,10 @@ RUN docker-php-ext-install gd
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Copy existing application directory contents
-COPY . /var/www
+COPY . /var/www/banking-coefficient
 
 # Copy existing application directory permissions
-COPY --chown=www-data:www-data . /var/www
+COPY --chown=www-data:www-data . /var/www/banking-coefficient
 
 # Change current user to www
 USER www-data
