@@ -99,20 +99,21 @@ class ClientCaseCls
 
             $questions = $this->caseStudyQuestionRepository->getAllSectionsWithQuestions();
             
-            $grouped = $questions->groupBy('section_name')->map(function ($sectionQuestions, $sectionName) {
+            $grouped = $questions->groupBy('section_name')->map(function ($sectionQuestions, $sectionName) use ($locale) {
                 return [
                     'section_name' => $sectionName,
+                    'locale' => $locale,
                     'questions' => $sectionQuestions->map(function ($question) {
                         return [
                             'id' => $question->id,
-                            'question' => $question->question,
+                            'question_text' => $question->question,
                             'options' => $question->options->map(function ($option) {
                                 return [
                                     'id' => $option->id,
                                     'option_text' => $option->option,
                                     'is_correct' => $option->is_correct,
                                 ];
-                            }),
+                            })->values(),
                         ];
                     })->values(),
                 ];

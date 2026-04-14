@@ -38,14 +38,14 @@ class ClientCaseController extends Controller
 
     public function caseStudySections(Request $request)
     {
-        $locale = $request->header('Accept-Language', 'en');
-        // Normalize locale
+        $locale = $request->query('lang', $request->header('Accept-Language', 'en'));
+
         if (str_starts_with($locale, 'fr')) {
             $locale = 'fr';
         } else {
             $locale = 'en';
         }
-        
+
         $data = $this->clientCaseCls->GetCaseStudySections($locale);
         return get_response($request, $data);
     }
