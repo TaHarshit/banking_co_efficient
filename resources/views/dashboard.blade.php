@@ -234,23 +234,56 @@
                             </div>
                         </div><!-- End Business Card -->
 
-                        <!-- Questions Card -->
+                        <!-- Personalized Experience Questions Card -->
                         <div class="col-xxl-4 col-md-6">
                             <div class="card info-card revenue-card">
                                 <div class="card-body">
-                                    <h5 class="card-title">{{ __('messages.questions') }}</h5>
+                                    <h5 class="card-title">{{ __('messages.personalized_experience') }} {{ __('messages.questions') }}</h5>
                                     <div class="d-flex align-items-center">
-                                        <div
-                                            class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                                             <i class="bi bi-question-circle"></i>
                                         </div>
                                         <div class="ps-3">
-                                            <h6>{{ isset($question_count) ? $question_count : 0 }}</h6>
+                                            <h6>{{ isset($personalized_question_count) ? $personalized_question_count : 0 }}</h6>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div><!-- End Questions Card -->
+                        </div><!-- End Personalized Experience Questions Card -->
+
+                        <!-- Exam Questions Card -->
+                        <div class="col-xxl-4 col-md-6">
+                            <div class="card info-card revenue-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ __('messages.skill_assessment') }} {{ __('messages.questions') }}</h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-ui-checks"></i>
+                                        </div>
+                                        <div class="ps-3">
+                                            <h6>{{ isset($exam_question_count) ? $exam_question_count : 0 }}</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- End Exam Questions Card -->
+
+                        <!-- Case Study Questions Card -->
+                        <div class="col-xxl-4 col-md-6">
+                            <div class="card info-card revenue-card">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ __('messages.case_study_questions') }}</h5>
+                                    <div class="d-flex align-items-center">
+                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                            <i class="bi bi-journal-text"></i>
+                                        </div>
+                                        <div class="ps-3">
+                                            <h6>{{ isset($case_study_question_count) ? $case_study_question_count : 0 }}</h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- End Case Study Questions Card -->
 
                         <!-- Contacts Card -->
                         <div class="col-xxl-4 col-md-6">

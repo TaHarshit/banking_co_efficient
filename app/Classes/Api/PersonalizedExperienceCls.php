@@ -208,27 +208,62 @@ class PersonalizedExperienceCls
     }
 
     /**
-     * Get user's responses
+     * Get user's responses organized by sections
      */
     public function GetUserResponses($userId)
     {
         try {
             $responses = $this->ResponseRep->GetResponsesByUser($userId);
 
-            $result = [];
-            foreach ($responses as $response) {
-                $result[] = [
-                    'question_id' => $response->question_id,
-                    'response_type' => $response->response_type,
-                    'option_id' => $response->option_id,
-                    'response_value' => $response->response_value,
-                    'rating_value' => $response->rating_value,
+            $sections = $responses->groupBy('question.section.id')->map(function ($sectionResponses, $sectionId) {
+                $section = $sectionResponses->first()->question->section;
+
+                $questions = $sectionResponses->groupBy('question.id')->map(function ($questionResponses, $questionId) {
+                    $question = $questionResponses->first()->question;
+
+                    $responsesData = $questionResponses->map(function ($response) {
+                        $data = [
+                            'response_type' => $response->response_type,
+                        ];
+
+                        if ($response->option_id && $response->option) {
+                            $data['option_text'] = $response->option->option_text;
+                            $data['option_subtitle'] = $response->option->option_subtitle;
+                        }
+
+                        if ($response->response_value) {
+                            $data['response_value'] = $response->response_value;
+                        }
+
+                        if ($response->rating_value) {
+                            $data['rating_value'] = $response->rating_value;
+                        }
+
+                        return $data;
+                    });
+
+                    return [
+                        'id' => $question->id,
+                        'text' => $question->question_text,
+                        'type' => $question->question_type,
+                        'helper_text' => $question->helper_text,
+                        'responses' => $responsesData->values(),
+                    ];
+                });
+
+                return [
+                    'id' => $section->id,
+                    'title' => $section->title,
+                    'subtitle' => $section->subtitle,
+                    'header' => $section->header,
+                    'order' => $section->order,
+                    'questions' => $questions->values(),
                 ];
-            }
+            });
 
             return [
                 'success' => true,
-                'data' => $result,
+                'data' => $sections->values(),
             ];
         } catch (Exception $e) {
             return [

@@ -19,7 +19,7 @@ class UserResponseRepository extends BaseRepository
     {
         return $this->model
             ->where('user_id', $userId)
-            ->with(['question', 'option'])
+            ->with(['question.section', 'option'])
             ->get();
     }
 

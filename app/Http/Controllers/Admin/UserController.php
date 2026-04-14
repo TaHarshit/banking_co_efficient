@@ -17,6 +17,8 @@ use Carbon\Carbon;
 use App\Models\Business;
 use App\Models\ContactUs;
 use App\Models\Question;
+use App\Models\SkillAssessmentQuestion;
+use App\Models\CaseStudyQuestion;
 
 class UserController extends Controller
 {
@@ -43,7 +45,9 @@ class UserController extends Controller
 
         $business_count = Business::count();
         $contact_count  = ContactUs::count();
-        $question_count = Question::count();
+        $personalized_question_count = Question::count();
+        $exam_question_count = SkillAssessmentQuestion::count();
+        $case_study_question_count = CaseStudyQuestion::count();
 
         $recent_businesses = Business::withCount('users')->orderBy('id', 'desc')->take(5)->get();
         $recent_contacts   = ContactUs::orderBy('id', 'desc')->take(5)->get();
@@ -64,7 +68,9 @@ class UserController extends Controller
             'admin_count'       => $admin_count,
             'business_count'    => $business_count,
             'contact_count'     => $contact_count,
-            'question_count'    => $question_count,
+            'personalized_question_count' => $personalized_question_count,
+            'exam_question_count' => $exam_question_count,
+            'case_study_question_count' => $case_study_question_count,
             'recent_businesses' => $recent_businesses,
             'recent_contacts'   => $recent_contacts,
             'exam_stats'        => $exam_stats,
