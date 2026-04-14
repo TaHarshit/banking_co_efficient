@@ -221,11 +221,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                         class="form-label">{{ __('messages.tags_en') ?? 'Tags (EN)' }}</label>
                                     <div class="tags-input-container">
                                         <div class="tags-display" id="tags-display">
-                                            @if(isset($data) && !empty($data->tags))
-                                                @php
-                                                    $tags = is_array($data->tags) ? $data->tags : json_decode($data->tags, true);
-                                                @endphp
-                                                @foreach($tags as $tag)
+                                            @php
+                                                $tagsValue = old('tags', isset($data) ? $data->tags : null);
+                                                if (is_string($tagsValue)) {
+                                                    $tagsValue = json_decode($tagsValue, true);
+                                                }
+                                            @endphp
+                                            @if(!empty($tagsValue) && is_array($tagsValue))
+                                                @foreach($tagsValue as $tag)
                                                     <span class="tag-item">{{ $tag }} <span class="remove-tag" onclick="removeTag(this)">×</span></span>
                                                 @endforeach
                                             @endif
@@ -233,8 +236,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <input type="text" name="tags_input" id="tags_input"
                                             class="form-control {{ $errors->has('tags') ? 'is-invalid' : '' }}"
                                             placeholder="Type and press Enter to add tags">
-                                        <input type="hidden" name="tags" id="tags" 
-                                            value="{{ isset($data) ? $data->tags : old('tags') }}">
+                                        @php
+                                            $tagsHidden = old('tags', isset($data) ? $data->tags : null);
+                                            if (is_array($tagsHidden)) {
+                                                $tagsHidden = json_encode($tagsHidden);
+                                            }
+                                        @endphp
+                                        <input type="hidden" name="tags" id="tags"
+                                            value="{{ $tagsHidden }}">
                                     </div>
                                     @if ($errors->has('tags'))
                                         <div class="invalid-feedback">{{ $errors->first('tags') }}</div>
@@ -247,11 +256,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                         class="form-label">{{ __('messages.tags_fr') ?? 'Tags (FR)' }}</label>
                                     <div class="tags-input-container">
                                         <div class="tags-display" id="tags-display-fr">
-                                            @if(isset($data) && !empty($data->tags_fr))
-                                                @php
-                                                    $tags_fr = is_array($data->tags_fr) ? $data->tags_fr : json_decode($data->tags_fr, true);
-                                                @endphp
-                                                @foreach($tags_fr as $tag)
+                                            @php
+                                                $tagsFrValue = old('tags_fr', isset($data) ? $data->tags_fr : null);
+                                                if (is_string($tagsFrValue)) {
+                                                    $tagsFrValue = json_decode($tagsFrValue, true);
+                                                }
+                                            @endphp
+                                            @if(!empty($tagsFrValue) && is_array($tagsFrValue))
+                                                @foreach($tagsFrValue as $tag)
                                                     <span class="tag-item">{{ $tag }} <span class="remove-tag" onclick="removeTag(this)">×</span></span>
                                                 @endforeach
                                             @endif
@@ -259,8 +271,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <input type="text" name="tags_fr_input" id="tags_fr_input"
                                             class="form-control {{ $errors->has('tags_fr') ? 'is-invalid' : '' }}"
                                             placeholder="Tapez et appuyez sur Entrée pour ajouter des balises">
-                                        <input type="hidden" name="tags_fr" id="tags_fr" 
-                                            value="{{ isset($data) ? $data->tags_fr : old('tags_fr') }}">
+                                        @php
+                                            $tagsFrHidden = old('tags_fr', isset($data) ? $data->tags_fr : null);
+                                            if (is_array($tagsFrHidden)) {
+                                                $tagsFrHidden = json_encode($tagsFrHidden);
+                                            }
+                                        @endphp
+                                        <input type="hidden" name="tags_fr" id="tags_fr"
+                                            value="{{ $tagsFrHidden }}">
                                     </div>
                                     @if ($errors->has('tags_fr'))
                                         <div class="invalid-feedback">{{ $errors->first('tags_fr') }}</div>
