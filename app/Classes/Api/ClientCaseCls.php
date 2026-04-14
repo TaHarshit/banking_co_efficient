@@ -38,12 +38,7 @@ class ClientCaseCls
                 'case_reference' => $postData['case_reference'] ?? null,
                 'client_alias' => $postData['client_alias'],
                 'context_overview' => $postData['context_overview'] ?? null,
-                'case_details' => [
-                    'objectives' => $postData['objectives'] ?? [],
-                    'commercial_context' => $postData['commercial_context'] ?? [],
-                    'client_profile' => $postData['client_profile'] ?? [],
-                    'client_ecosystem' => $postData['client_ecosystem'] ?? [],
-                ],
+                'case_details' => $postData['case_details'] ?? [],
             ];
 
             DB::beginTransaction();
