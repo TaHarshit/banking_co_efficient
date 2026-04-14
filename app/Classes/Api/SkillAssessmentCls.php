@@ -249,16 +249,74 @@ class SkillAssessmentCls
     }
 
     /**
-     * Get user's exam history
+     * Get user's exam history grouped by template
      */
     public function getHistory(): JsonResponse
     {
         $exams = $this->repository->getUserExamHistory(Auth::id());
 
+        // Group exams by template ID (latest first order preserved)
+        $groupedByTemplate = $exams->groupBy('skill_assessment_exam_template_id');
+
+        $result = [];
+
+        foreach ($groupedByTemplate as $templateId => $templateExams) {
+            $template = $templateExams->first()->examTemplate;
+
+            if (!$template) {
+                continue;
+            }
+
+            // Load sections with active questions for total count
+            $template->load(['sections.questions' => function ($query) {
+                $query->where('is_active', true);
+            }]);
+
+            // Calculate total questions across all sections
+            $totalQuestions = $template->sections->sum(function ($section) {
+                return $section->questions->count();
+            });
+
+            // Remove sections from template data in response
+            unset($template->sections);
+
+            // Calculate average percentage from completed/evaluated exams
+            $completedExams = $templateExams->filter(function ($exam) {
+                return $exam->status === 'completed' || $exam->status === 'evaluated';
+            });
+
+            $averagePercentage = 0;
+            if ($completedExams->isNotEmpty()) {
+                $averagePercentage = round($completedExams->avg('percentage'), 2);
+            }
+
+            // Prepare exam list (already ordered last to first from repository)
+            $examList = $templateExams->map(function ($exam) {
+                return [
+                    'id' => $exam->id,
+                    'total_score' => $exam->total_score,
+                    'max_score' => $exam->max_score,
+                    'percentage' => $exam->percentage,
+                    'status' => $exam->status,
+                    'started_at' => $exam->started_at,
+                    'completed_at' => $exam->completed_at,
+                    'created_at' => $exam->created_at,
+                ];
+            })->values();
+
+            $result[] = [
+                'template_id' => $templateId,
+                'template' => $template,
+                'total_questions' => $totalQuestions,
+                'average_percentage' => $averagePercentage,
+                'exams' => $examList,
+            ];
+        }
+
         return response()->json([
             'status' => true,
             'message' => 'History retrieved successfully',
-            'data' => $exams,
+            'data' => $result,
         ]);
     }
 }
