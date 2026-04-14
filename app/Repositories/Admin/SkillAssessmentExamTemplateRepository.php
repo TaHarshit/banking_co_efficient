@@ -63,8 +63,8 @@ class SkillAssessmentExamTemplateRepository extends BaseRepository
             'description_fr' => $data['description_fr'] ?? null,
             'exam_level' => $data['exam_level'] ?? null,
             'exam_level_fr' => $data['exam_level_fr'] ?? null,
-            'tags' => !empty($data['tags']) ? json_decode($data['tags'], true) : null,
-            'tags_fr' => !empty($data['tags_fr']) ? json_decode($data['tags_fr'], true) : null,
+            'tags' => ! empty($data['tags']) ? (is_array($data['tags']) ? $data['tags'] : json_decode($data['tags'], true)) : null,
+            'tags_fr' => ! empty($data['tags_fr']) ? (is_array($data['tags_fr']) ? $data['tags_fr'] : json_decode($data['tags_fr'], true)) : null,
             'duration_minutes' => $data['duration_minutes'] ?? null,
             'passing_percentage' => $data['passing_percentage'] ?? null,
             'order' => $data['order'] ?? 0,
@@ -77,8 +77,10 @@ class SkillAssessmentExamTemplateRepository extends BaseRepository
             $template = $this->model->find($id);
             if ($template) {
                 $template->update($templateData);
+
                 return $template;
             }
+
             return null;
         }
     }
@@ -91,8 +93,10 @@ class SkillAssessmentExamTemplateRepository extends BaseRepository
         $template = $this->model->find($id);
         if ($template) {
             $template->delete();
+
             return true;
         }
+
         return false;
     }
 
@@ -104,8 +108,10 @@ class SkillAssessmentExamTemplateRepository extends BaseRepository
         $template = $this->model->find($id);
         if ($template) {
             $template->update(['is_active' => $status]);
+
             return true;
         }
+
         return false;
     }
 
@@ -115,6 +121,7 @@ class SkillAssessmentExamTemplateRepository extends BaseRepository
     public function GetNextOrder()
     {
         $maxOrder = $this->model->max('order');
+
         return $maxOrder ? $maxOrder + 1 : 1;
     }
 }

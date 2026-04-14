@@ -222,7 +222,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div class="tags-input-container">
                                         <div class="tags-display" id="tags-display">
                                             @if(isset($data) && !empty($data->tags))
-                                                @foreach(json_decode($data->tags, true) as $tag)
+                                                @php
+                                                    $tags = is_array($data->tags) ? $data->tags : json_decode($data->tags, true);
+                                                @endphp
+                                                @foreach($tags as $tag)
                                                     <span class="tag-item">{{ $tag }} <span class="remove-tag" onclick="removeTag(this)">×</span></span>
                                                 @endforeach
                                             @endif
@@ -245,7 +248,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div class="tags-input-container">
                                         <div class="tags-display" id="tags-display-fr">
                                             @if(isset($data) && !empty($data->tags_fr))
-                                                @foreach(json_decode($data->tags_fr, true) as $tag)
+                                                @php
+                                                    $tags_fr = is_array($data->tags_fr) ? $data->tags_fr : json_decode($data->tags_fr, true);
+                                                @endphp
+                                                @foreach($tags_fr as $tag)
                                                     <span class="tag-item">{{ $tag }} <span class="remove-tag" onclick="removeTag(this)">×</span></span>
                                                 @endforeach
                                             @endif
