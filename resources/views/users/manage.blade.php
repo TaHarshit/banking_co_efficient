@@ -113,9 +113,9 @@
                                                             </div>
                                                         </td>
                                                         <td>
-                                                            {{-- <a href="{{route('updateuser',['id'=>$val->id])}}" style="font-size: 20px; color:#00ACEF !important" class="text-primary">
-                                                            <i class="bi bi-pencil-fill"></i>
-                                                        </a> --}}
+                                                            <a href="{{route('updateuser',['id'=>$val->id])}}" style="font-size: 20px; color:#00ACEF !important" class="text-primary">
+                                                                <i class="bi bi-pencil-fill"></i>
+                                                            </a>
                                                             <a href="javascript:void(0);"
                                                                 style="font-size: 20px; color:#EE6C4D !important;"
                                                                 onclick="return showConfirmToast('{{ route('deleteuser', ['id' => $val->id]) }}')"

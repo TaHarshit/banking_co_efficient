@@ -35,16 +35,40 @@ class BusinessDashboardController extends Controller
         $totalSeats = 50;
         $seatsRemaining = $totalSeats - $totalUsers;
 
-        // Get exam templates for this business
-        $exam_templates = \App\Models\SkillAssessmentExamTemplate::where('business_id', $business->id)
+        // Get exam templates and exam types for this business dashboard
+        $selected_exam_type = $request->query('exam_type');
+        $exam_template_id = $request->query('exam_template_id');
+
+        // Load templates relevant to this business: templates that belong to this business OR global templates (business_id NULL)
+        $all_templates = \App\Models\SkillAssessmentExamTemplate::where(function($q) use ($business) {
+                $q->where('business_id', $business->id)
+                  ->orWhereNull('business_id');
+            })
             ->where('is_active', true)
             ->orderBy('title')
-            ->pluck('title', 'id')
-            ->toArray();
+            ->get();
 
-        // Handle exam template filter
-        $exam_template_id = $request->query('exam_template_id');
-        $exam_stats = \App\Models\SkillAssessmentExam::getPercentageStats($business->id, $exam_template_id);
+        // Determine available exam types for this business (global templates vs business-specific templates)
+        $has_global = \App\Models\SkillAssessmentExamTemplate::whereNull('business_id')->where('is_active', true)->exists();
+        $has_business_for_this = \App\Models\SkillAssessmentExamTemplate::where('business_id', $business->id)->where('is_active', true)->exists();
+
+        $exam_types = [];
+        if ($has_global) {
+            $exam_types['global'] = __('messages.global_exams') ?? 'Global Exams';
+        }
+        if ($has_business_for_this) {
+            $exam_types['business'] = __('messages.business_exams') ?? 'Business Exams';
+        }
+
+        // Filter exam templates by selected type: global => business_id NULL, business => only templates for this business
+        $exam_templates = $all_templates->filter(function ($t) use ($selected_exam_type, $business) {
+            if (!$selected_exam_type) return true;
+            if ($selected_exam_type === 'global') return !$t->business_id;
+            return $t->business_id == $business->id;
+        })->pluck('title', 'id')->toArray();
+
+        // Get exam stats with business and type/template filters
+        $exam_stats = \App\Models\SkillAssessmentExam::getPercentageStats($business->id, $exam_template_id, $selected_exam_type);
 
         return view('business.dashboard', [
             'business' => $business,
@@ -59,7 +83,9 @@ class BusinessDashboardController extends Controller
             'seatsRemaining' => $seatsRemaining,
             'exam_stats' => $exam_stats,
             'exam_templates' => $exam_templates,
-            'selected_exam_template' => $exam_template_id
+            'exam_types' => $exam_types,
+            'selected_exam_template' => $exam_template_id,
+            'selected_exam_type' => $selected_exam_type
         ]);
     }
 

@@ -177,7 +177,7 @@ class UserCls
         }
     }
 
-    public function updateProfile($name, $email, $password, $image, $id)
+    public function updateProfile($request, $image, $id)
     {
         try {
 
@@ -194,9 +194,21 @@ class UserCls
             //     $ImageName = Auth::user()->profile_image;
             // }
 
-            $this->UserRep->updateProfile($name, $email, $id);
-            if (trim($password) != "" && $id > 0) {
-                $this->UserRep->changePassword($password, $id);
+            $this->UserRep->updateProfile(
+                $request->name, 
+                $request->surname, 
+                $request->email, 
+                $request->phone_no, 
+                $id,
+                $request->username,
+                $request->job_title,
+                $request->institution,
+                $request->department,
+                $request->year_of_experience
+            );
+            
+            if (trim($request->password) != "" && $id > 0) {
+                $this->UserRep->changePassword($request->password, $id);
             }
 
             Session::flash('message', 'Profile edited successfully');

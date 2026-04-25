@@ -406,19 +406,31 @@
                                 <div class="card-body pb-0">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h5 class="card-title mb-0">{{ __('messages.skill_assessment_results') }} <span>| Cumulative</span></h5>
-                                        @if(isset($exam_templates) && count($exam_templates) > 0)
-                                            <div class="d-flex align-items-center">
-                                                <label for="examTemplateFilter" class="form-label me-2 mb-0">{{ __('messages.filter_by_exam') }}</label>
-                                                <select id="examTemplateFilter" class="form-select form-select-sm" style="width: 250px;">
-                                                    <option value="">{{ __('messages.all_exams') }}</option>
-                                                    @foreach($exam_templates as $id => $title)
-                                                        <option value="{{ $id }}" {{ $selected_exam_template == $id ? 'selected' : '' }}>
-                                                            {{ $title }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        @endif
+										@if((isset($exam_types) && count($exam_types) > 0) || (isset($exam_templates) && count($exam_templates) > 0))
+											<div class="d-flex align-items-center">
+												@if(isset($exam_types) && count($exam_types) > 0)
+													<label for="examTypeFilter" class="form-label me-2 mb-0">{{ __('messages.filter_by_type') ?? 'Filter by Type' }}</label>
+													<select id="examTypeFilter" class="form-select form-select-sm me-2" style="width: 200px;">
+														<option value="">{{ __('messages.all_exam_types') ?? 'All Types' }}</option>
+														@foreach($exam_types as $key => $label)
+															<option value="{{ $key }}" {{ (isset($selected_exam_type) && $selected_exam_type == $key) ? 'selected' : '' }}>{{ $label }}</option>
+														@endforeach
+													</select>
+												@endif
+
+												@if(isset($exam_templates) && count($exam_templates) > 0)
+													<label for="examTemplateFilter" class="form-label me-2 mb-0">{{ __('messages.filter_by_exam') }}</label>
+													<select id="examTemplateFilter" class="form-select form-select-sm" style="width: 250px;">
+														<option value="">{{ __('messages.all_exams') }}</option>
+														@foreach($exam_templates as $id => $title)
+															<option value="{{ $id }}" {{ $selected_exam_template == $id ? 'selected' : '' }}>
+																{{ $title }}
+															</option>
+														@endforeach
+													</select>
+												@endif
+											</div>
+										@endif
                                     </div>
                                     <div id="resultPieChart" style="min-height: 400px;" class="echart"></div>
                                     <script>
@@ -478,6 +490,22 @@
                                                     window.location.href = url.toString();
                                                 });
                                             }
+											// Handle exam type filter change (reloads and resets selected template)
+											const examTypeFilter = document.getElementById('examTypeFilter');
+											if (examTypeFilter) {
+												examTypeFilter.addEventListener('change', function() {
+													const examType = this.value;
+													const url = new URL(window.location);
+													if (examType) {
+														url.searchParams.set('exam_type', examType);
+													} else {
+														url.searchParams.delete('exam_type');
+													}
+													// Clear selected template when changing type
+													url.searchParams.delete('exam_template_id');
+													window.location.href = url.toString();
+												});
+											}
                                         });
                                     </script>
                                 </div>

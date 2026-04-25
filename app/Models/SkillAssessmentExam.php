@@ -116,9 +116,13 @@ class SkillAssessmentExam extends Model
     }
 
     /**
-     * Get percentage statistics for exams, optionally filtered by business and/or exam template
+     * Get percentage statistics for exams, optionally filtered by business, exam template, and/or exam type
+     *
+     * Exam type values supported:
+     * - 'global' => templates with NULL business_id
+     * - 'business' => templates with a non-NULL business_id (optionally restricted to $businessId when provided)
      */
-    public static function getPercentageStats(?int $businessId = null, ?int $examTemplateId = null): array
+    public static function getPercentageStats(?int $businessId = null, ?int $examTemplateId = null, ?string $examType = null): array
     {
         $query = self::query()
             ->whereIn('status', ['completed', 'evaluated'])
@@ -137,6 +141,20 @@ class SkillAssessmentExam extends Model
 
         if ($examTemplateId) {
             $query->where('skill_assessment_exam_template_id', $examTemplateId);
+        }
+
+        if ($examType) {
+            $query->whereHas('examTemplate', function ($q) use ($examType, $businessId) {
+                if ($examType === 'global') {
+                    $q->whereNull('business_id');
+                } elseif ($examType === 'business') {
+                    if ($businessId) {
+                        $q->where('business_id', $businessId);
+                    } else {
+                        $q->whereNotNull('business_id');
+                    }
+                }
+            });
         }
 
         $exams = $query->get(['percentage']);

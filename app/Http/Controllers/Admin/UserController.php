@@ -52,15 +52,36 @@ class UserController extends Controller
         $recent_businesses = Business::withCount('users')->orderBy('id', 'desc')->take(5)->get();
         $recent_contacts   = ContactUs::orderBy('id', 'desc')->take(5)->get();
         
-        // Get exam templates for filter dropdown
-        $exam_templates = \App\Models\SkillAssessmentExamTemplate::where('is_active', true)
-            ->orderBy('title')
-            ->pluck('title', 'id')
-            ->toArray();
-        
-        // Handle exam template filter
+        // Get exam templates and exam types for filter dropdowns
+        $selected_exam_type = $request->query('exam_type');
         $exam_template_id = $request->query('exam_template_id');
-        $exam_stats = \App\Models\SkillAssessmentExam::getPercentageStats(null, $exam_template_id);
+
+        // Load all active templates (we'll filter client-side/server-side by selected type)
+        $all_templates = \App\Models\SkillAssessmentExamTemplate::where('is_active', true)
+            ->orderBy('title')
+            ->get();
+
+        // Build exam type options: 'global' (templates with NULL business_id) and 'business' (templates with a business_id)
+        $has_global = \App\Models\SkillAssessmentExamTemplate::whereNull('business_id')->where('is_active', true)->exists();
+        $has_business = \App\Models\SkillAssessmentExamTemplate::whereNotNull('business_id')->where('is_active', true)->exists();
+
+        $exam_types = [];
+        if ($has_global) {
+            $exam_types['global'] = __('messages.global_exams') ?? 'Global Exams';
+        }
+        if ($has_business) {
+            $exam_types['business'] = __('messages.business_exams') ?? 'Business Exams';
+        }
+
+        // Filter exam templates by selected exam type (if any). 'global' => business_id NULL, 'business' => has business_id
+        $exam_templates = $all_templates->filter(function ($t) use ($selected_exam_type) {
+            if (!$selected_exam_type) return true;
+            if ($selected_exam_type === 'global') return !$t->business_id;
+            return (bool) $t->business_id;
+        })->pluck('title', 'id')->toArray();
+
+        // Get exam stats applying both template and type filters
+        $exam_stats = \App\Models\SkillAssessmentExam::getPercentageStats(null, $exam_template_id, $selected_exam_type);
 
         return view('dashboard', [
             'page_name'         => 'Dashboard',
@@ -75,7 +96,9 @@ class UserController extends Controller
             'recent_contacts'   => $recent_contacts,
             'exam_stats'        => $exam_stats,
             'exam_templates'    => $exam_templates,
-            'selected_exam_template' => $exam_template_id
+            'exam_types'        => $exam_types,
+            'selected_exam_template' => $exam_template_id,
+            'selected_exam_type' => $selected_exam_type
         ]);
     }
 
@@ -105,11 +128,18 @@ class UserController extends Controller
 
         $validatedData  = $request->validate([
             'name'          => 'required|max:100',
+            'surname'       => 'required|max:100',
+            'username'      => 'nullable|max:100|unique:users,username' . ($request->id ? ",$request->id,id" : ''),
+            'phone_no'      => 'required|max:20',
             'email'         => 'required|email|max:255|unique:users,email' . ($request->id ? ",$request->id,id" : ',NULL,id'),
-            'password'      => $request->id <= 0 ? 'required|' : '|' . 'max:255'
+            'password'      => $request->id <= 0 ? 'required|' : '|' . 'max:255',
+            'job_title'     => 'nullable|max:255',
+            'institution'   => 'nullable|max:255',
+            'department'    => 'nullable|max:255',
+            'year_of_experience' => 'nullable|max:255',
         ]);
         $image = $request->file('profile_image');
-        return $this->UserCls->updateProfile($request->name, $request->email, $request->password, $image, $request->id);
+        return $this->UserCls->updateProfile($request, $image, $request->id);
     }
 
     public function ManageUsers(Request $request)
@@ -155,7 +185,7 @@ class UserController extends Controller
             'name'          => 'required|max:100',
             'surname'       => 'required|max:100',
             'username'      => 'nullable|max:100|unique:users,username' . ($request->id ? ",$request->id,id" : ''),
-            'phone_no'      => 'required|max:10',
+            'phone_no'      => 'required|max:20',
             'email'         => 'required|email|max:255|unique:users,email' . ($request->id ? ",$request->id,id" : ',NULL,id'),
             'password'      => $request->id > 0 ? 'nullable|max:255' : 'nullable', // Password will be auto-generated for new users
             'job_title'     => 'nullable|max:255',

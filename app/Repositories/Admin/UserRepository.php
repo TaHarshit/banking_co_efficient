@@ -74,14 +74,21 @@ class UserRepository extends BaseRepository
         }
     }
 
-    public function updateProfile($name, $email, $id)
+    public function updateProfile($name, $surname, $email, $phone_no, $id, $username = null, $job_title = null, $institution = null, $department = null, $year_of_experience = null)
     {
 
         return $this->model
             ->where('id', $id)
             ->update([
                 'name'          => $name,
+                'surname'       => $surname,
                 'email'         => $email,
+                'phone_no'      => $phone_no,
+                'username'      => $username,
+                'job_title'     => $job_title,
+                'institution'   => $institution,
+                'department'    => $department,
+                'year_of_experience' => $year_of_experience,
             ]);
     }
 
