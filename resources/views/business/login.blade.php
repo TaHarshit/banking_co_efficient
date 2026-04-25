@@ -17,6 +17,12 @@
     <link href="{{ url('public/assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
     <link href="{{ url('public/assets/css/style.css') }}" rel="stylesheet">
     <style>
+        :root {
+            --primary: {{ env('APP_THEME_COLOR', '#4154f1') }};
+            --hov-primary: {{ env('APP_HOVER_THEME_COLOR', '#012970') }};
+        }
+    </style>
+    <style>
         .btn-primary {
             background-color: #4154f1;
             border-color: #4154f1;
@@ -119,13 +125,17 @@
                                                     {{ __('messages.please_enter_password') }}</div>
                                             @endif
                                         </div>
-                                        <div class="col-12">
+                                        <div class="col-6">
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" name="remember_me"
                                                     value="1" id="rememberMe">
                                                 <label class="form-check-label"
                                                     for="rememberMe">{{ __('messages.remember_me') }}</label>
                                             </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <a href="{{ route('business.password.email') }}"
+                                                class="text-decoration-underline small float-end">{{ __('messages.forgot_password') }}</a>
                                         </div>
                                         <div class="col-12">
                                             <button class="btn btn-primary w-100"

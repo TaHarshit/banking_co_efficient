@@ -15,27 +15,41 @@ class SkillAssessmentQuestionRepository extends BaseRepository
     /**
      * Get all questions across all sections
      */
-    public function GetAllQuestions()
+    public function GetAllQuestions($source = null)
     {
-        return $this->model->with(['section', 'options' => function ($query) {
+        $query = $this->model->with(['section', 'options' => function ($query) {
             $query->orderBy('order');
         }])
             ->orderBy('skill_assessment_section_id')
-            ->orderBy('order')
-            ->get();
+            ->orderBy('order');
+
+        if ($source === 'business') {
+            $query->whereNotNull('business_id');
+        } elseif ($source === 'global') {
+            $query->whereNull('business_id');
+        }
+
+        return $query->get();
     }
 
     /**
      * Get questions by section
      */
-    public function GetQuestionsBySection($sectionId)
+    public function GetQuestionsBySection($sectionId, $source = null)
     {
-        return $this->model->where('skill_assessment_section_id', $sectionId)
+        $query = $this->model->where('skill_assessment_section_id', $sectionId)
             ->with(['options' => function ($query) {
                 $query->orderBy('order');
             }])
-            ->orderBy('order')
-            ->get();
+            ->orderBy('order');
+
+        if ($source === 'business') {
+            $query->whereNotNull('business_id');
+        } elseif ($source === 'global') {
+            $query->whereNull('business_id');
+        }
+
+        return $query->get();
     }
 
     /**

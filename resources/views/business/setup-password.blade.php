@@ -17,6 +17,12 @@
     <link href="{{ url('public/assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
     <link href="{{ url('public/assets/css/style.css') }}" rel="stylesheet">
     <style>
+        :root {
+            --primary: {{ env('APP_THEME_COLOR', '#4154f1') }};
+            --hov-primary: {{ env('APP_HOVER_THEME_COLOR', '#012970') }};
+        }
+    </style>
+    <style>
         .btn-primary {
             background-color: #4154f1;
             border-color: #4154f1;

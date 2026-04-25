@@ -30,6 +30,7 @@
 
         function filterBySection(sectionId) {
             var examTemplateId = '{{ $examTemplateId ?? '' }}';
+            var source = document.getElementById('source_filter') ? document.getElementById('source_filter').value : '';
             var url = '{{ route('manageskillassessmentquestions') }}';
             var params = [];
             if (examTemplateId) {
@@ -37,6 +38,9 @@
             }
             if (sectionId) {
                 params.push('section_id=' + sectionId);
+            }
+            if (source) {
+                params.push('source=' + source);
             }
             if (params.length > 0) {
                 url += '?' + params.join('&');
@@ -93,7 +97,7 @@
                     <div class="card mb-3">
                         <div class="card-body">
                             <div class="row align-items-center">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label for="section_filter"
                                         class="form-label">{{ __('messages.filter_by_section') ?? 'Filter by Section' }}</label>
                                     <select id="section_filter" class="form-select" onchange="filterBySection(this.value)">
@@ -106,7 +110,15 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-8 text-end mt-3 mt-md-0">
+                                <div class="col-md-3">
+                                    <label for="source_filter" class="form-label">{{ __('messages.filter_by_type') ?? 'Type' }}</label>
+                                    <select id="source_filter" class="form-select" onchange="filterBySection(document.getElementById('section_filter').value)">
+                                        <option value="">All</option>
+                                        <option value="global" {{ (isset($source) && $source == 'global') ? 'selected' : '' }}>{{ __('messages.global') ?? 'Global' }}</option>
+                                        <option value="business" {{ (isset($source) && $source == 'business') ? 'selected' : '' }}>{{ __('messages.business') ?? 'Business' }}</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 text-end mt-3 mt-md-0">
                                     {{-- Export Button (only if section selected) --}}
                                     @if ($selectedSectionId)
                                         <a href="{{ route('exportskillassessmentquestions', ['section_id' => $selectedSectionId]) }}"
@@ -150,6 +162,7 @@
                                                     <tr>
                                                         <th>#</th>
                                                         <th>{{ __('messages.section') ?? 'Section' }}</th>
+                                                        <th>{{ __('messages.source') ?? 'Source' }}</th>
                                                         <th>{{ __('messages.question_text') ?? 'Question' }}</th>
                                                         <th>{{ __('messages.question_type') ?? 'Type' }}</th>
                                                         <th>{{ __('messages.options') ?? 'Options' }}</th>
@@ -164,6 +177,13 @@
                                                             <td>
                                                                 <span
                                                                     class="badge bg-info">{{ $question->section->title ?? 'N/A' }}</span>
+                                                            </td>
+                                                            <td>
+                                                                @if($question->business_id)
+                                                                    <span class="badge bg-info">{{ __('messages.business') ?? 'Business' }}</span>
+                                                                @else
+                                                                    <span class="badge bg-secondary">{{ __('messages.global') ?? 'Global' }}</span>
+                                                                @endif
                                                             </td>
                                                             <td>
                                                                 {{ Str::limit($question->question_text, 40) }}

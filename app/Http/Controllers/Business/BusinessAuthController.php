@@ -8,6 +8,8 @@ use App\Repositories\Admin\BusinessRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\DailyMail;
 
 class BusinessAuthController extends Controller
 {
@@ -59,6 +61,40 @@ class BusinessAuthController extends Controller
             return redirect()->route('business.dashboard');
         }
         return view('business.login');
+    }
+
+    public function ShowForgotForm()
+    {
+        return view('business.forgot-password');
+    }
+
+    public function SendResetLink(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $business = $this->BusinessRep->GetBusinessByEmail($request->email);
+
+        if (!$business) {
+            Session::flash('message', 'No business found with that email');
+            Session::flash('icon', 'error');
+            return back()->withInput();
+        }
+
+        $token = $business->generatePasswordSetupToken();
+
+        $data = [
+            'business_name' => $business->name,
+            'business_email' => $business->email,
+            'setup_link' => route('business.password.setup', ['token' => $token]),
+        ];
+
+        Mail::to($business->email)->send(new DailyMail('Reset your password - ' . config('app.name'), 'emails.business-invitation', $data));
+
+        Session::flash('message', 'Password reset link sent to your email');
+        Session::flash('icon', 'success');
+        return redirect()->route('business.login');
     }
 
     public function Login(Request $request)

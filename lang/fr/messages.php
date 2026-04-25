@@ -432,6 +432,10 @@ return [
     'tag_en' => 'Étiqueter (EN)',
     'tags_en' => 'Étiquettes (EN)',
     'tags_fr' => 'Étiquettes (FR)',
+    'tags' => 'Étiquettes',
+    'global' => 'Global',
+    'source' => 'Source',
+    'filter_by_type' => 'Filtrer par type',
     'description_en' => 'Description (EN)',
     'description_fr' => 'Description (FR)',
     'question_text_en' => 'Texte de la question (EN)',
@@ -440,6 +444,7 @@ return [
     'helper_text_fr' => 'Texte d\'aide (FR)',
     'option_text_en' => 'Texte de l\'option (EN)',
     'option_text_fr' => 'Texte de l\'option (FR)',
+    'forgot_password' => 'Mot de passe oublié',
 
     // ===========================================
     // Navigation & Sidebar

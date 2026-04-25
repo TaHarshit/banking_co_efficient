@@ -33,6 +33,8 @@ Route::get('/locale/{locale}', function ($locale) {
 Route::controller(BusinessAuthController::class)->group(function () {
     Route::GET('/login', 'ShowLoginForm')->name('business.login');
     Route::POST('/login', 'Login')->name('business.login.submit');
+    Route::GET('/forgot-password', 'ShowForgotForm')->name('business.password.request');
+    Route::POST('/forgot-password', 'SendResetLink')->name('business.password.email');
     Route::GET('/setup-password/{token}', 'ShowPasswordSetupForm')->name('business.password.setup');
     Route::POST('/setup-password', 'SetupPassword')->name('business.password.setup.submit');
 });

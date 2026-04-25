@@ -24,6 +24,7 @@ class SkillAssessmentQuestionController extends Controller
     {
         $selectedSectionId = $request->query('section_id');
         $examTemplateId = $request->query('exam_template_id');
+        $source = $request->query('source');
 
         // Determine exam template from section if not directly provided
         if ($selectedSectionId && !$examTemplateId) {
@@ -43,12 +44,12 @@ class SkillAssessmentQuestionController extends Controller
         }
 
         if ($selectedSectionId) {
-            $questions = $this->SkillAssessmentQuestionCls->GetQuestionsBySection($selectedSectionId);
+            $questions = $this->SkillAssessmentQuestionCls->GetQuestionsBySection($selectedSectionId, $source);
         } else {
-            $questions = $this->SkillAssessmentQuestionCls->GetAllQuestions();
+            $questions = $this->SkillAssessmentQuestionCls->GetAllQuestions($source);
         }
 
-        return view('skill-assessment.questions.manage', compact('sections', 'questions', 'selectedSectionId', 'examTemplate', 'examTemplateId'));
+        return view('skill-assessment.questions.manage', compact('sections', 'questions', 'selectedSectionId', 'examTemplate', 'examTemplateId', 'source'));
     }
 
     /**

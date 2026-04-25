@@ -20,8 +20,9 @@ class SkillAssessmentExamTemplateController extends Controller
      */
     public function ManageExamTemplates()
     {
-        $examTemplates = $this->ExamTemplateCls->GetAllExamTemplates();
-        return view('skill-assessment.exams.manage', compact('examTemplates'));
+        $source = request()->query('source');
+        $examTemplates = $this->ExamTemplateCls->GetAllExamTemplates($source);
+        return view('skill-assessment.exams.manage', compact('examTemplates', 'source'));
     }
 
     /**

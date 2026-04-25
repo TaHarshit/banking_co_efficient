@@ -27,10 +27,10 @@ class SkillAssessmentQuestionCls
     /**
      * Get all questions across all sections
      */
-    public function GetAllQuestions()
+    public function GetAllQuestions($source = null)
     {
         try {
-            return $this->QuestionRep->GetAllQuestions();
+            return $this->QuestionRep->GetAllQuestions($source);
         } catch (Exception $e) {
             return collect();
         }
@@ -63,10 +63,10 @@ class SkillAssessmentQuestionCls
     /**
      * Get questions by section
      */
-    public function GetQuestionsBySection($sectionId)
+    public function GetQuestionsBySection($sectionId, $source = null)
     {
         try {
-            return $this->QuestionRep->GetQuestionsBySection($sectionId);
+            return $this->QuestionRep->GetQuestionsBySection($sectionId, $source);
         } catch (Exception $e) {
             return response()->view('error.500', ['message' => $e->getMessage()], 500);
         }

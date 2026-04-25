@@ -398,6 +398,10 @@ return [
     'tag_en' => 'Tag (EN)',
     'tags_en' => 'Tags (EN)',
     'tags_fr' => 'Tags (FR)',
+    'tags' => 'Tags',
+    'source' => 'Source',
+    'global' => 'Global',
+    'filter_by_type' => 'Filter by Type',
     'description_en' => 'Description (EN)',
     'description_fr' => 'Description (FR)',
     'question_text_en' => 'Question Text (EN)',
@@ -406,6 +410,7 @@ return [
     'helper_text_fr' => 'Helper Text (FR)',
     'option_text_en' => 'Option Text (EN)',
     'option_text_fr' => 'Option Text (FR)',
+    'forgot_password' => 'Forgot Password',
 
     // ===========================================
     // Navigation & Sidebar

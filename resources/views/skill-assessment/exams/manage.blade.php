@@ -23,6 +23,13 @@
                 }
             });
         }
+        function filterExamsBySource(source) {
+            var url = '{{ route('manageskillassessmentexamtemplates') }}';
+            if (source) {
+                url += '?source=' + source;
+            }
+            window.location.href = url;
+        }
     </script>
 @endsection
 @include('partials.headerfiles')
@@ -52,6 +59,16 @@
                                     <i class="bi bi-plus"></i> {{ __('messages.add_exam') ?? 'Add Exam' }}
                                 </a>
                             </h5>
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <label for="exam_source_filter" class="form-label">{{ __('messages.filter_by_type') ?? 'Type' }}</label>
+                                    <select id="exam_source_filter" class="form-select" onchange="filterExamsBySource(this.value)">
+                                        <option value="">All</option>
+                                        <option value="global" {{ (isset($source) && $source == 'global') ? 'selected' : '' }}>{{ __('messages.global') ?? 'Global' }}</option>
+                                        <option value="business" {{ (isset($source) && $source == 'business') ? 'selected' : '' }}>{{ __('messages.business') ?? 'Business' }}</option>
+                                    </select>
+                                </div>
+                            </div>
                             <div class="row">
                                 <div class="col-12">
                                     @if ($examTemplates->count() > 0)
@@ -61,6 +78,7 @@
                                                     <tr>
                                                         <th>#</th>
                                                         <th>{{ __('messages.title') ?? 'Title' }}</th>
+                                                        <th>{{ __('messages.source') ?? 'Source' }}</th>
                                                         <th>{{ __('messages.exam_level') ?? 'Exam Level' }}</th>
                                                         <th>{{ __('messages.tags') ?? 'Tags' }}</th>
                                                         <th>{{ __('messages.description') ?? 'Description' }}</th>
@@ -76,6 +94,13 @@
                                                         <tr>
                                                             <td>{{ $template->order }}</td>
                                                             <td>{{ $template->title }}</td>
+                                                            <td>
+                                                                @if($template->business_id)
+                                                                    <span class="badge bg-info">{{ __('messages.business') ?? 'Business' }}</span>
+                                                                @else
+                                                                    <span class="badge bg-secondary">{{ __('messages.global') ?? 'Global' }}</span>
+                                                                @endif
+                                                            </td>
                                                             <td>
                                                                 @if ($template->exam_level)
                                                                     <span class="badge bg-primary">{{ ucfirst($template->exam_level) }}</span>

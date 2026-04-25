@@ -18,10 +18,10 @@ class SkillAssessmentExamTemplateCls
     /**
      * Get all exam templates
      */
-    public function GetAllExamTemplates()
+    public function GetAllExamTemplates($source = null)
     {
         try {
-            return $this->ExamTemplateRep->GetAllExamTemplates();
+            return $this->ExamTemplateRep->GetAllExamTemplates($source);
         } catch (Exception $e) {
             return response()->view('error.500', ['message' => $e->getMessage()], 500);
         }

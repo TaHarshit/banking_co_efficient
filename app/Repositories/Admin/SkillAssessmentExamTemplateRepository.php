@@ -15,9 +15,17 @@ class SkillAssessmentExamTemplateRepository extends BaseRepository
     /**
      * Get all exam templates ordered by display order
      */
-    public function GetAllExamTemplates()
+    public function GetAllExamTemplates($source = null)
     {
-        return $this->model->withCount('sections')->orderBy('order')->get();
+        $query = $this->model->withCount('sections')->orderBy('order');
+
+        if ($source === 'business') {
+            $query->whereNotNull('business_id');
+        } elseif ($source === 'global') {
+            $query->whereNull('business_id');
+        }
+
+        return $query->get();
     }
 
     /**
