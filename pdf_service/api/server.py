@@ -147,23 +147,24 @@ def process_question(query: str, history: list = []):
         
         # System instructions with context
         system_content = f"""You are a helpful AI assistant answering questions about the provided document.
-For greetings or conversational interactions, respond politely.
-For factual questions about the document, answer using ONLY the context provided below.
-If a user asks a question that is clearly not a greeting and the answer is not found in the context, reply "I cannot find the answer to that in the document.".
 
 Context:
 {context}
 
 INSTRUCTIONS:
-1. Provide a detailed answer based on the context.
-2. After your answer, provide exactly 3 short follow-up questions the user might ask next.
-3. Format your response exactly like this:
+1. For greetings or conversational interactions, respond politely.
+2. For factual questions about the document, answer using ONLY the context provided above.
+3. If the answer is not found in the context, reply "I cannot find the answer to that in the document.".
+4. ALWAYS provide exactly 3 short, relevant follow-up questions the user might ask next (even for greetings).
+5. MANDATORY FORMAT: You MUST wrap your response in [ANSWER] and [SUGGESTIONS] tags.
+
+Example Output:
 [ANSWER]
-(your answer here)
+The document mentions that the interest rate is 5%.
 [SUGGESTIONS]
-- (suggestion 1)
-- (suggestion 2)
-- (suggestion 3)"""
+- What are the eligibility criteria?
+- How do I apply for this loan?
+- Are there any processing fees?"""
 
         messages = [{"role": "system", "content": system_content}]
         
@@ -193,7 +194,15 @@ INSTRUCTIONS:
             parts = full_response.split("[SUGGESTIONS]")
             answer_text = parts[0].replace("[ANSWER]", "").strip()
             suggestion_text = parts[1].strip()
-            suggestions = [line.strip("- ").strip() for line in suggestion_text.split("\n") if line.strip("- ").strip()]
+            
+            # More robust parsing for suggestions (handles -, *, 1., etc.)
+            import re
+            suggestions = []
+            for line in suggestion_text.split("\n"):
+                # Remove common bullet points and whitespace
+                clean_line = re.sub(r'^(\s*[-*•\d+.]\s*)+', '', line).strip()
+                if clean_line:
+                    suggestions.append(clean_line)
         elif "[ANSWER]" in full_response:
             answer_text = full_response.replace("[ANSWER]", "").strip()
 
