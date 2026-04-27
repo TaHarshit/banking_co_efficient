@@ -155,7 +155,7 @@ INSTRUCTIONS:
 1. For greetings or conversational interactions, respond politely.
 2. For factual questions about the document, answer using ONLY the context provided above.
 3. If the answer is not found in the context, reply "I cannot find the answer to that in the document.".
-4. ALWAYS provide exactly 3 short, highly specific suggestions for follow-up questions.
+4. ALWAYS provide exactly 3 VERY SHORT suggestions (max 3-4 words each).
 5. GROUNDING: These suggestions MUST be directly answerable using the provided Context. Avoid generic "AI" questions.
 6. MANDATORY FORMAT: You MUST wrap your response in [ANSWER] and [SUGGESTIONS] tags.
 
@@ -163,9 +163,9 @@ Example Output:
 [ANSWER]
 The document mentions that the interest rate is 5%.
 [SUGGESTIONS]
-- Eligibility criteria for the 5% rate
-- How to apply for this specific loan
-- Processing fees and hidden charges in Section 3"""
+- 5% Interest Eligibility
+- Loan Application Process
+- Section 3 Fees"""
 
         messages = [{"role": "system", "content": system_content}]
         
