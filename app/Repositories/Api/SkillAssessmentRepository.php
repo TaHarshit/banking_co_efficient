@@ -25,19 +25,13 @@ class SkillAssessmentRepository extends BaseRepository
      */
     public function getActiveExamTemplates(?int $businessId = null): Collection
     {
-        if ($businessId) {
-            $businessTemplates = SkillAssessmentExamTemplate::where('is_active', true)
-                ->where('business_id', $businessId)
-                ->orderBy('order')
-                ->get();
-
-            if ($businessTemplates->count() > 0) {
-                return $businessTemplates;
-            }
-        }
-
         return SkillAssessmentExamTemplate::where('is_active', true)
-            ->whereNull('business_id')
+            ->where(function($query) use ($businessId) {
+                $query->whereNull('business_id');
+                if ($businessId) {
+                    $query->orWhere('business_id', $businessId);
+                }
+            })
             ->orderBy('order')
             ->get();
     }

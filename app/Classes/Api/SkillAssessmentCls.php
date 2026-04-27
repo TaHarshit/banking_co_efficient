@@ -253,19 +253,23 @@ class SkillAssessmentCls
      */
     public function getHistory(): JsonResponse
     {
-        $exams = $this->repository->getUserExamHistory(Auth::id());
+        $user = Auth::user();
+        $businessId = $user->business_id ?? null;
+
+        // Get all available templates for this user (both global and business-specific)
+        $templates = $this->repository->getActiveExamTemplates($businessId);
+
+        // Get user's exam history
+        $exams = $this->repository->getUserExamHistory($user->id);
 
         // Group exams by template ID (latest first order preserved)
         $groupedByTemplate = $exams->groupBy('skill_assessment_exam_template_id');
 
         $result = [];
 
-        foreach ($groupedByTemplate as $templateId => $templateExams) {
-            $template = $templateExams->first()->examTemplate;
-
-            if (!$template) {
-                continue;
-            }
+        foreach ($templates as $template) {
+            $templateId = $template->id;
+            $templateExams = $groupedByTemplate->get($templateId, collect());
 
             // Load sections with active questions for total count
             $template->load(['sections.questions' => function ($query) {
@@ -310,6 +314,7 @@ class SkillAssessmentCls
                 'total_questions' => $totalQuestions,
                 'average_percentage' => $averagePercentage,
                 'exams' => $examList,
+                'attempted' => $templateExams->isNotEmpty(),
             ];
         }
 
