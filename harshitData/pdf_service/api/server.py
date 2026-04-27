@@ -9,7 +9,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
 
-client = OpenAI()
+# Load environment variables
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL") # For OpenRouter etc.
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini") # Default model
+
+# Initialize client
+if OPENAI_BASE_URL:
+    client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
+else:
+    client = OpenAI(api_key=OPENAI_API_KEY)
 
 app = FastAPI()
 
@@ -102,7 +111,7 @@ def process_question(query: str):
         # --- STEP 5: Get model response ---
         print("[INFO] Step 5: Calling OpenAI API...")
         result = client.chat.completions.create(
-            model="gpt-4.1-mini",
+            model=OPENAI_MODEL,
             messages=[{"role": "user", "content": prompt}],
             timeout=60
         )
