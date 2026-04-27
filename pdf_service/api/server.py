@@ -24,15 +24,7 @@ try:
 except ImportError:
     pass
 
-# Lazy-initialize OpenAI client to avoid crash on Windows with --reload
-_client = None
-
-def get_openai_client():
-    global _client
-    if _client is None:
-        _client = OpenAI()
-    return _client
-
+# FastAPI App Initialization
 app = FastAPI()
 
 # Enable CORS for Laravel integration
@@ -59,6 +51,44 @@ vectors = np.load(str(BASE_DIR / "embeddings" / "vectors.npy"))
 with open(str(BASE_DIR / "embeddings" / "meta.json")) as f:
     meta = json.load(f)
 
+# AI Configuration from Environment
+AI_API_BASE_URL = os.getenv("AI_API_BASE_URL", None)
+AI_CHAT_MODEL = os.getenv("AI_CHAT_MODEL", "gpt-4o-mini")
+AI_EMBEDDING_MODEL = os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small")
+AI_IMAGE_BASE_URL = os.getenv("AI_IMAGE_BASE_URL", "http://127.0.0.1:8000")
+
+# Optional headers for OpenRouter
+AI_HTTP_REFERER = os.getenv("AI_HTTP_REFERER", "")
+AI_SITE_TITLE = os.getenv("AI_SITE_TITLE", "")
+
+print(f"[CONFIG] AI Provider: {'Custom (' + AI_API_BASE_URL + ')' if AI_API_BASE_URL else 'OpenAI Default'}")
+print(f"[CONFIG] Chat Model: {AI_CHAT_MODEL}")
+print(f"[CONFIG] Embedding Model: {AI_EMBEDDING_MODEL}")
+print(f"[CONFIG] Image Base URL: {AI_IMAGE_BASE_URL}")
+
+# Lazy-initialize AI client
+_client = None
+
+def get_ai_client():
+    global _client
+    if _client is None:
+        # Build extra headers for OpenRouter
+        extra_headers = {}
+        if AI_HTTP_REFERER:
+            extra_headers["HTTP-Referer"] = AI_HTTP_REFERER
+        if AI_SITE_TITLE:
+            extra_headers["X-Title"] = AI_SITE_TITLE
+            
+        # Initialize client
+        if AI_API_BASE_URL:
+            _client = OpenAI(
+                base_url=AI_API_BASE_URL,
+                default_headers=extra_headers if extra_headers else None
+            )
+        else:
+            _client = OpenAI()
+    return _client
+
 
 class QuestionRequest(BaseModel):
     question: str
@@ -80,11 +110,11 @@ def process_question(query: str, history: list = []):
         print(f"[INFO] Processing question: {query[:50]}...")
         
         # --- STEP 1: Embed the query ---
-        print("[INFO] Step 1: Creating embeddings...")
-        q_embed = get_openai_client().embeddings.create(
-            model="text-embedding-3-small",
+        print(f"[INFO] Step 1: Creating embeddings using {AI_EMBEDDING_MODEL}...")
+        q_embed = get_ai_client().embeddings.create(
+            model=AI_EMBEDDING_MODEL,
             input=query,
-            timeout=10
+            timeout=15
         ).data[0].embedding
 
         q_embed = np.array(q_embed).astype("float32").reshape(1, -1)
@@ -105,16 +135,15 @@ def process_question(query: str, history: list = []):
 
             # collect images
             for img in chunk.get("images", []):
-                collected_images.append(f"http://127.0.0.1:8000/images/{img}")
+                # Ensure we don't have double slashes if AI_IMAGE_BASE_URL ends with one
+                base_url = AI_IMAGE_BASE_URL.rstrip("/")
+                collected_images.append(f"{base_url}/images/{img}")
 
             # collect pages
             reference_pages.add(chunk["page"])
 
         # --- STEP 4: Build prompt & messages ---
         print("[INFO] Step 4: Building messages...")
-        
-        # Build the message list for OpenAI
-        messages = []
         
         # System instructions with context
         system_content = f"""You are a helpful AI assistant answering questions about the provided document.
@@ -136,11 +165,10 @@ INSTRUCTIONS:
 - (suggestion 2)
 - (suggestion 3)"""
 
-        messages.append({"role": "system", "content": system_content})
+        messages = [{"role": "system", "content": system_content}]
         
         # Add history
         for msg in history:
-            # Ensure each message has the correct format
             if isinstance(msg, dict) and "role" in msg and "content" in msg:
                 messages.append(msg)
             
@@ -148,9 +176,9 @@ INSTRUCTIONS:
         messages.append({"role": "user", "content": query})
 
         # --- STEP 5: Get model response ---
-        print("[INFO] Step 5: Calling OpenAI API...")
-        result = get_openai_client().chat.completions.create(
-            model="gpt-4o-mini",
+        print(f"[INFO] Step 5: Calling Chat API using {AI_CHAT_MODEL}...")
+        result = get_ai_client().chat.completions.create(
+            model=AI_CHAT_MODEL,
             messages=messages,
             timeout=60
         )

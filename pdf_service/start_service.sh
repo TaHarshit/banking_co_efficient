@@ -28,7 +28,7 @@ fi
 # Check if OPENAI_API_KEY is set
 if [ -z "$OPENAI_API_KEY" ]; then
     echo "WARNING: OPENAI_API_KEY environment variable is not set!"
-    echo "Please set it using: export OPENAI_API_KEY='your-api-key'"
+    echo "If you are using OpenAI or DeepSeek, please set it in your .env file."
     echo ""
 fi
 
