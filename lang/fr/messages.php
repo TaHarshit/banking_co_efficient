@@ -90,7 +90,7 @@ return [
     // ===========================================
     // Expérience Personnalisée - Sections
     // ===========================================
-    'personalized_experience' => 'Expérience Personnalisée',
+    'personalized_experience' => "Profilage de l'environnement",
     'sections' => 'Sections',
     'manage_sections' => 'Gérer les sections',
     'add_section' => 'Ajouter une section',
