@@ -62,6 +62,7 @@ with open(str(BASE_DIR / "embeddings" / "meta.json")) as f:
 
 class QuestionRequest(BaseModel):
     question: str
+    history: list = []
 
 
 @app.get("/ask")
@@ -71,10 +72,10 @@ def ask(query: str):
 
 @app.post("/ask")
 def ask_post(request: QuestionRequest):
-    return process_question(request.question)
+    return process_question(request.question, request.history)
 
 
-def process_question(query: str):
+def process_question(query: str, history: list = []):
     try:
         print(f"[INFO] Processing question: {query[:50]}...")
         
@@ -109,32 +110,71 @@ def process_question(query: str):
             # collect pages
             reference_pages.add(chunk["page"])
 
-        # --- STEP 4: Build prompt ---
-        print("[INFO] Step 4: Building prompt...")
-        prompt = f"""
-        Answer the user's question using ONLY this context.
-        If answer is not found, reply "Not found in document".
+        # --- STEP 4: Build prompt & messages ---
+        print("[INFO] Step 4: Building messages...")
+        
+        # Build the message list for OpenAI
+        messages = []
+        
+        # System instructions with context
+        system_content = f"""You are a helpful AI assistant answering questions about the provided document.
+For greetings or conversational interactions, respond politely.
+For factual questions about the document, answer using ONLY the context provided below.
+If a user asks a question that is clearly not a greeting and the answer is not found in the context, reply "I cannot find the answer to that in the document.".
 
-        Context:
-        {context}
+Context:
+{context}
 
-        Question: {query}
-        """
+INSTRUCTIONS:
+1. Provide a detailed answer based on the context.
+2. After your answer, provide exactly 3 short follow-up questions the user might ask next.
+3. Format your response exactly like this:
+[ANSWER]
+(your answer here)
+[SUGGESTIONS]
+- (suggestion 1)
+- (suggestion 2)
+- (suggestion 3)"""
+
+        messages.append({"role": "system", "content": system_content})
+        
+        # Add history
+        for msg in history:
+            # Ensure each message has the correct format
+            if isinstance(msg, dict) and "role" in msg and "content" in msg:
+                messages.append(msg)
+            
+        # Add current query
+        messages.append({"role": "user", "content": query})
 
         # --- STEP 5: Get model response ---
         print("[INFO] Step 5: Calling OpenAI API...")
         result = get_openai_client().chat.completions.create(
-            model="gpt-4.1-mini",
-            messages=[{"role": "user", "content": prompt}],
+            model="gpt-4o-mini",
+            messages=messages,
             timeout=60
         )
 
-        answer_text = result.choices[0].message.content
+        full_response = result.choices[0].message.content
+        
+        # Parse Answer and Suggestions
+        answer_text = full_response
+        suggestions = []
+        
+        if "[SUGGESTIONS]" in full_response:
+            parts = full_response.split("[SUGGESTIONS]")
+            answer_text = parts[0].replace("[ANSWER]", "").strip()
+            suggestion_text = parts[1].strip()
+            suggestions = [line.strip("- ").strip() for line in suggestion_text.split("\n") if line.strip("- ").strip()]
+        elif "[ANSWER]" in full_response:
+            answer_text = full_response.replace("[ANSWER]", "").strip()
+
         print("[INFO] Step 6: Returning response")
 
         # --- STEP 6: Return final API response ---
         return {
             "answer": answer_text,
+            "suggestions": suggestions[:3],
             "images": collected_images,
             "reference_pages": sorted(list(reference_pages))
         }
