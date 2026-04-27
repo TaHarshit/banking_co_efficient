@@ -66,9 +66,17 @@ class BusinessRepository extends BaseRepository
         }
 
         if ($id > 0) {
-            return $this->model->where('id', $id)->update($data);
+            $update = $this->model->where('id', $id)->update($data);
+            if ($update) {
+                logAdminActivity('Business', 'Update', $id, "Updated business: $name", $data);
+            }
+            return $update;
         } else {
-            return $this->model->create($data);
+            $business = $this->model->create($data);
+            if ($business) {
+                logAdminActivity('Business', 'Add', $business->id, "Added new business: $name", $data);
+            }
+            return $business;
         }
     }
 
@@ -90,17 +98,27 @@ class BusinessRepository extends BaseRepository
 
     public function ChangeStatus($id, $status)
     {
-        return $this->model->where('id', $id)->update(['status' => $status]);
+        $update = $this->model->where('id', $id)->update(['status' => $status]);
+        if ($update) {
+            $statusText = $status == 1 ? 'Active' : 'Inactive';
+            logAdminActivity('Business', 'Status Change', $id, "Changed business status to: $statusText");
+        }
+        return $update;
     }
 
     public function DeleteBusiness($id)
     {
         $business = $this->GetBusiness($id);
+        $name = $business ? $business->name : "ID: $id";
 
         if ($business && $business->logo && Storage::exists('public/business_logos/' . $business->logo)) {
             Storage::delete('public/business_logos/' . $business->logo);
         }
 
-        return $this->model->where('id', $id)->delete();
+        $delete = $this->model->where('id', $id)->delete();
+        if ($delete) {
+            logAdminActivity('Business', 'Delete', $id, "Deleted business: $name");
+        }
+        return $delete;
     }
 }

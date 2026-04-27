@@ -67,6 +67,13 @@
         </li>
 
         <li class="nav-item">
+            <a class="nav-link {{ request()->routeIs('admin.activity_logs.index') ? 'active' : 'collapsed' }}" href="{{ route('admin.activity_logs.index') }}">
+                <i class="bi bi-list-check"></i>
+                <span>Activity Logs</span>
+            </a>
+        </li>
+
+        <li class="nav-item">
             <a class="nav-link {{ request()->routeIs('addeditsetting') ? 'active' : 'collapsed' }}" href="{{ route('addeditsetting', ['id' => 1]) }}">
                 <i class="bi bi-gear"></i>
                 <span>{{ __('messages.settings') }}</span>

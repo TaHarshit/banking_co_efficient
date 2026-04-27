@@ -68,14 +68,22 @@ class QuestionRepository extends BaseRepository
 
         if ($id > 0) {
             $this->model->where('id', $id)->update($questionData);
-            return $this->model->find($id);
+            $question = $this->model->find($id);
+            if ($question) {
+                logAdminActivity('Personalized Experience', 'Update Question', $id, "Updated question in section ID: {$questionData['section_id']}", $questionData);
+            }
+            return $question;
         } else {
             // Set order to max + 1 for this section if not provided
             if (!isset($data['order']) || $data['order'] == 0) {
                 $maxOrder = $this->model->where('section_id', $data['section_id'])->max('order') ?? 0;
                 $questionData['order'] = $maxOrder + 1;
             }
-            return $this->model->create($questionData);
+            $question = $this->model->create($questionData);
+            if ($question) {
+                logAdminActivity('Personalized Experience', 'Add Question', $question->id, "Added new question in section ID: {$questionData['section_id']}", $questionData);
+            }
+            return $question;
         }
     }
 
@@ -84,7 +92,13 @@ class QuestionRepository extends BaseRepository
      */
     public function DeleteQuestion($id)
     {
-        return $this->model->where('id', $id)->delete();
+        $question = $this->model->find($id);
+        $sectionId = $question ? $question->section_id : "N/A";
+        $delete = $this->model->where('id', $id)->delete();
+        if ($delete) {
+            logAdminActivity('Personalized Experience', 'Delete Question', $id, "Deleted question from section ID: $sectionId");
+        }
+        return $delete;
     }
 
     /**
@@ -103,7 +117,12 @@ class QuestionRepository extends BaseRepository
      */
     public function ChangeStatus($id, $status)
     {
-        return $this->model->where('id', $id)->update(['is_active' => $status]);
+        $update = $this->model->where('id', $id)->update(['is_active' => $status]);
+        if ($update) {
+            $statusText = $status ? 'Active' : 'Inactive';
+            logAdminActivity('Personalized Experience', 'Status Change Question', $id, "Changed question status to: $statusText");
+        }
+        return $update;
     }
 
     /**
@@ -134,6 +153,7 @@ class QuestionRepository extends BaseRepository
             $question->delete();
         }
 
+        logAdminActivity('Personalized Experience', 'Delete All Questions', null, "Deleted all questions for section ID: $sectionId");
         return true;
     }
 }

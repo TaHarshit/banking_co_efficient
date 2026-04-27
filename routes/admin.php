@@ -165,6 +165,10 @@ Route::group(['middleware' => ['auth', 'admin.auth']], function () {
         Route::get('/case-study-questions/{question}/edit', 'edit')->name('admin.case_study_questions.edit');
         Route::post('/case-study-questions/{question}', 'update')->name('admin.case_study_questions.update');
         Route::get('/case-study-questions/{question}/delete', 'destroy')->name('admin.case_study_questions.destroy');
+        // Admin Activity Logs
+    Route::controller(\App\Http\Controllers\Admin\AdminActivityLogController::class)->group(function () {
+        Route::GET('/activity-logs', 'index')->name('admin.activity_logs.index');
     });
+});
 
 });

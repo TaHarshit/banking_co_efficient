@@ -414,6 +414,8 @@ class QuestionCls
                 }
             }
 
+            logAdminActivity('Personalized Experience', 'Import Questions', null, "Imported questions for section ID: $sectionId");
+
             Session::flash('message', __('messages.questions_imported'));
             Session::flash('icon', 'success');
             return redirect()->route('managequestions', ['section_id' => $sectionId]);

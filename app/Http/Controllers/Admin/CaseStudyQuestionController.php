@@ -47,6 +47,8 @@ class CaseStudyQuestionController extends Controller
             ]);
         }
 
+        logAdminActivity('Case Study', 'Add', $question->id, "Added new case study question in section: {$request->section_name}", $request->all());
+
         return redirect()->route('admin.case_study_questions.index')->with('success', 'Question created successfully.');
     }
 
@@ -84,12 +86,17 @@ class CaseStudyQuestionController extends Controller
             ]);
         }
 
+        logAdminActivity('Case Study', 'Update', $question->id, "Updated case study question in section: {$request->section_name}", $request->all());
+
         return redirect()->route('admin.case_study_questions.index')->with('success', 'Question updated successfully.');
     }
 
     public function destroy(CaseStudyQuestion $question)
     {
+        $id = $question->id;
+        $section = $question->section_name;
         $question->delete();
+        logAdminActivity('Case Study', 'Delete', $id, "Deleted case study question from section: $section");
         return redirect()->route('admin.case_study_questions.index')->with('success', 'Question deleted successfully.');
     }
 
@@ -154,6 +161,8 @@ class CaseStudyQuestionController extends Controller
                     ]);
                 }
             }
+
+            logAdminActivity('Case Study', 'Import', null, "Imported case study questions from file: " . $file->getClientOriginalName());
 
             return redirect()->route('admin.case_study_questions.index')->with('success', 'Import successful!');
         } catch (\Exception $e) {

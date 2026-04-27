@@ -25,9 +25,30 @@ class SettingsRepository extends BaseRepository {
         $data['terms_and_conditions']   = $terms_and_conditions;
 
         if($id>0){
-            return $this->model->where('id', $id)->update($data);
+            $oldSetting = $this->GetSetting($id);
+            $update = $this->model->where('id', $id)->update($data);
+            if ($update) {
+                $changes = [];
+                if ($oldSetting->user_android_version != $user_android_version || $oldSetting->user_ios_version != $user_ios_version) {
+                    $changes[] = "Version Update";
+                }
+                if ($oldSetting->privacy_policy != $privacy_policy) {
+                    $changes[] = "Privacy Policy Change";
+                }
+                if ($oldSetting->terms_and_conditions != $terms_and_conditions) {
+                    $changes[] = "Terms and Conditions Change";
+                }
+                
+                $description = !empty($changes) ? implode(", ", $changes) : "Updated settings";
+                logAdminActivity('Settings', 'Update', $id, $description, $data);
+            }
+            return $update;
         } else {
-            return $this->model->create($data);
+            $setting = $this->model->create($data);
+            if ($setting) {
+                logAdminActivity('Settings', 'Add', $setting->id, "Added settings", $data);
+            }
+            return $setting;
         }
     }
 }

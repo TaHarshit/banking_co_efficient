@@ -80,12 +80,16 @@ class SkillAssessmentExamTemplateRepository extends BaseRepository
         ];
 
         if ($id == 0) {
-            return $this->model->create($templateData);
+            $template = $this->model->create($templateData);
+            if ($template) {
+                logAdminActivity('Exam', 'Add', $template->id, "Added new exam: {$templateData['title']}", $templateData);
+            }
+            return $template;
         } else {
             $template = $this->model->find($id);
             if ($template) {
                 $template->update($templateData);
-
+                logAdminActivity('Exam', 'Update', $id, "Updated exam: {$templateData['title']}", $templateData);
                 return $template;
             }
 
@@ -100,7 +104,9 @@ class SkillAssessmentExamTemplateRepository extends BaseRepository
     {
         $template = $this->model->find($id);
         if ($template) {
+            $title = $template->title;
             $template->delete();
+            logAdminActivity('Exam', 'Delete', $id, "Deleted exam: $title");
 
             return true;
         }
@@ -116,6 +122,8 @@ class SkillAssessmentExamTemplateRepository extends BaseRepository
         $template = $this->model->find($id);
         if ($template) {
             $template->update(['is_active' => $status]);
+            $statusText = $status ? 'Active' : 'Inactive';
+            logAdminActivity('Exam', 'Status Change', $id, "Changed exam status to: $statusText");
 
             return true;
         }

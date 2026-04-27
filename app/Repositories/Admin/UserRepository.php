@@ -68,9 +68,17 @@ class UserRepository extends BaseRepository
         }
 
         if ($id > 0) {
-            return $this->model->where('id', $id)->update($data);
+            $update = $this->model->where('id', $id)->update($data);
+            if ($update) {
+                logAdminActivity('User', 'Update', $id, "Updated user: $name $surname", $data);
+            }
+            return $update;
         } else {
-            return $this->model->create($data);
+            $user = $this->model->create($data);
+            if ($user) {
+                logAdminActivity('User', 'Add', $user->id, "Added new user: $name $surname", $data);
+            }
+            return $user;
         }
     }
 
@@ -94,18 +102,32 @@ class UserRepository extends BaseRepository
 
     public function ChangeStatus($id, $status)
     {
-        return $this->model->where('id', $id)->update(['status' => $status]);
+        $update = $this->model->where('id', $id)->update(['status' => $status]);
+        if ($update) {
+            logAdminActivity('User', 'Status Change', $id, "Changed user status to: $status");
+        }
+        return $update;
     }
 
     public function deleteUser($id)
     {
-        return $this->model->where('id', $id)->delete();
+        $user = $this->model->find($id);
+        $name = $user ? "$user->name $user->surname" : "ID: $id";
+        $delete = $this->model->where('id', $id)->delete();
+        if ($delete) {
+            logAdminActivity('User', 'Delete', $id, "Deleted user: $name");
+        }
+        return $delete;
     }
 
     public function changePassword($password, $id)
     {
-        return $this->model->where('id', $id)->update([
+        $update = $this->model->where('id', $id)->update([
             'password' => Hash::make($password)
         ]);
+        if ($update) {
+            logAdminActivity('User', 'Password Change', $id, "Changed password for user ID: $id");
+        }
+        return $update;
     }
 }

@@ -79,11 +79,16 @@ class SkillAssessmentSectionRepository extends BaseRepository
         ];
 
         if ($id == 0) {
-            return $this->model->create($sectionData);
+            $section = $this->model->create($sectionData);
+            if ($section) {
+                logAdminActivity('Exam', 'Add Section', $section->id, "Added new exam section: {$sectionData['title']}", $sectionData);
+            }
+            return $section;
         } else {
             $section = $this->model->find($id);
             if ($section) {
                 $section->update($sectionData);
+                logAdminActivity('Exam', 'Update Section', $id, "Updated exam section: {$sectionData['title']}", $sectionData);
                 return $section;
             }
             return null;
@@ -97,7 +102,9 @@ class SkillAssessmentSectionRepository extends BaseRepository
     {
         $section = $this->model->find($id);
         if ($section) {
+            $title = $section->title;
             $section->delete();
+            logAdminActivity('Exam', 'Delete Section', $id, "Deleted exam section: $title");
             return true;
         }
         return false;
@@ -122,6 +129,8 @@ class SkillAssessmentSectionRepository extends BaseRepository
         $section = $this->model->find($id);
         if ($section) {
             $section->update(['is_active' => $status]);
+            $statusText = $status ? 'Active' : 'Inactive';
+            logAdminActivity('Exam', 'Status Change Section', $id, "Changed exam section status to: $statusText");
             return true;
         }
         return false;

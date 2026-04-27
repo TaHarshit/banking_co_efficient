@@ -223,3 +223,34 @@ if (!function_exists('SingleImageRemove')) {
         return true;
     }
 }
+if (!function_exists('logAdminActivity')) {
+    /**
+     * Log admin activity
+     * 
+     * @param string $module
+     * @param string $action
+     * @param int|null $moduleId
+     * @param string|null $description
+     * @param array|null $data
+     */
+    function logAdminActivity($module, $action, $moduleId = null, $description = null, $data = null) {
+        try {
+            $adminId = auth()->check() ? auth()->id() : null;
+            
+            // Log only if it's an admin (user_type 1)
+            // Or if you want to log all auth users actions in admin panel
+            
+            \App\Models\AdminActivityLog::create([
+                'admin_id' => $adminId,
+                'module' => $module,
+                'action' => $action,
+                'module_id' => $moduleId,
+                'description' => $description,
+                'data' => $data,
+                'ip_address' => request()->ip(),
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to log admin activity: ' . $e->getMessage());
+        }
+    }
+}

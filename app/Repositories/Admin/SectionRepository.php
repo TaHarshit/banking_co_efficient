@@ -61,14 +61,22 @@ class SectionRepository extends BaseRepository
         ];
 
         if ($id > 0) {
-            return $this->model->where('id', $id)->update($sectionData);
+            $update = $this->model->where('id', $id)->update($sectionData);
+            if ($update) {
+                logAdminActivity('Personalized Experience', 'Update Section', $id, "Updated section: {$sectionData['title_en']}", $sectionData);
+            }
+            return $update;
         } else {
             // Set order to max + 1 if not provided
             if (!isset($data['order']) || $data['order'] == 0) {
                 $maxOrder = $this->model->max('order') ?? 0;
                 $sectionData['order'] = $maxOrder + 1;
             }
-            return $this->model->create($sectionData);
+            $section = $this->model->create($sectionData);
+            if ($section) {
+                logAdminActivity('Personalized Experience', 'Add Section', $section->id, "Added new section: {$sectionData['title_en']}", $sectionData);
+            }
+            return $section;
         }
     }
 
@@ -77,7 +85,13 @@ class SectionRepository extends BaseRepository
      */
     public function DeleteSection($id)
     {
-        return $this->model->where('id', $id)->delete();
+        $section = $this->model->find($id);
+        $title = $section ? $section->title_en : "ID: $id";
+        $delete = $this->model->where('id', $id)->delete();
+        if ($delete) {
+            logAdminActivity('Personalized Experience', 'Delete Section', $id, "Deleted section: $title");
+        }
+        return $delete;
     }
 
     /**
@@ -88,6 +102,7 @@ class SectionRepository extends BaseRepository
         foreach ($orderedIds as $index => $id) {
             $this->model->where('id', $id)->update(['order' => $index + 1]);
         }
+        logAdminActivity('Personalized Experience', 'Update Order', null, "Updated order of sections");
         return true;
     }
 
@@ -96,7 +111,12 @@ class SectionRepository extends BaseRepository
      */
     public function ChangeStatus($id, $status)
     {
-        return $this->model->where('id', $id)->update(['is_active' => $status]);
+        $update = $this->model->where('id', $id)->update(['is_active' => $status]);
+        if ($update) {
+            $statusText = $status ? 'Active' : 'Inactive';
+            logAdminActivity('Personalized Experience', 'Status Change', $id, "Changed section status to: $statusText");
+        }
+        return $update;
     }
 
     /**
