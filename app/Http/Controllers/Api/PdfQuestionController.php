@@ -46,6 +46,7 @@ class PdfQuestionController extends Controller
                 return response()->json([
                     'success' => true,
                     'answer' => $data['answer'] ?? 'No answer found',
+                    'suggestions' => $data['suggestions'] ?? 'No Suggestion',
                     'images' => $data['images'] ?? [],
                     'reference_pages' => $data['reference_pages'] ?? [],
                     'message' => 'Answer retrieved successfully'
