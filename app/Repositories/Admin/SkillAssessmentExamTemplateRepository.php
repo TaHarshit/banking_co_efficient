@@ -65,6 +65,7 @@ class SkillAssessmentExamTemplateRepository extends BaseRepository
         $isActive = isset($data['is_active']) ? true : false;
 
         $templateData = [
+            'business_id' => $data['business_id'] ?? null,
             'title' => $data['title'],
             'title_fr' => $data['title_fr'] ?? null,
             'description' => $data['description'] ?? null,

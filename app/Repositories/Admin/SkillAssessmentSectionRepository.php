@@ -68,8 +68,20 @@ class SkillAssessmentSectionRepository extends BaseRepository
         // Handle checkbox - it sends 'on' when checked or is not present when unchecked
         $isActive = isset($data['is_active']) ? true : false;
 
+        $templateId = $data['skill_assessment_exam_template_id'] ?? null;
+        $businessId = $data['business_id'] ?? null;
+
+        // If business_id is not provided, inherit it from the template
+        if ($businessId === null && $templateId) {
+            $template = \App\Models\SkillAssessmentExamTemplate::find($templateId);
+            if ($template) {
+                $businessId = $template->business_id;
+            }
+        }
+
         $sectionData = [
-            'skill_assessment_exam_template_id' => $data['skill_assessment_exam_template_id'] ?? null,
+            'skill_assessment_exam_template_id' => $templateId,
+            'business_id' => $businessId,
             'title' => $data['title'],
             'title_fr' => $data['title_fr'] ?? null,
             'description' => $data['description'] ?? null,

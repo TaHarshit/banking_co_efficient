@@ -75,8 +75,20 @@ class SkillAssessmentQuestionRepository extends BaseRepository
      */
     public function StoreQuestion($data, $id = 0)
     {
+        $sectionId = $data['skill_assessment_section_id'];
+        $businessId = $data['business_id'] ?? null;
+
+        // If business_id is not provided, inherit it from the section
+        if ($businessId === null && $sectionId) {
+            $section = \App\Models\SkillAssessmentSection::find($sectionId);
+            if ($section) {
+                $businessId = $section->business_id;
+            }
+        }
+
         $questionData = [
-            'skill_assessment_section_id' => $data['skill_assessment_section_id'],
+            'skill_assessment_section_id' => $sectionId,
+            'business_id' => $businessId,
             'question_type' => $data['question_type'],
             'question_text' => $data['question_text'],
             'question_text_fr' => $data['question_text_fr'] ?? null,
