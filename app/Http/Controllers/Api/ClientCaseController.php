@@ -26,7 +26,8 @@ class ClientCaseController extends Controller
 
     public function index(Request $request)
     {
-        $data = $this->clientCaseCls->GetCases();
+        $search = $request->query('search');
+        $data = $this->clientCaseCls->GetCases($search);
         return get_response($request, $data);
     }
 

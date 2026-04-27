@@ -18,9 +18,19 @@ class ClientCaseRepository extends BaseRepository
         return $this->model->create($data);
     }
 
-    public function GetUserCases($userId)
+    public function GetUserCases($userId, $search = null)
     {
-        return $this->model->where('user_id', $userId)->orderBy('created_at', 'desc')->get();
+        $query = $this->model->where('user_id', $userId);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('case_reference', 'LIKE', "%{$search}%")
+                    ->orWhere('client_alias', 'LIKE', "%{$search}%")
+                    ->orWhere('context_overview', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return $query->orderBy('created_at', 'desc')->get();
     }
 
     public function GetCaseDetails($id, $userId)
