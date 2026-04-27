@@ -155,16 +155,17 @@ INSTRUCTIONS:
 1. For greetings or conversational interactions, respond politely.
 2. For factual questions about the document, answer using ONLY the context provided above.
 3. If the answer is not found in the context, reply "I cannot find the answer to that in the document.".
-4. ALWAYS provide exactly 3 short, relevant follow-up questions the user might ask next (even for greetings).
-5. MANDATORY FORMAT: You MUST wrap your response in [ANSWER] and [SUGGESTIONS] tags.
+4. ALWAYS provide exactly 3 short, highly specific suggestions for follow-up questions.
+5. GROUNDING: These suggestions MUST be directly answerable using the provided Context. Avoid generic "AI" questions.
+6. MANDATORY FORMAT: You MUST wrap your response in [ANSWER] and [SUGGESTIONS] tags.
 
 Example Output:
 [ANSWER]
 The document mentions that the interest rate is 5%.
 [SUGGESTIONS]
-- What are the eligibility criteria?
-- How do I apply for this loan?
-- Are there any processing fees?"""
+- Eligibility criteria for the 5% rate
+- How to apply for this specific loan
+- Processing fees and hidden charges in Section 3"""
 
         messages = [{"role": "system", "content": system_content}]
         
