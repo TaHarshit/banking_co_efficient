@@ -77,6 +77,7 @@ Route::middleware(['basicFilter'])->group(function () {
 
         Route::controller(PdfQuestionController::class)->group(function () {
             Route::POST('pdf/ask', 'ask');
+            Route::GET('pdf/history', 'getHistory');
             Route::GET('pdf/status', 'status');
         });
 

@@ -30,7 +30,7 @@ class ClientCaseRepository extends BaseRepository
             });
         }
 
-        return $query->orderBy('created_at', 'desc')->get();
+        return $query->orderBy('created_at', 'desc')->paginate(10);
     }
 
     public function GetCaseDetails($id, $userId)

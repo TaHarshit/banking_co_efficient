@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ChatHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class PdfQuestionController extends Controller
 {
@@ -43,12 +45,32 @@ class PdfQuestionController extends Controller
             if ($response->successful()) {
                 $data = $response->json();
 
+                $answer = $data['answer'] ?? 'No answer found';
+                $suggestions = $data['suggestions'] ?? [];
+                $images = $data['images'] ?? [];
+                $reference_pages = $data['reference_pages'] ?? [];
+
+                // Store in history
+                try {
+                    ChatHistory::create([
+                        'user_id' => Auth::id(),
+                        'question' => $question,
+                        'answer' => $answer,
+                        'suggestions' => $suggestions,
+                        'images' => $images,
+                        'reference_pages' => $reference_pages
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to save chat history', ['error' => $e->getMessage()]);
+                    // Don't fail the request if history storage fails
+                }
+
                 return response()->json([
                     'success' => true,
-                    'answer' => $data['answer'] ?? 'No answer found',
-                    'suggestions' => $data['suggestions'] ?? 'No Suggestion',
-                    'images' => $data['images'] ?? [],
-                    'reference_pages' => $data['reference_pages'] ?? [],
+                    'answer' => $answer,
+                    'suggestions' => !empty($suggestions) ? $suggestions : 'No Suggestion',
+                    'images' => $images,
+                    'reference_pages' => $reference_pages,
                     'message' => 'Answer retrieved successfully'
                 ], 200);
             } else {
@@ -87,6 +109,34 @@ class PdfQuestionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while processing your question',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get chat history for the authenticated user
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getHistory()
+    {
+        try {
+            $history = ChatHistory::where('user_id', Auth::id())
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
+
+            return response()->json([
+                'success' => true,
+                'history' => $history,
+                'message' => 'Chat history retrieved successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve chat history', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving chat history',
                 'error' => $e->getMessage()
             ], 500);
         }
