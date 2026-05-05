@@ -122,7 +122,7 @@ services:
     volumes:
       - ./docker-compose/certbot/conf:/etc/letsencrypt
       - ./docker-compose/certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12d & wait $${!}; done;'"
+    command: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12d & wait $${!}; done;'"
     networks:
       - app-network
 
