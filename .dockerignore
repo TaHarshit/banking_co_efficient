@@ -1,0 +1,42 @@
+# Dependencies
+vendor/
+node_modules/
+venv/
+.venv/
+env/
+**/venv/
+**/__pycache__/
+*.pyc
+
+# Data
+harshitData/
+
+# Local configuration and logs
+.env
+storage/*.key
+storage/logs/*.log
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*.php
+storage/debugbar/
+
+# Docker/Infrastructure
+docker-compose/
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Git
+.git/
+.gitignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Misc
+.phpunit.result.cache
+.vscode/
+.gemini/
+CLAUDE.md
+README.md
