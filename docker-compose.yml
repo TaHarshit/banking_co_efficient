@@ -99,6 +99,8 @@ services:
       - "8001:8000"
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      AI_API_BASE_URL: ${AI_API_BASE_URL}
+      AI_CHAT_MODEL: ${AI_CHAT_MODEL}
     networks:
       - app-network
 

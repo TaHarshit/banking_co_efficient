@@ -1,40 +1,61 @@
 import json
-import numpy as np
-import faiss
-from openai import OpenAI
+import os
+from sentence_transformers import SentenceTransformer
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams, PointStruct
+from pathlib import Path
 
-client = OpenAI()
+# Load models (Free & Local)
+print("Loading embedding model (all-MiniLM-L6-v2)...")
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+# Qdrant Configuration
+# When running inside docker, host should be "qdrant". 
+# When running locally for testing, you might need "localhost".
+QDRANT_HOST = os.getenv("QDRANT_HOST", "qdrant")
+QDRANT_PORT = int(os.getenv("QDRANT_PORT", 6333))
+
+client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 
 INPUT = "data/chunks.json"
-FAISS_INDEX = "vectorstore/index.faiss"
-EMBED_STORE = "embeddings/vectors.npy"
-META_STORE = "embeddings/meta.json"
+COLLECTION_NAME = "pdf_chunks"
 
 def embed_chunks():
+    if not Path(INPUT).exists():
+        print(f"Error: {INPUT} not found. Run chunk_pdf.py first.")
+        return
+
     with open(INPUT, "r") as f:
         chunks = json.load(f)
 
+    print(f"Embedding {len(chunks)} chunks...")
     texts = [c["text"] for c in chunks]
+    
+    # Generate embeddings locally
+    vectors = model.encode(texts)
+    vector_size = len(vectors[0])
 
-    response = client.embeddings.create(
-        model="text-embedding-3-small",
-        input=texts
+    # Create/Recreate collection in Qdrant
+    print(f"Creating Qdrant collection: {COLLECTION_NAME}...")
+    client.recreate_collection(
+        collection_name=COLLECTION_NAME,
+        vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
     )
 
-    vectors = np.array([d.embedding for d in response.data]).astype("float32")
+    # Prepare points for upload
+    points = []
+    for idx, (chunk, vector) in enumerate(zip(chunks, vectors)):
+        points.append(PointStruct(
+            id=idx,
+            vector=vector.tolist(),
+            payload=chunk
+        ))
 
-    dimension = vectors.shape[1]
-    index = faiss.IndexFlatL2(dimension)
-    index.add(vectors)
+    # Batch upload
+    print("Uploading to Qdrant...")
+    client.upsert(collection_name=COLLECTION_NAME, points=points)
 
-    faiss.write_index(index, FAISS_INDEX)
-    np.save(EMBED_STORE, vectors)
-
-    with open(META_STORE, "w") as f:
-        json.dump(chunks, f, indent=2)
-
-    print("Embeddings + FAISS index created!")
+    print("✅ Successfully embedded and uploaded to Qdrant!")
 
 if __name__ == "__main__":
     embed_chunks()
-

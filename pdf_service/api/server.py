@@ -1,4 +1,3 @@
-import faiss
 import numpy as np
 import json
 import os
@@ -8,21 +7,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
+from sentence_transformers import SentenceTransformer, CrossEncoder
+from qdrant_client import QdrantClient
+from dotenv import load_dotenv
 
-# Try to load .env file if python-dotenv is available
-try:
-    from dotenv import load_dotenv
-    # Load from the project root .env or pdf_service .env
-    env_path = Path(__file__).resolve().parent.parent / ".env"
-    if env_path.exists():
-        load_dotenv(env_path)
-    else:
-        # Try the Laravel project root .env
-        laravel_env = Path(__file__).resolve().parent.parent.parent / ".env"
-        if laravel_env.exists():
-            load_dotenv(laravel_env)
-except ImportError:
-    pass
+# Load .env
+env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(env_path)
 
 # FastAPI App Initialization
 app = FastAPI()
@@ -30,198 +21,120 @@ app = FastAPI()
 # Enable CORS for Laravel integration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your Laravel domain
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Get the project root directory (parent of api folder)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Serve images from /data/images
+# Serve images
 images_dir = BASE_DIR / "data" / "images"
 if images_dir.exists():
     app.mount("/images", StaticFiles(directory=str(images_dir)), name="images")
 
-# Load FAISS & metadata
-index = faiss.read_index(str(BASE_DIR / "vectorstore" / "index.faiss"))
-vectors = np.load(str(BASE_DIR / "embeddings" / "vectors.npy"))
+# --- Initialize AI Models (Local & Free) ---
+print("Loading Embedding Model (all-MiniLM-L6-v2)...")
+embed_model = SentenceTransformer('all-MiniLM-L6-v2')
 
-with open(str(BASE_DIR / "embeddings" / "meta.json")) as f:
-    meta = json.load(f)
+print("Loading Re-ranker Model (ms-marco-MiniLM-L-6-v2)...")
+rerank_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
 
-# AI Configuration from Environment
+# --- Initialize Qdrant Client ---
+QDRANT_HOST = os.getenv("QDRANT_HOST", "qdrant")
+qdrant_client = QdrantClient(host=QDRANT_HOST, port=6333)
+COLLECTION_NAME = "pdf_chunks"
+
+# AI Configuration for Chat (OpenAI/OpenRouter)
 AI_API_BASE_URL = os.getenv("AI_API_BASE_URL", None)
 AI_CHAT_MODEL = os.getenv("AI_CHAT_MODEL", "gpt-4o-mini")
-AI_EMBEDDING_MODEL = os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small")
 AI_IMAGE_BASE_URL = os.getenv("AI_IMAGE_BASE_URL", "http://127.0.0.1:8000")
 
-# Optional headers for OpenRouter
-AI_HTTP_REFERER = os.getenv("AI_HTTP_REFERER", "")
-AI_SITE_TITLE = os.getenv("AI_SITE_TITLE", "")
-
-print(f"[CONFIG] AI Provider: {'Custom (' + AI_API_BASE_URL + ')' if AI_API_BASE_URL else 'OpenAI Default'}")
-print(f"[CONFIG] Chat Model: {AI_CHAT_MODEL}")
-print(f"[CONFIG] Embedding Model: {AI_EMBEDDING_MODEL}")
-print(f"[CONFIG] Image Base URL: {AI_IMAGE_BASE_URL}")
-
-# Lazy-initialize AI client
 _client = None
-
 def get_ai_client():
     global _client
     if _client is None:
-        # Build extra headers for OpenRouter
-        extra_headers = {}
-        if AI_HTTP_REFERER:
-            extra_headers["HTTP-Referer"] = AI_HTTP_REFERER
-        if AI_SITE_TITLE:
-            extra_headers["X-Title"] = AI_SITE_TITLE
-            
-        # Initialize client
         if AI_API_BASE_URL:
-            _client = OpenAI(
-                base_url=AI_API_BASE_URL,
-                default_headers=extra_headers if extra_headers else None
-            )
+            _client = OpenAI(base_url=AI_API_BASE_URL)
         else:
             _client = OpenAI()
     return _client
-
 
 class QuestionRequest(BaseModel):
     question: str
     history: list = []
 
-
-@app.get("/ask")
-def ask(query: str):
-    return process_question(query)
-
-
 @app.post("/ask")
 def ask_post(request: QuestionRequest):
     return process_question(request.question, request.history)
 
-
 def process_question(query: str, history: list = []):
     try:
-        print(f"[INFO] Processing question: {query[:50]}...")
+        # --- STEP 1: Embed Query locally ---
+        query_vector = embed_model.encode(query).tolist()
+
+        # --- STEP 2: Initial Search in Qdrant (Top 20) ---
+        search_result = qdrant_client.search(
+            collection_name=COLLECTION_NAME,
+            query_vector=query_vector,
+            limit=20,
+            with_payload=True
+        )
+
+        if not search_result:
+            return {"answer": "No relevant information found.", "images": [], "reference_pages": []}
+
+        # --- STEP 3: Re-ranking (Two-Stage Retrieval) ---
+        print(f"[INFO] Re-ranking {len(search_result)} candidates...")
         
-        # --- STEP 1: Embed the query ---
-        print(f"[INFO] Step 1: Creating embeddings using {AI_EMBEDDING_MODEL}...")
-        q_embed = get_ai_client().embeddings.create(
-            model=AI_EMBEDDING_MODEL,
-            input=query,
-            timeout=15
-        ).data[0].embedding
+        # Prepare pairs for re-ranking: [ [query, chunk1], [query, chunk2], ... ]
+        pairs = [[query, res.payload["text"]] for res in search_result]
+        scores = rerank_model.predict(pairs)
 
-        q_embed = np.array(q_embed).astype("float32").reshape(1, -1)
+        # Sort results by re-ranker score
+        for i, score in enumerate(scores):
+            search_result[i].score = score # Overwrite vector score with re-ranker score
+        
+        search_result.sort(key=lambda x: x.score, reverse=True)
+        
+        # Take the top 5 best chunks after re-ranking
+        top_chunks = search_result[:5]
 
-        # --- STEP 2: Search FAISS ---
-        print("[INFO] Step 2: Searching FAISS index...")
-        distances, ids = index.search(q_embed, 5)
-
-        # --- STEP 3: Build context + collect images + pages ---
-        print("[INFO] Step 3: Building context...")
+        # --- STEP 4: Build Context & Metadata ---
         context = ""
         collected_images = []
         reference_pages = set()
 
-        for i in ids[0]:
-            chunk = meta[i]
+        for res in top_chunks:
+            chunk = res.payload
             context += chunk["text"] + "\n\n"
-
-            # collect images
             for img in chunk.get("images", []):
-                # Ensure we don't have double slashes if AI_IMAGE_BASE_URL ends with one
                 base_url = AI_IMAGE_BASE_URL.rstrip("/")
                 collected_images.append(f"{base_url}/images/{img}")
-
-            # collect pages
             reference_pages.add(chunk["page"])
 
-        # --- STEP 4: Build prompt & messages ---
-        print("[INFO] Step 4: Building messages...")
-        
-        # System instructions with context
-        system_content = f"""You are a helpful AI assistant answering questions about the provided document.
-
-Context:
-{context}
-
-INSTRUCTIONS:
-1. For greetings or conversational interactions, respond politely.
-2. For factual questions about the document, answer using ONLY the context provided above.
-3. If the answer is not found in the context, reply "I cannot find the answer to that in the document.".
-4. ALWAYS provide exactly 3 VERY SHORT suggestions (max 3-4 words each).
-5. GROUNDING: These suggestions MUST be directly answerable using the provided Context. Avoid generic "AI" questions.
-6. MANDATORY FORMAT: You MUST wrap your response in [ANSWER] and [SUGGESTIONS] tags.
-
-Example Output:
-[ANSWER]
-The document mentions that the interest rate is 5%.
-[SUGGESTIONS]
-- 5% Interest Eligibility
-- Loan Application Process
-- Section 3 Fees"""
-
+        # --- STEP 5: Chat Completion (LLM) ---
+        system_content = f"Answer the user based on this context:\n\n{context}\n\n[ANSWER]\n[SUGGESTIONS]"
         messages = [{"role": "system", "content": system_content}]
-        
-        # Add history
-        for msg in history:
-            if isinstance(msg, dict) and "role" in msg and "content" in msg:
-                messages.append(msg)
-            
-        # Add current query
+        messages.extend(history)
         messages.append({"role": "user", "content": query})
 
-        # --- STEP 5: Get model response ---
-        print(f"[INFO] Step 5: Calling Chat API using {AI_CHAT_MODEL}...")
         result = get_ai_client().chat.completions.create(
             model=AI_CHAT_MODEL,
-            messages=messages,
-            timeout=60
+            messages=messages
         )
 
-        full_response = result.choices[0].message.content
-        
-        # Parse Answer and Suggestions
-        answer_text = full_response
-        suggestions = []
-        
-        if "[SUGGESTIONS]" in full_response:
-            parts = full_response.split("[SUGGESTIONS]")
-            answer_text = parts[0].replace("[ANSWER]", "").strip()
-            suggestion_text = parts[1].strip()
-            
-            # More robust parsing for suggestions (handles -, *, 1., etc.)
-            import re
-            suggestions = []
-            for line in suggestion_text.split("\n"):
-                # Remove common bullet points and whitespace
-                clean_line = re.sub(r'^(\s*[-*•\d+.]\s*)+', '', line).strip()
-                if clean_line:
-                    suggestions.append(clean_line)
-        elif "[ANSWER]" in full_response:
-            answer_text = full_response.replace("[ANSWER]", "").strip()
-
-        print("[INFO] Step 6: Returning response")
-
-        # --- STEP 6: Return final API response ---
         return {
-            "answer": answer_text,
-            "suggestions": suggestions[:3],
-            "images": collected_images,
+            "answer": result.choices[0].message.content,
+            "images": list(set(collected_images)), # Remove duplicates
             "reference_pages": sorted(list(reference_pages))
         }
-    
-    except Exception as e:
-        print(f"[ERROR] Error processing question: {str(e)}")
-        return {
-            "answer": f"Error processing your question: {str(e)}",
-            "images": [],
-            "reference_pages": []
-        }
 
+    except Exception as e:
+        print(f"[ERROR] {str(e)}")
+        return {"answer": f"Error: {str(e)}", "images": [], "reference_pages": []}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
