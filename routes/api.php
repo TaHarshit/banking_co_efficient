@@ -46,6 +46,7 @@ Route::middleware(['basicFilter'])->group(function () {
     Route::middleware(['auth:api'])->group(function () {
         Route::controller(UserController::class)->group(function () {
             Route::POST('user/get_profile', 'GetProfile');
+            Route::POST('user/get_status', 'GetStatus');
             Route::POST('user/complete_profile', 'CompleteProfile');
             Route::POST('user/profile_image_update', 'UpdateProfileImages');
             Route::POST('user/change_password', 'ChangePassword');

@@ -36,6 +36,13 @@ class UserController extends Controller
         return get_response($request, $data);
     }
 
+    public function GetStatus(Request $request)
+    {
+        $postData     = General::stripRequest($request->all());
+        $data         = $this->UserCls->GetStatus();
+        return get_response($request, $data);
+    }
+
     public function GetProfile(Request $request)
     {
         $postData     = General::stripRequest($request->all());

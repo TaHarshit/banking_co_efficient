@@ -98,39 +98,39 @@ class UserCls
                 DB::commit();
 
                 // If user is pending (status=2), return success without login
-                if ($userStatus === 2) {
-                    $data = General::setResponse('SUCCESS', "Registration submitted! Please wait for approval from the business.");
-                    $data['data'] = [
-                        'status' => 'pending',
-                        'message' => 'Your account is pending approval from the business administrator.'
-                    ];
-                    return $data;
-                }
+                // if ($userStatus === 2) {
+                //     $data = General::setResponse('SUCCESS', "Registration submitted! Please wait for approval from the business.");
+                //     $data['data'] = [
+                //         'status' => 'pending',
+                //         'message' => 'Your account is pending approval from the business administrator.'
+                //     ];
+                //     return $data;
+                // }
 
                 if (Auth::attempt(['email' => $postData['email'], 'password' => $postData['password']], false)) {
-                    if (Auth::user()->status == 'active') {
+                    // if (Auth::user()->status == 'active') {
 
-                        DB::beginTransaction();
-                        $user = $this->UserRep->GetUser(Auth::user()->id);
-                        if ($postData['device_token'] != "") {
-                            $this->UserRep->UpdateDeviceToken($postData['device_token'], $postData['platform'], $user->id);
-                        }
-
-                        $token                      = $user->createToken(env('API_KEY', ''))->accessToken;
-                        $user['api_token']          = $token->token;
-                        $user['device_token']       = $postData['device_token'];
-                        $user['platform']           = $postData['platform'];
-
-                        $this->UserRep->UpdateApiToken($token->token, $user->id);
-
-                        DB::commit();
-
-                        $data = General::setResponse('SUCCESS', "You have successfully signed up!");
-                        $data['data'] = $user;
-                        return $data;
-                    } else {
-                        return General::setResponse('VALIDATION_ERROR', 'Your account is inactive please contact to admin.');
+                    DB::beginTransaction();
+                    $user = $this->UserRep->GetUser(Auth::user()->id);
+                    if ($postData['device_token'] != "") {
+                        $this->UserRep->UpdateDeviceToken($postData['device_token'], $postData['platform'], $user->id);
                     }
+
+                    $token                      = $user->createToken(env('API_KEY', ''))->accessToken;
+                    $user['api_token']          = $token->token;
+                    $user['device_token']       = $postData['device_token'];
+                    $user['platform']           = $postData['platform'];
+
+                    $this->UserRep->UpdateApiToken($token->token, $user->id);
+
+                    DB::commit();
+
+                    $data = General::setResponse('SUCCESS', "You have successfully signed up!");
+                    $data['data'] = $user;
+                    return $data;
+                    // } else {
+                    //     return General::setResponse('VALIDATION_ERROR', 'Your account is inactive please contact to admin.');
+                    // }
                 } else {
                     return General::setResponse('VALIDATION_ERROR', 'Email or password is incorrect.');
                 }
@@ -155,43 +155,43 @@ class UserCls
                 $userStatus = Auth::user()->status;
 
                 // Check for active status ('active' = active)
-                if ($userStatus == 'active') {
+                // if ($userStatus == 'active') {
 
-                    DB::beginTransaction();
-                    $user = $this->UserRep->GetUser(Auth::user()->id);
+                DB::beginTransaction();
+                $user = $this->UserRep->GetUser(Auth::user()->id);
 
-                    if ($postData['device_token'] != "") {
-                        $this->UserRep->UpdateDeviceToken($postData['device_token'], $postData['platform'], $user->id);
-                    }
-                    // $user->tokens()->delete();
-
-                    $token                      = $user->createToken(env('API_KEY', ''))->accessToken;
-
-                    $user['api_token']          = $token->token;
-                    $user['device_token']       = $postData['device_token'];
-                    $user['platform']           = $postData['platform'];
-
-                    unset($user['profile_images']);
-
-
-                    $this->UserRep->UpdateApiToken($token->token, $user->id);
-
-
-                    DB::commit();
-
-                    $data = General::setResponse('SUCCESS', "You have successfully login!");
-                    $data['data'] = $user;
-                    return $data;
-                } elseif ($userStatus == 'pending') {
-                    Auth::logout();
-                    return General::setResponse('VALIDATION_ERROR', 'Your account is pending approval from the business administrator.');
-                } elseif ($userStatus == 'rejected') {
-                    Auth::logout();
-                    return General::setResponse('VALIDATION_ERROR', 'Your account has been rejected. Please contact the business administrator.');
-                } else {
-                    Auth::logout();
-                    return General::setResponse('VALIDATION_ERROR', 'Your account is inactive please contact to admin.');
+                if ($postData['device_token'] != "") {
+                    $this->UserRep->UpdateDeviceToken($postData['device_token'], $postData['platform'], $user->id);
                 }
+                // $user->tokens()->delete();
+
+                $token                      = $user->createToken(env('API_KEY', ''))->accessToken;
+
+                $user['api_token']          = $token->token;
+                $user['device_token']       = $postData['device_token'];
+                $user['platform']           = $postData['platform'];
+
+                unset($user['profile_images']);
+
+
+                $this->UserRep->UpdateApiToken($token->token, $user->id);
+
+
+                DB::commit();
+
+                $data = General::setResponse('SUCCESS', "You have successfully login!");
+                $data['data'] = $user;
+                return $data;
+                // } elseif ($userStatus == 'pending') {
+                //     Auth::logout();
+                //     return General::setResponse('VALIDATION_ERROR', 'Your account is pending approval from the business administrator.');
+                // } elseif ($userStatus == 'rejected') {
+                //     Auth::logout();
+                //     return General::setResponse('VALIDATION_ERROR', 'Your account has been rejected. Please contact the business administrator.');
+                // } else {
+                //     Auth::logout();
+                //     return General::setResponse('VALIDATION_ERROR', 'Your account is inactive please contact to admin.');
+                // }
             } else {
                 return General::setResponse('VALIDATION_ERROR', 'Email or password is incorrect.');
             }
@@ -251,6 +251,21 @@ class UserCls
 
             $data = General::setResponse('SUCCESS', "You have successfully login!");
             $data['data'] = $result;
+            return $data;
+        } catch (Exception $e) {
+            DB::rollback();
+            return General::setResponse('OTHER_ERROR', $e->getMessage());
+        }
+    }
+
+    public function GetStatus()
+    {
+        try {
+
+            $statuses['user_status'] = Auth::user()->status;
+
+            $data = General::setResponse('SUCCESS', "Status get successfully.");
+            $data['data'] = $statuses;
             return $data;
         } catch (Exception $e) {
             DB::rollback();
