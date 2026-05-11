@@ -44,7 +44,6 @@ print("Loading Re-ranker Model (ms-marco-MiniLM-L-6-v2)...")
 rerank_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
 
 # --- Initialize Qdrant Client ---
-print(f"Qdrant Client Version: {qdrant_client.__version__}")
 QDRANT_HOST = os.getenv("QDRANT_HOST", "qdrant")
 vector_db = QdrantClient(host=QDRANT_HOST, port=6333)
 COLLECTION_NAME = "pdf_chunks"
