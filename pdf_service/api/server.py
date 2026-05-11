@@ -72,12 +72,14 @@ class QuestionRequest(BaseModel):
 class CaseAnalysisRequest(BaseModel):
     client_alias: str
     context_overview: str = ""
-    case_details: dict # Contains objective, commercial_context, client_profile, client_ecosystem
+    case_details: dict
+    user_profile: str = "" # New field for behavioral data
     history: list = []
 
 class ActionPlanRequest(BaseModel):
     case_data: dict
     analysis_data: dict
+    user_profile: str = "" # New field for behavioral data
     history: list = []
 
 # --- Case Memory Storage ---
@@ -126,6 +128,9 @@ def analyze_case(request: CaseAnalysisRequest):
         You are a World-Class Negotiation Expert. 
         Analyze this case for {request.client_alias}.
         
+        [USER BEHAVIORAL PROFILE]
+        {request.user_profile}
+
         [BOOK KNOWLEDGE]
         {context}
         
@@ -136,7 +141,8 @@ def analyze_case(request: CaseAnalysisRequest):
         Overview: {request.context_overview}
         Details: {json.dumps(details)}
 
-        Output as JSON:
+        [GOAL]
+        Provide recommendations that align with the user's specific negotiation style and challenges described in their profile.
         {{
             "ai_recommendations": ["..."],
             "suggested_readings": [{{ "chapter": "...", "title": "...", "time": "..." }}],
@@ -194,6 +200,9 @@ def generate_plan(request: ActionPlanRequest):
         system_prompt = f"""
         Generate a detailed "Negotiation Action Plan" based on this case and the book techniques.
         
+        [USER BEHAVIORAL PROFILE]
+        {request.user_profile}
+
         [BOOK TECHNIQUES]
         {context}
 
@@ -203,7 +212,8 @@ def generate_plan(request: ActionPlanRequest):
         [ANALYSIS DATA]
         {json.dumps(request.analysis_data)}
 
-        Output the response in the following JSON format ONLY:
+        [GOAL]
+        Personalize the plan phases and strategic recommendations to complement the user's strengths and mitigate their weaknesses as identified in their profile.
         {{
             "executive_summary": "...",
             "meeting_objectives": ["obj 1", "obj 2"],

@@ -1,16 +1,18 @@
 import fitz
 import json
 import base64
+import os
+from pathlib import Path
 
-PDF_PATH = "data/input_pdf.pdf"
-OUTPUT_JSON = "data/extracted.json"
+DATA_DIR = Path("data")
+OUTPUT_JSON = DATA_DIR / "extracted.json"
 
 def render_vector_blocks(page):
     raw = page.get_text("rawdict")
     vector_rects = []
 
     for block in raw["blocks"]:
-        if block["type"] == 4:  # vector path (lines, shapes)
+        if "bbox" in block:
             x0, y0, x1, y1 = block["bbox"]
             vector_rects.append(fitz.Rect(x0, y0, x1, y1))
 
@@ -32,24 +34,32 @@ def render_vector_blocks(page):
         "data": base64_img
     }
 
-def extract_pdf():
-    doc = fitz.open(PDF_PATH)
-    extracted = []
+def extract_pdfs():
+    all_extracted = []
+    
+    # Find all PDFs in data directory
+    pdf_files = list(DATA_DIR.glob("*.pdf"))
+    print(f"Found {len(pdf_files)} PDF(s): {[f.name for f in pdf_files]}")
 
-    for page_num, page in enumerate(doc):
-        text = page.get_text("text")
-        diagram = render_vector_blocks(page)
+    for pdf_path in pdf_files:
+        print(f"Extracting: {pdf_path.name}...")
+        doc = fitz.open(pdf_path)
+        
+        for page_num, page in enumerate(doc):
+            text = page.get_text("text")
+            diagram = render_vector_blocks(page)
 
-        extracted.append({
-            "page": page_num + 1,
-            "text": text,
-            "diagram": diagram  # may be None
-        })
+            all_extracted.append({
+                "source": pdf_path.name,
+                "page": page_num + 1,
+                "text": text,
+                "diagram": diagram  # may be None
+            })
 
     with open(OUTPUT_JSON, "w") as f:
-        json.dump(extracted, f, indent=2)
+        json.dump(all_extracted, f, indent=2)
 
-    print("Extraction with diagrams complete →", OUTPUT_JSON)
+    print(f"Extraction complete. Saved {len(all_extracted)} total pages to {OUTPUT_JSON}")
 
 if __name__ == "__main__":
-    extract_pdf()
+    extract_pdfs()

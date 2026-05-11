@@ -31,20 +31,22 @@ def chunk_pdf():
     except:
         image_map = []
 
-    # Create a dict: page_number → list of images
+    # Create a dict: (source, page) → list of images
     page_to_images = {}
     for img in image_map:
-        page_to_images.setdefault(img["page"], []).append(img["image_file"])
+        key = (img["source"], img["page"])
+        page_to_images.setdefault(key, []).append(img["image_file"])
 
     all_chunks = []
     chunk_id = 1
 
     for p in pages:
+        source = p.get("source", "unknown")
         page_num = p["page"]
         page_text = p["text"]
 
-        # Get images for this page
-        images_for_page = page_to_images.get(page_num, [])
+        # Get images for this page/source
+        images_for_page = page_to_images.get((source, page_num), [])
 
         # Chunk text
         chunks = chunk_text(page_text)
@@ -53,6 +55,7 @@ def chunk_pdf():
         for c in chunks:
             all_chunks.append({
                 "id": f"chunk_{chunk_id}",
+                "source": source,
                 "page": page_num,
                 "images": images_for_page,
                 "text": c
@@ -63,9 +66,8 @@ def chunk_pdf():
     with open(OUTPUT, "w") as f:
         json.dump(all_chunks, f, indent=2)
 
-    print("Chunking + image mapping complete → data/chunks.json")
+    print(f"Chunking complete. Total chunks created: {len(all_chunks)} → {OUTPUT}")
 
 
 if __name__ == "__main__":
     chunk_pdf()
-

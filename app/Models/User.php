@@ -68,4 +68,35 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Business::class);
     }
+
+    /**
+     * Get the user's responses from the onboarding/signup questionnaire.
+     */
+    public function responses()
+    {
+        return $this->hasMany(UserResponse::class);
+    }
+
+    /**
+     * Generates a text summary of the user's behavioral profile based on their signup responses.
+     */
+    public function getAiBehaviorProfile()
+    {
+        $responses = $this->responses()->with('question', 'option')->get();
+        
+        if ($responses->isEmpty()) {
+            return "No behavioral profile data available for this user.";
+        }
+
+        $profile = "USER BEHAVIORAL PROFILE:\n";
+        foreach ($responses as $response) {
+            $questionText = $response->question->question_text_en;
+            $value = $response->getValue();
+            if ($value) {
+                $profile .= "- {$questionText}: {$value}\n";
+            }
+        }
+
+        return $profile;
+    }
 }

@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\UserSubscriptionsController;
 use App\Http\Controllers\Api\PersonalizedExperienceController;
 use App\Repositories\Api\ContactUsRepository;
 use App\Http\Controllers\Api\ClientCaseController;
+use App\Http\Controllers\Api\CaseStudyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -88,6 +89,12 @@ Route::middleware(['basicFilter'])->group(function () {
             Route::get('client-cases', 'index');
             Route::get('client-cases/{id}', 'show');
             Route::get('case-study-sections', 'caseStudySections');
+        });
+
+        // AI Case Analysis and Plan Generation
+        Route::controller(CaseStudyController::class)->group(function () {
+            Route::post('ai/analyze-case', 'analyzeCase');
+            Route::post('ai/generate-plan', 'generatePlan');
         });
     });
 });
