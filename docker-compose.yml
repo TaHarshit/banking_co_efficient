@@ -1,6 +1,5 @@
-version: '3.8'
+version: "3.8"
 services:
-
   # PHP-FPM Service
   app:
     build:
@@ -101,6 +100,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       AI_API_BASE_URL: ${AI_API_BASE_URL}
       AI_CHAT_MODEL: ${AI_CHAT_MODEL}
+      AI_IMAGE_BASE_URL: ${AI_IMAGE_BASE_URL}
     networks:
       - app-network
 
