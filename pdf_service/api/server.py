@@ -139,20 +139,8 @@ def process_question(query: str, history: list = []):
         }
 
     except Exception as e:
-        import traceback
-        debug_info = {
-            "error": str(e),
-            "type_of_client": str(type(vector_db)),
-            "has_search": hasattr(vector_db, "search"),
-            "attributes": [attr for attr in dir(vector_db) if not attr.startswith("_")][:20]
-        }
-        print(f"[ERROR] {debug_info}")
-        return {
-            "answer": f"Deep Debug Error: {str(e)}",
-            "debug": debug_info,
-            "images": [],
-            "reference_pages": []
-        }
+        print(f"[ERROR] {str(e)}")
+        return {"answer": f"Error: {str(e)}", "images": [], "reference_pages": []}
 
 if __name__ == "__main__":
     import uvicorn
