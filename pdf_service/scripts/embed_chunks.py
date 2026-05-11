@@ -12,10 +12,8 @@ model = SentenceTransformer('all-MiniLM-L6-v2')
 # Qdrant Configuration
 # When running inside docker, host should be "qdrant". 
 # When running locally for testing, you might need "localhost".
-QDRANT_HOST = os.getenv("QDRANT_HOST", "qdrant")
-QDRANT_PORT = int(os.getenv("QDRANT_PORT", 6333))
-
-client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+# Use 'qdrant' as host since we are running inside the docker network
+client = QdrantClient(host="qdrant", port=6333)
 
 INPUT = "data/chunks.json"
 COLLECTION_NAME = "pdf_chunks"
