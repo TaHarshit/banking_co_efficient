@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 # Install Python dependencies
 # Install Python dependencies (CPU-only to save space)
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
-RUN pip install --no-cache-dir sentence-transformers qdrant-client
+RUN pip install --no-cache-dir sentence-transformers qdrant-client==1.17.1
 RUN pip install --no-cache-dir fastapi uvicorn numpy openai python-multipart python-dotenv
 
 # Copy the service code

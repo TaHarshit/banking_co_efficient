@@ -8,7 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer, CrossEncoder
+import qdrant_client
 from qdrant_client import QdrantClient
+
 from dotenv import load_dotenv
 
 # Load .env
@@ -42,9 +44,11 @@ print("Loading Re-ranker Model (ms-marco-MiniLM-L-6-v2)...")
 rerank_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
 
 # --- Initialize Qdrant Client ---
+print(f"Qdrant Client Version: {qdrant_client.__version__}")
 QDRANT_HOST = os.getenv("QDRANT_HOST", "qdrant")
-qdrant_client = QdrantClient(host=QDRANT_HOST, port=6333)
+vector_db = QdrantClient(host=QDRANT_HOST, port=6333)
 COLLECTION_NAME = "pdf_chunks"
+
 
 # AI Configuration for Chat (OpenAI/OpenRouter)
 AI_API_BASE_URL = os.getenv("AI_API_BASE_URL", None)
@@ -75,12 +79,13 @@ def process_question(query: str, history: list = []):
         query_vector = embed_model.encode(query).tolist()
 
         # --- STEP 2: Initial Search in Qdrant (Top 20) ---
-        search_result = qdrant_client.search(
+        search_result = vector_db.search(
             collection_name=COLLECTION_NAME,
             query_vector=query_vector,
             limit=20,
             with_payload=True
         )
+
 
         if not search_result:
             return {"answer": "No relevant information found.", "images": [], "reference_pages": []}
