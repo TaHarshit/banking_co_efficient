@@ -70,10 +70,9 @@ class QuestionRequest(BaseModel):
     history: list = []
 
 class CaseAnalysisRequest(BaseModel):
-    business_objective: str
-    context: str
-    client_profile: str
-    decision_ecosystem: str
+    client_alias: str
+    context_overview: str = ""
+    case_details: dict # Contains objective, commercial_context, client_profile, client_ecosystem
     history: list = []
 
 class ActionPlanRequest(BaseModel):
@@ -83,81 +82,65 @@ class ActionPlanRequest(BaseModel):
 
 # --- Case Memory Storage ---
 CASES_COLLECTION = "past_cases"
+ANALYZED_COLLECTION = "analyzed_cases"
 
-def ensure_cases_collection():
-    try:
-        vector_db.get_collection(CASES_COLLECTION)
-    except:
-        print(f"Creating collection: {CASES_COLLECTION}...")
-        from qdrant_client.models import VectorParams, Distance
-        vector_db.create_collection(
-            collection_name=CASES_COLLECTION,
-            vectors_config=VectorParams(size=384, distance=Distance.COSINE) # size for all-MiniLM-L6-v2
-        )
+def ensure_collections():
+    for coll in [CASES_COLLECTION, ANALYZED_COLLECTION]:
+        try:
+            vector_db.get_collection(coll)
+        except:
+            print(f"Creating collection: {coll}...")
+            vector_db.create_collection(
+                collection_name=coll,
+                vectors_config=VectorParams(size=384, distance=Distance.COSINE)
+            )
 
 # Initialize collections
-ensure_cases_collection()
+ensure_collections()
 
 @app.post("/analyze-case")
 def analyze_case(request: CaseAnalysisRequest):
     try:
-        combined_input = f"{request.business_objective} {request.context} {request.client_profile} {request.decision_ecosystem}"
+        details = request.case_details
+        combined_input = f"{request.client_alias} {request.context_overview} {json.dumps(details)}"
         query_vector = embed_model.encode(combined_input).tolist()
 
-        # 1. Search Past Cases (Memory)
-        past_cases_result = vector_db.query_points(
-            collection_name=CASES_COLLECTION,
-            query=query_vector,
-            limit=2,
-            with_payload=True
-        ).points
+        # 1. Search Past Memory (Both Input and Analysis)
+        past_cases = vector_db.query_points(collection_name=CASES_COLLECTION, query=query_vector, limit=2).points
+        past_analysis = vector_db.query_points(collection_name=ANALYZED_COLLECTION, query=query_vector, limit=2).points
         
-        past_context = ""
-        for res in past_cases_result:
-            past_context += f"Past Case: {res.payload['objective']}\nStrategy Used: {res.payload['recommendations']}\n\n"
+        past_context = "PAST CASES:\n"
+        for res in past_cases:
+            past_context += f"- {res.payload.get('objective', '')}\n"
+        
+        past_context += "\nPAST AI ADVICE:\n"
+        for res in past_analysis:
+            past_context += f"- {res.payload.get('recommendations', '')}\n"
 
-        # 2. Search PDF Book (Knowledge)
-        book_result = vector_db.query_points(
-            collection_name=COLLECTION_NAME,
-            query=query_vector,
-            limit=10,
-            with_payload=True
-        ).points
-
-        context = ""
-        for res in book_result:
-            context += res.payload["text"] + "\n\n"
+        # 2. Search PDF Book
+        book_result = vector_db.query_points(collection_name=COLLECTION_NAME, query=query_vector, limit=10).points
+        context = "\n".join([res.payload["text"] for res in book_result])
 
         # 3. Generate Analysis
         system_prompt = f"""
-        You are a World-Class Negotiation Expert. Analyze the user's case and provide structured guidance.
+        You are a World-Class Negotiation Expert. 
+        Analyze this case for {request.client_alias}.
         
-        [CONTEXT FROM BOOK]
+        [BOOK KNOWLEDGE]
         {context}
         
-        [PAST CASE MEMORY]
+        [HISTORICAL MEMORY]
         {past_context}
 
-        [USER CASE]
-        Objective: {request.business_objective}
-        Context: {request.context}
-        Profile: {request.client_profile}
-        Ecosystem: {request.decision_ecosystem}
+        [CURRENT CASE]
+        Overview: {request.context_overview}
+        Details: {json.dumps(details)}
 
-        Output the response in the following JSON format ONLY:
+        Output as JSON:
         {{
-            "ai_recommendations": [
-                "Detailed recommendation 1. Reference: Chapter X - Name",
-                "Detailed recommendation 2. Reference: Chapter Y - Name"
-            ],
-            "suggested_readings": [
-                {{ "chapter": "Chapter 4", "title": "Name", "time": "10 min" }},
-                {{ "chapter": "Chapter 7", "title": "Name", "time": "12 min" }}
-            ],
-            "ai_challenges": [
-                "Question challenging the user's approach 1",
-                "Question challenging the user's approach 2"
-            ]
+            "ai_recommendations": ["..."],
+            "suggested_readings": [{{ "chapter": "...", "title": "...", "time": "..." }}],
+            "ai_challenges": ["..."]
         }}
         """
 
@@ -169,21 +152,19 @@ def analyze_case(request: CaseAnalysisRequest):
         
         analysis = json.loads(result.choices[0].message.content)
 
-        # 4. Store this case in Memory for future
-        from qdrant_client.models import PointStruct
-        import uuid
+        # 4. Store Separately
+        case_id = str(uuid.uuid4())
+        
+        # Store Input in CASES_COLLECTION
         vector_db.upsert(
             collection_name=CASES_COLLECTION,
-            points=[
-                PointStruct(
-                    id=str(uuid.uuid4()),
-                    vector=query_vector,
-                    payload={
-                        "objective": request.business_objective,
-                        "recommendations": str(analysis["ai_recommendations"])
-                    }
-                )
-            ]
+            points=[PointStruct(id=case_id, vector=query_vector, payload={"alias": request.client_alias, "objective": details.get("objective", "")})]
+        )
+        
+        # Store AI Analysis in ANALYZED_COLLECTION
+        vector_db.upsert(
+            collection_name=ANALYZED_COLLECTION,
+            points=[PointStruct(id=case_id, vector=query_vector, payload={"recommendations": str(analysis["ai_recommendations"])})]
         )
 
         return analysis
