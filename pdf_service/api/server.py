@@ -78,12 +78,15 @@ def process_question(query: str, history: list = []):
         query_vector = embed_model.encode(query).tolist()
 
         # --- STEP 2: Initial Search in Qdrant (Top 20) ---
-        search_result = vector_db.search(
+        # Using query_points (the modern replacement for search in 1.11+)
+        response = vector_db.query_points(
             collection_name=COLLECTION_NAME,
-            query_vector=query_vector,
+            query=query_vector,
             limit=20,
             with_payload=True
         )
+        search_result = response.points
+
 
 
         if not search_result:
