@@ -64,9 +64,7 @@ class PdfQuestionController extends Controller
                     Log::error('Failed to save chat history', ['error' => $e->getMessage()]);
                     // Don't fail the request if history storage fails
                 }
-
-                return response()->json($data['answer']);
-
+                
                 return response()->json([
                     'success' => true,
                     'answer' => $answer,
