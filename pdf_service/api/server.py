@@ -116,8 +116,8 @@ def process_question(query: str, history: list = []):
         for res in top_chunks:
             chunk = res.payload
             context += chunk["text"] + "\n\n"
-            for img in chunk.get("images", []):
-                base_url = AI_IMAGE_BASE_URL.rstrip("/")
+            for img in (chunk.get("images") or []):
+                base_url = (AI_IMAGE_BASE_URL or "http://127.0.0.1:8000").rstrip("/")
                 collected_images.append(f"{base_url}/images/{img}")
             reference_pages.add(chunk["page"])
 
@@ -139,7 +139,8 @@ def process_question(query: str, history: list = []):
         """
         
         messages = [{"role": "system", "content": system_content}]
-        messages.extend(history)
+        if history:
+            messages.extend(history)
         messages.append({"role": "user", "content": query})
 
         result = get_ai_client().chat.completions.create(
