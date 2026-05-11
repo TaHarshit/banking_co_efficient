@@ -12,8 +12,18 @@ model = SentenceTransformer('all-MiniLM-L6-v2')
 # Qdrant Configuration
 # When running inside docker, host should be "qdrant". 
 # When running locally for testing, you might need "localhost".
-# Use 'qdrant' as host since we are running inside the docker network
-client = QdrantClient(host="qdrant", port=6333)
+def get_qdrant_client():
+    hosts = ["qdrant", "banking-qdrant"]
+    for host in hosts:
+        try:
+            client = QdrantClient(host=host, port=6333, timeout=10)
+            client.get_collections()
+            return client
+        except:
+            continue
+    raise Exception("Could not connect to Qdrant")
+
+client = get_qdrant_client()
 
 INPUT = "data/chunks.json"
 COLLECTION_NAME = "pdf_chunks"
