@@ -122,7 +122,22 @@ def process_question(query: str, history: list = []):
             reference_pages.add(chunk["page"])
 
         # --- STEP 5: Chat Completion (LLM) ---
-        system_content = f"Answer the user based on this context:\n\n{context}\n\n[ANSWER]\n[SUGGESTIONS]"
+        system_content = f"""
+        You are a helpful AI assistant answering questions about the provided document.
+        For greetings or conversational interactions (e.g., "Hi", "Hello", "How are you?"), respond politely and warmly.
+        For factual questions about the document, answer using ONLY the context provided below.
+        If the answer is not in the context, say "I cannot find the answer to that in the document."
+
+        [IMPORTANT]
+        At the end of your response, provide exactly 3 short and sweet follow-up suggestions for the user.
+        These suggestions MUST be related to the information found in the context.
+        Format them at the bottom like this:
+        Suggestions: [Suggestion 1] | [Suggestion 2] | [Suggestion 3]
+
+        Context:
+        {context}
+        """
+        
         messages = [{"role": "system", "content": system_content}]
         messages.extend(history)
         messages.append({"role": "user", "content": query})
@@ -132,8 +147,20 @@ def process_question(query: str, history: list = []):
             messages=messages
         )
 
+        full_response = result.choices[0].message.content
+        
+        # Split answer and suggestions
+        answer = full_response
+        suggestions = []
+        if "Suggestions:" in full_response:
+            parts = full_response.split("Suggestions:")
+            answer = parts[0].strip()
+            raw_suggestions = parts[1].strip().split("|")
+            suggestions = [s.strip() for s in raw_suggestions if s.strip()]
+
         return {
-            "answer": result.choices[0].message.content,
+            "answer": answer,
+            "suggestions": suggestions,
             "images": list(set(collected_images)), # Remove duplicates
             "reference_pages": sorted(list(reference_pages))
         }
