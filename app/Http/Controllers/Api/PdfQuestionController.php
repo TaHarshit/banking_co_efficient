@@ -65,6 +65,8 @@ class PdfQuestionController extends Controller
                     // Don't fail the request if history storage fails
                 }
 
+                return response()->json($data);
+
                 return response()->json([
                     'success' => true,
                     'answer' => $answer,
