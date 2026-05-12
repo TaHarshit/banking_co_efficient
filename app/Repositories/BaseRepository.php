@@ -98,6 +98,14 @@ abstract class BaseRepository implements RepositoryContract
     }
 
     /**
+     * @return Model
+     */
+    public function GetModel()
+    {
+        return app()->make($this->model());
+    }
+
+    /**
      * Get all the model records in the database.
      *
      * @param array $columns
