@@ -50,4 +50,18 @@ class ClientCaseController extends Controller
         $data = $this->clientCaseCls->GetCaseStudySections($locale);
         return get_response($request, $data);
     }
+
+    public function analyzeCase(Request $request)
+    {
+        $postData = General::stripRequest($request->all());
+        $data = $this->clientCaseCls->AnalyzeCase($postData);
+        return get_response($request, $data);
+    }
+
+    public function generatePlan(Request $request)
+    {
+        $postData = General::stripRequest($request->all());
+        $data = $this->clientCaseCls->GeneratePlan($postData);
+        return get_response($request, $data);
+    }
 }

@@ -15,10 +15,14 @@ class ClientCase extends Model
         'client_alias',
         'context_overview',
         'case_details',
+        'ai_analysis',
+        'action_plan',
     ];
 
     protected $casts = [
         'case_details' => 'array',
+        'ai_analysis' => 'array',
+        'action_plan' => 'array',
     ];
 
     public function user()

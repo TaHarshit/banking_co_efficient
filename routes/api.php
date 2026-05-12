@@ -92,7 +92,7 @@ Route::middleware(['basicFilter'])->group(function () {
         });
 
         // AI Case Analysis and Plan Generation
-        Route::controller(CaseStudyController::class)->group(function () {
+        Route::controller(ClientCaseController::class)->group(function () {
             Route::post('ai/analyze-case', 'analyzeCase');
             Route::post('ai/generate-plan', 'generatePlan');
         });
