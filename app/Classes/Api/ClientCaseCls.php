@@ -95,7 +95,7 @@ class ClientCaseCls
             app()->setLocale($locale);
 
             $questions = $this->caseStudyQuestionRepository->getAllSectionsWithQuestions();
-            
+
             $grouped = $questions->groupBy('section_name')->map(function ($sectionQuestions, $sectionName) use ($locale) {
                 return [
                     'section_name' => $sectionName,
@@ -158,7 +158,7 @@ class ClientCaseCls
             $pythonUrl = env('PDF_SERVICE_BASE_URL', 'http://127.0.0.1:8000');
             $endpoint = rtrim($pythonUrl, '/') . '/analyze-case';
 
-            $response = Http::timeout(60)->post($endpoint, [
+            $response = Http::post($endpoint, [
                 'client_alias' => $postData['client_alias'],
                 'context_overview' => $postData['context_overview'] ?? '',
                 'case_details' => $caseDetailsArray,
@@ -167,7 +167,7 @@ class ClientCaseCls
 
             if ($response->successful()) {
                 $analysisData = $response->json();
-                
+
                 $clientCase->ai_analysis = $analysisData;
                 $clientCase->save();
 
@@ -178,7 +178,6 @@ class ClientCaseCls
             }
 
             return General::setResponse('OTHER_ERROR', 'AI Service error: ' . $response->body());
-
         } catch (Exception $e) {
             Log::error('Case Analysis Error', ['error' => $e->getMessage()]);
             return General::setResponse('OTHER_ERROR', $e->getMessage());
@@ -208,7 +207,7 @@ class ClientCaseCls
             $pythonUrl = env('PDF_SERVICE_BASE_URL', 'http://127.0.0.1:8000');
             $endpoint = rtrim($pythonUrl, '/') . '/generate-plan';
 
-            $response = Http::timeout(60)->post($endpoint, [
+            $response = Http::post($endpoint, [
                 'case_data' => $caseData,
                 'analysis_data' => $analysisData,
                 'user_profile' => $userProfile,
@@ -227,7 +226,6 @@ class ClientCaseCls
             }
 
             return General::setResponse('OTHER_ERROR', 'AI Service error: ' . $response->body());
-
         } catch (Exception $e) {
             Log::error('Plan Generation Error', ['error' => $e->getMessage()]);
             return General::setResponse('OTHER_ERROR', $e->getMessage());
