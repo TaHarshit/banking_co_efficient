@@ -40,10 +40,10 @@ if images_dir.exists():
     app.mount("/images", StaticFiles(directory=str(images_dir)), name="images")
 
 # --- Initialize AI Models (Local & Free) ---
-print("Loading Embedding Model (all-MiniLM-L6-v2)...")
+print("Loading Embedding Model (all-MiniLM-L6-v2)...", flush=True)
 embed_model = SentenceTransformer('all-MiniLM-L6-v2')
 
-print("Loading Re-ranker Model (ms-marco-MiniLM-L-6-v2)...")
+print("Loading Re-ranker Model (ms-marco-MiniLM-L-6-v2)...", flush=True)
 rerank_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
 
 # --- Initialize Qdrant Client ---
@@ -104,7 +104,7 @@ def ensure_collections():
         try:
             vector_db.get_collection(coll)
         except:
-            print(f"Creating collection: {coll}...")
+            print(f"Creating collection: {coll}...", flush=True)
             vector_db.create_collection(
                 collection_name=coll,
                 vectors_config=VectorParams(size=384, distance=Distance.COSINE)
@@ -195,12 +195,12 @@ def analyze_case(request: CaseAnalysisRequest):
         t_store = time.time() - t0
 
         total_time = time.time() - start_time
-        print(f"[PERF] /analyze-case - Embed: {t_embed:.3f}s, MemSearch: {t_search_memory:.3f}s, BookSearch: {t_search_book:.3f}s, AI: {t_ai:.3f}s, Store: {t_store:.3f}s, Total: {total_time:.3f}s")
+        print(f"[PERF] /analyze-case - Embed: {t_embed:.3f}s, MemSearch: {t_search_memory:.3f}s, BookSearch: {t_search_book:.3f}s, AI: {t_ai:.3f}s, Store: {t_store:.3f}s, Total: {total_time:.3f}s", flush=True)
 
         return analysis
 
     except Exception as e:
-        print(f"[ERROR] /analyze-case: {str(e)}")
+        print(f"[ERROR] /analyze-case: {str(e)}", flush=True)
         return {"error": str(e)}
 
 @app.post("/generate-plan")
@@ -268,12 +268,12 @@ def generate_plan(request: ActionPlanRequest):
         t_ai = time.time() - t0
 
         total_time = time.time() - start_time
-        print(f"[PERF] /generate-plan - Embed: {t_embed:.3f}s, Search: {t_search:.3f}s, AI: {t_ai:.3f}s, Total: {total_time:.3f}s")
+        print(f"[PERF] /generate-plan - Embed: {t_embed:.3f}s, Search: {t_search:.3f}s, AI: {t_ai:.3f}s, Total: {total_time:.3f}s", flush=True)
 
         return json.loads(result.choices[0].message.content)
 
     except Exception as e:
-        print(f"[ERROR] /generate-plan: {str(e)}")
+        print(f"[ERROR] /generate-plan: {str(e)}", flush=True)
         return {"error": str(e)}
 
 @app.post("/ask")
@@ -304,7 +304,7 @@ def process_question(query: str, history: list = []):
 
         # 3. Re-ranking
         t0 = time.time()
-        print(f"[INFO] Re-ranking {len(search_result)} candidates...")
+        print(f"[INFO] Re-ranking {len(search_result)} candidates...", flush=True)
         
         # Prepare pairs for re-ranking: [ [query, chunk1], [query, chunk2], ... ]
         pairs = [[query, res.payload["text"]] for res in search_result]
@@ -374,7 +374,7 @@ def process_question(query: str, history: list = []):
             suggestions = [s.strip() for s in raw_suggestions if s.strip()]
 
         total_time = time.time() - start_time
-        print(f"[PERF] /ask - Embed: {t_embed:.3f}s, Search: {t_search:.3f}s, Rerank: {t_rerank:.3f}s, AI: {t_ai:.3f}s, Total: {total_time:.3f}s")
+        print(f"[PERF] /ask - Embed: {t_embed:.3f}s, Search: {t_search:.3f}s, Rerank: {t_rerank:.3f}s, AI: {t_ai:.3f}s, Total: {total_time:.3f}s", flush=True)
 
         return {
             "answer": answer,
@@ -384,7 +384,7 @@ def process_question(query: str, history: list = []):
         }
 
     except Exception as e:
-        print(f"[ERROR] /ask (process_question): {str(e)}")
+        print(f"[ERROR] /ask (process_question): {str(e)}", flush=True)
         return {"answer": f"Error: {str(e)}", "images": [], "reference_pages": []}
 
 if __name__ == "__main__":
