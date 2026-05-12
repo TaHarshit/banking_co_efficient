@@ -182,7 +182,12 @@ def analyze_case(request: CaseAnalysisRequest):
             messages=[{"role": "system", "content": system_prompt}],
             response_format={ "type": "json_object" }
         )
-        analysis = json.loads(result.choices[0].message.content)
+        
+        content = result.choices[0].message.content
+        if content is None:
+            raise ValueError("AI response content is empty (None).")
+            
+        analysis = json.loads(content)
         t_ai = time.time() - t0
         print(f"[PERF] /analyze-case - AI Generation finished in {t_ai:.3f}s", flush=True)
 
@@ -288,13 +293,18 @@ def generate_plan(request: ActionPlanRequest):
             messages=[{"role": "system", "content": system_prompt}],
             response_format={ "type": "json_object" }
         )
+        
+        content = result.choices[0].message.content
+        if content is None:
+            raise ValueError("AI response content is empty (None).")
+            
         t_ai = time.time() - t0
         print(f"[PERF] /generate-plan - AI Generation finished in {t_ai:.3f}s", flush=True)
 
         total_time = time.time() - start_time
         print(f"[PERF] /generate-plan - SUCCESS. Total time: {total_time:.3f}s", flush=True)
 
-        return json.loads(result.choices[0].message.content)
+        return json.loads(content)
 
     except Exception as e:
         print(f"[ERROR] /generate-plan: {str(e)}", flush=True)
