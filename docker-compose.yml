@@ -97,10 +97,13 @@ services:
     ports:
       - "8001:8000"
     environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      AI_API_BASE_URL: ${AI_API_BASE_URL}
-      AI_CHAT_MODEL: ${AI_CHAT_MODEL}
-      AI_IMAGE_BASE_URL: ${AI_IMAGE_BASE_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AI_API_BASE_URL=${AI_API_BASE_URL}
+      - AI_CHAT_MODEL=${AI_CHAT_MODEL}
+      - AI_IMAGE_BASE_URL=${AI_IMAGE_BASE_URL}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./pdf_service:/app
     networks:
       - app-network
 

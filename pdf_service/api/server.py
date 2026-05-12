@@ -184,13 +184,26 @@ def analyze_case(request: CaseAnalysisRequest):
         # 5. Store Separately
         t0 = time.time()
         case_id = str(uuid.uuid4())
+        
+        # Safely get recommendations, default to empty string if missing
+        recommendations = analysis.get("ai_recommendations", [])
+        if isinstance(recommendations, list):
+            recommendations_str = ", ".join(recommendations)
+        else:
+            recommendations_str = str(recommendations)
+
         vector_db.upsert(
             collection_name=CASES_COLLECTION,
-            points=[PointStruct(id=case_id, vector=query_vector, payload={"alias": request.client_alias, "objective": details.get("objective", "")})]
+            points=[PointStruct(id=case_id, vector=query_vector, payload={
+                "alias": request.client_alias, 
+                "objective": details.get("objective", "")
+            })]
         )
         vector_db.upsert(
             collection_name=ANALYZED_COLLECTION,
-            points=[PointStruct(id=case_id, vector=query_vector, payload={"recommendations": str(analysis["ai_recommendations"])})]
+            points=[PointStruct(id=case_id, vector=query_vector, payload={
+                "recommendations": recommendations_str
+            })]
         )
         t_store = time.time() - t0
 
