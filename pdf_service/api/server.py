@@ -11,6 +11,8 @@ from sentence_transformers import SentenceTransformer, CrossEncoder
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct, VectorParams, Distance
 import uuid
+import time
+from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 
@@ -113,14 +115,21 @@ ensure_collections()
 
 @app.post("/analyze-case")
 def analyze_case(request: CaseAnalysisRequest):
+    start_time = time.time()
     try:
         details = request.case_details
         combined_input = f"{request.client_alias} {request.context_overview} {json.dumps(details)}"
+        
+        # 1. Embedding
+        t0 = time.time()
         query_vector = embed_model.encode(combined_input).tolist()
+        t_embed = time.time() - t0
 
-        # 1. Search Past Memory (Both Input and Analysis)
+        # 2. Search Past Memory
+        t0 = time.time()
         past_cases = vector_db.query_points(collection_name=CASES_COLLECTION, query=query_vector, limit=2).points
         past_analysis = vector_db.query_points(collection_name=ANALYZED_COLLECTION, query=query_vector, limit=2).points
+        t_search_memory = time.time() - t0
         
         past_context = "PAST CASES:\n"
         for res in past_cases:
@@ -130,11 +139,14 @@ def analyze_case(request: CaseAnalysisRequest):
         for res in past_analysis:
             past_context += f"- {res.payload.get('recommendations', '')}\n"
 
-        # 2. Search PDF Book
+        # 3. Search PDF Book
+        t0 = time.time()
         book_result = vector_db.query_points(collection_name=COLLECTION_NAME, query=query_vector, limit=10).points
         context = "\n".join([res.payload["text"] for res in book_result])
+        t_search_book = time.time() - t0
 
-        # 3. Generate Analysis
+        # 4. Generate Analysis
+        t0 = time.time()
         system_prompt = f"""
         You are a World-Class Negotiation Expert. 
         Analyze this case for {request.client_alias}.
@@ -166,48 +178,57 @@ def analyze_case(request: CaseAnalysisRequest):
             messages=[{"role": "system", "content": system_prompt}],
             response_format={ "type": "json_object" }
         )
-        
         analysis = json.loads(result.choices[0].message.content)
+        t_ai = time.time() - t0
 
-        # 4. Store Separately
+        # 5. Store Separately
+        t0 = time.time()
         case_id = str(uuid.uuid4())
-        
-        # Store Input in CASES_COLLECTION
         vector_db.upsert(
             collection_name=CASES_COLLECTION,
             points=[PointStruct(id=case_id, vector=query_vector, payload={"alias": request.client_alias, "objective": details.get("objective", "")})]
         )
-        
-        # Store AI Analysis in ANALYZED_COLLECTION
         vector_db.upsert(
             collection_name=ANALYZED_COLLECTION,
             points=[PointStruct(id=case_id, vector=query_vector, payload={"recommendations": str(analysis["ai_recommendations"])})]
         )
+        t_store = time.time() - t0
+
+        total_time = time.time() - start_time
+        print(f"[PERF] /analyze-case - Embed: {t_embed:.3f}s, MemSearch: {t_search_memory:.3f}s, BookSearch: {t_search_book:.3f}s, AI: {t_ai:.3f}s, Store: {t_store:.3f}s, Total: {total_time:.3f}s")
 
         return analysis
 
     except Exception as e:
-        print(f"[ERROR] {str(e)}")
+        print(f"[ERROR] /analyze-case: {str(e)}")
         return {"error": str(e)}
 
 @app.post("/generate-plan")
 def generate_plan(request: ActionPlanRequest):
+    start_time = time.time()
     try:
         combined_input = json.dumps(request.case_data) + json.dumps(request.analysis_data)
+        
+        # 1. Embedding
+        t0 = time.time()
         query_vector = embed_model.encode(combined_input).tolist()
+        t_embed = time.time() - t0
 
-        # Search PDF for specific planning techniques
+        # 2. Search PDF
+        t0 = time.time()
         book_result = vector_db.query_points(
             collection_name=COLLECTION_NAME,
             query=query_vector,
             limit=10,
             with_payload=True
         ).points
-
         context = ""
         for res in book_result:
             context += res.payload["text"] + "\n\n"
+        t_search = time.time() - t0
 
+        # 3. AI Generation
+        t0 = time.time()
         system_prompt = f"""
         Generate a detailed "Negotiation Action Plan" based on this case and the book techniques.
         
@@ -244,11 +265,15 @@ def generate_plan(request: ActionPlanRequest):
             messages=[{"role": "system", "content": system_prompt}],
             response_format={ "type": "json_object" }
         )
+        t_ai = time.time() - t0
+
+        total_time = time.time() - start_time
+        print(f"[PERF] /generate-plan - Embed: {t_embed:.3f}s, Search: {t_search:.3f}s, AI: {t_ai:.3f}s, Total: {total_time:.3f}s")
 
         return json.loads(result.choices[0].message.content)
 
     except Exception as e:
-        print(f"[ERROR] {str(e)}")
+        print(f"[ERROR] /generate-plan: {str(e)}")
         return {"error": str(e)}
 
 @app.post("/ask")
@@ -256,12 +281,15 @@ def ask_post(request: QuestionRequest):
     return process_question(request.question, request.history)
 
 def process_question(query: str, history: list = []):
+    start_time = time.time()
     try:
-        # --- STEP 1: Embed Query locally ---
+        # 1. Embedding
+        t0 = time.time()
         query_vector = embed_model.encode(query).tolist()
+        t_embed = time.time() - t0
 
-        # --- STEP 2: Initial Search in Qdrant (Top 20) ---
-        # Using query_points (the modern replacement for search in 1.11+)
+        # 2. Qdrant Search
+        t0 = time.time()
         response = vector_db.query_points(
             collection_name=COLLECTION_NAME,
             query=query_vector,
@@ -269,13 +297,13 @@ def process_question(query: str, history: list = []):
             with_payload=True
         )
         search_result = response.points
-
-
+        t_search = time.time() - t0
 
         if not search_result:
             return {"answer": "No relevant information found.", "images": [], "reference_pages": []}
 
-        # --- STEP 3: Re-ranking (Two-Stage Retrieval) ---
+        # 3. Re-ranking
+        t0 = time.time()
         print(f"[INFO] Re-ranking {len(search_result)} candidates...")
         
         # Prepare pairs for re-ranking: [ [query, chunk1], [query, chunk2], ... ]
@@ -290,8 +318,9 @@ def process_question(query: str, history: list = []):
         
         # Take the top 5 best chunks after re-ranking
         top_chunks = search_result[:5]
+        t_rerank = time.time() - t0
 
-        # --- STEP 4: Build Context & Metadata ---
+        # 4. Context Building
         context = ""
         collected_images = []
         reference_pages = set()
@@ -304,7 +333,8 @@ def process_question(query: str, history: list = []):
                 collected_images.append(f"{base_url}/images/{img}")
             reference_pages.add(chunk["page"])
 
-        # --- STEP 5: Chat Completion (LLM) ---
+        # 5. AI Completion
+        t0 = time.time()
         system_content = f"""
         You are a helpful AI assistant answering questions about the provided document.
         For greetings or conversational interactions (e.g., "Hi", "Hello", "How are you?"), respond politely and warmly.
@@ -330,6 +360,7 @@ def process_question(query: str, history: list = []):
             model=AI_CHAT_MODEL,
             messages=messages
         )
+        t_ai = time.time() - t0
 
         full_response = result.choices[0].message.content
         
@@ -342,6 +373,9 @@ def process_question(query: str, history: list = []):
             raw_suggestions = parts[1].strip().split("|")
             suggestions = [s.strip() for s in raw_suggestions if s.strip()]
 
+        total_time = time.time() - start_time
+        print(f"[PERF] /ask - Embed: {t_embed:.3f}s, Search: {t_search:.3f}s, Rerank: {t_rerank:.3f}s, AI: {t_ai:.3f}s, Total: {total_time:.3f}s")
+
         return {
             "answer": answer,
             "suggestions": suggestions,
@@ -350,7 +384,7 @@ def process_question(query: str, history: list = []):
         }
 
     except Exception as e:
-        print(f"[ERROR] {str(e)}")
+        print(f"[ERROR] /ask (process_question): {str(e)}")
         return {"answer": f"Error: {str(e)}", "images": [], "reference_pages": []}
 
 if __name__ == "__main__":
