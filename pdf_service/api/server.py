@@ -74,9 +74,16 @@ def get_ai_client():
     global _client
     if _client is None:
         if AI_API_BASE_URL:
-            _client = OpenAI(base_url=AI_API_BASE_URL)
+            _client = OpenAI(
+                base_url=AI_API_BASE_URL,
+                timeout=30.0,
+                max_retries=2
+            )
         else:
-            _client = OpenAI()
+            _client = OpenAI(
+                timeout=30.0,
+                max_retries=2
+            )
     return _client
 
 class QuestionRequest(BaseModel):
@@ -315,6 +322,9 @@ def generate_plan(request: ActionPlanRequest):
 
         [GOAL]
         Personalize the plan phases and strategic recommendations to complement the user's strengths and mitigate their weaknesses as identified in their profile.
+
+        [IMPORTANT - OUTPUT FORMAT]
+        You MUST respond with a valid JSON object ONLY. Do not include any other text, explanations, or fields outside of this structure:
         {{
             "executive_summary": "...",
             "meeting_objectives": ["obj 1", "obj 2"],
@@ -327,6 +337,8 @@ def generate_plan(request: ActionPlanRequest):
             "critical_success_factors": ["factor 1", "factor 2"],
             "plan_b": ["alternative 1", "alternative 2"]
         }}
+
+        Do NOT include fields like "message", "data", "case_id", or any other fields. Only the fields listed above.
         """
 
         result = get_ai_client().chat.completions.create(

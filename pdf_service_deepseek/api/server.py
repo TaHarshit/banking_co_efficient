@@ -32,6 +32,8 @@ def get_client():
         _client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=OPENROUTER_API_KEY,
+            timeout=30.0,
+            max_retries=2
         )
     return _client
 
