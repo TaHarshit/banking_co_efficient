@@ -134,33 +134,22 @@ class ClientCaseCls
     {
         try {
             set_time_limit(300);
-            $validator = Validate::required($postData, ['client_alias', 'case_details']);
+            $validator = Validate::required($postData, ['case_id']);
             if ($validator->fails()) {
                 return General::setResponse('VALIDATION_ERROR', $validator->errors()->first());
-            }
-
-            $caseDetailsArray = is_string($postData['case_details']) ? json_decode($postData['case_details'], true) : $postData['case_details'];
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                return General::setResponse('VALIDATION_ERROR', 'Invalid JSON format in case_details.');
             }
 
             $user = Auth::user();
             $userProfile = $user->getAiBehaviorProfile();
 
-            // Find or Create Case Record
-            if (isset($postData['case_id'])) {
-                $clientCase = $this->clientCaseRepository->GetCaseDetails($postData['case_id'], $user->id);
-                if (! $clientCase) {
-                    return General::setResponse('VALIDATION_ERROR', 'Case not found.');
-                }
-            } else {
-                $clientCase = $this->clientCaseRepository->GetModel();
-                $clientCase->user_id = $user->id;
+            // Find Case Record
+            $clientCase = $this->clientCaseRepository->GetCaseDetails($postData['case_id'], $user->id);
+            if (! $clientCase) {
+                return General::setResponse('VALIDATION_ERROR', 'Case not found.');
             }
 
-            $clientCase->client_alias = $postData['client_alias'];
-            $clientCase->context_overview = $postData['context_overview'] ?? '';
-            $clientCase->case_details = $caseDetailsArray;
+            // Use stored data from existing case
+            $caseDetailsArray = $clientCase->case_details;
             $clientCase->save();
 
             // Call Python AI Service
@@ -173,8 +162,8 @@ class ClientCaseCls
                     CURLOPT_CONNECTTIMEOUT => 60,
                 ],
             ])->post($endpoint, [
-                'client_alias' => $postData['client_alias'],
-                'context_overview' => $postData['context_overview'] ?? '',
+                'client_alias' => $clientCase->client_alias,
+                'context_overview' => $clientCase->context_overview,
                 'case_details' => $caseDetailsArray,
                 'user_profile' => $userProfile,
             ]);
