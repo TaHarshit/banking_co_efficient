@@ -76,7 +76,7 @@
                                     <div class="table-responsive">
                                         <table class="table datatable">
                                             <thead>
-                                                <tr>
+                                                <tr> 
                                                     <th>#</th>
                                                     <th>{{ __('messages.user_type') }}</th>
                                                     <th>{{ __('messages.name') }}</th>
