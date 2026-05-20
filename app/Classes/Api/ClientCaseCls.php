@@ -164,7 +164,7 @@ class ClientCaseCls
             $clientCase->save();
 
             // Call Python AI Service
-            $pythonUrl = config('services.pdf_service.base_url', 'http://127.0.0.1:8000');
+            $pythonUrl = config(env('PDF_SERVICE_BASE_URL'), 'http://127.0.0.1:8000');
             $endpoint = rtrim($pythonUrl, '/').'/analyze-case';
 
             $response = Http::timeout(900)->withOptions([
@@ -223,7 +223,7 @@ class ClientCaseCls
             }
 
             $userProfile = $user->getAiBehaviorProfile();
-            $pythonUrl = config('services.pdf_service.base_url', 'http://127.0.0.1:8000');
+            $pythonUrl = config(env('PDF_SERVICE_BASE_URL'), 'http://127.0.0.1:8000');
             $endpoint = rtrim($pythonUrl, '/').'/generate-plan';
 
             $response = Http::timeout(900)->withOptions([
