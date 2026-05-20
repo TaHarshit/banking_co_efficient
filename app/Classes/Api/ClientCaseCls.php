@@ -2,19 +2,20 @@
 
 namespace App\Classes\Api;
 
-use App\Repositories\Api\ClientCaseRepository;
-use App\Repositories\Api\CaseStudyQuestionRepository;
-use App\General\Validate;
 use App\General\General;
-use Illuminate\Support\Facades\DB;
+use App\General\Validate;
+use App\Repositories\Api\CaseStudyQuestionRepository;
+use App\Repositories\Api\ClientCaseRepository;
+use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Exception;
 
 class ClientCaseCls
 {
     protected $clientCaseRepository;
+
     protected $caseStudyQuestionRepository;
 
     public function __construct(
@@ -50,12 +51,14 @@ class ClientCaseCls
             if ($case) {
                 $response = General::setResponse('SUCCESS', 'Case created successfully.');
                 $response['data'] = $case;
+
                 return $response;
             } else {
                 return General::setResponse('VALIDATION_ERROR', 'Failed to create case.');
             }
         } catch (Exception $e) {
             DB::rollBack();
+
             return General::setResponse('OTHER_ERROR', $e->getMessage());
         }
     }
@@ -66,6 +69,7 @@ class ClientCaseCls
             $cases = $this->clientCaseRepository->GetUserCases(Auth::id(), $search);
             $response = General::setResponse('SUCCESS', 'Cases retrieved successfully.');
             $response['data'] = $cases;
+
             return $response;
         } catch (Exception $e) {
             return General::setResponse('OTHER_ERROR', $e->getMessage());
@@ -77,12 +81,13 @@ class ClientCaseCls
         try {
             $case = $this->clientCaseRepository->GetCaseDetails($id, Auth::id());
 
-            if (!$case) {
+            if (! $case) {
                 return General::setResponse('VALIDATION_ERROR', 'Case not found.');
             }
 
             $response = General::setResponse('SUCCESS', 'Case details retrieved successfully.');
             $response['data'] = $case;
+
             return $response;
         } catch (Exception $e) {
             return General::setResponse('OTHER_ERROR', $e->getMessage());
@@ -118,6 +123,7 @@ class ClientCaseCls
 
             $response = General::setResponse('SUCCESS', 'Case study sections retrieved successfully.');
             $response['data'] = $grouped;
+
             return $response;
         } catch (Exception $e) {
             return General::setResponse('OTHER_ERROR', $e->getMessage());
@@ -127,6 +133,7 @@ class ClientCaseCls
     public function AnalyzeCase($postData)
     {
         try {
+            set_time_limit(300);
             $validator = Validate::required($postData, ['client_alias', 'case_details']);
             if ($validator->fails()) {
                 return General::setResponse('VALIDATION_ERROR', $validator->errors()->first());
@@ -143,7 +150,9 @@ class ClientCaseCls
             // Find or Create Case Record
             if (isset($postData['case_id'])) {
                 $clientCase = $this->clientCaseRepository->GetCaseDetails($postData['case_id'], $user->id);
-                if (!$clientCase) return General::setResponse('VALIDATION_ERROR', 'Case not found.');
+                if (! $clientCase) {
+                    return General::setResponse('VALIDATION_ERROR', 'Case not found.');
+                }
             } else {
                 $clientCase = $this->clientCaseRepository->GetModel();
                 $clientCase->user_id = $user->id;
@@ -155,10 +164,15 @@ class ClientCaseCls
             $clientCase->save();
 
             // Call Python AI Service
-            $pythonUrl = env('PDF_SERVICE_BASE_URL', 'http://127.0.0.1:8000');
-            $endpoint = rtrim($pythonUrl, '/') . '/analyze-case';
+            $pythonUrl = config('services.pdf_service.base_url', 'http://127.0.0.1:8000');
+            $endpoint = rtrim($pythonUrl, '/').'/analyze-case';
 
-            $response = Http::post($endpoint, [
+            $response = Http::timeout(900)->withOptions([
+                'curl' => [
+                    CURLOPT_TIMEOUT => 900,
+                    CURLOPT_CONNECTTIMEOUT => 60,
+                ],
+            ])->post($endpoint, [
                 'client_alias' => $postData['client_alias'],
                 'context_overview' => $postData['context_overview'] ?? '',
                 'case_details' => $caseDetailsArray,
@@ -174,12 +188,14 @@ class ClientCaseCls
                 $resp = General::setResponse('SUCCESS', 'Analysis completed and saved.');
                 $resp['case_id'] = $clientCase->id;
                 $resp['data'] = $analysisData;
+
                 return $resp;
             }
 
-            return General::setResponse('OTHER_ERROR', 'AI Service error: ' . $response->body());
+            return General::setResponse('OTHER_ERROR', 'AI Service error: '.$response->body());
         } catch (Exception $e) {
             Log::error('Case Analysis Error', ['error' => $e->getMessage()]);
+
             return General::setResponse('OTHER_ERROR', $e->getMessage());
         }
     }
@@ -187,6 +203,7 @@ class ClientCaseCls
     public function GeneratePlan($postData)
     {
         try {
+            set_time_limit(300);
             $validator = Validate::required($postData, ['case_id']);
             if ($validator->fails()) {
                 return General::setResponse('VALIDATION_ERROR', $validator->errors()->first());
@@ -194,20 +211,27 @@ class ClientCaseCls
 
             $user = Auth::user();
             $clientCase = $this->clientCaseRepository->GetCaseDetails($postData['case_id'], $user->id);
-            if (!$clientCase) return General::setResponse('VALIDATION_ERROR', 'Case not found.');
+            if (! $clientCase) {
+                return General::setResponse('VALIDATION_ERROR', 'Case not found.');
+            }
 
             $caseData = $postData['case_data'] ?? $clientCase->case_details;
             $analysisData = $postData['analysis_data'] ?? $clientCase->ai_analysis;
 
-            if (!$caseData || !$analysisData) {
+            if (! $caseData || ! $analysisData) {
                 return General::setResponse('VALIDATION_ERROR', 'Missing case data or analysis data.');
             }
 
             $userProfile = $user->getAiBehaviorProfile();
-            $pythonUrl = env('PDF_SERVICE_BASE_URL', 'http://127.0.0.1:8000');
-            $endpoint = rtrim($pythonUrl, '/') . '/generate-plan';
+            $pythonUrl = config('services.pdf_service.base_url', 'http://127.0.0.1:8000');
+            $endpoint = rtrim($pythonUrl, '/').'/generate-plan';
 
-            $response = Http::post($endpoint, [
+            $response = Http::timeout(900)->withOptions([
+                'curl' => [
+                    CURLOPT_TIMEOUT => 900,
+                    CURLOPT_CONNECTTIMEOUT => 60,
+                ],
+            ])->post($endpoint, [
                 'case_data' => $caseData,
                 'analysis_data' => $analysisData,
                 'user_profile' => $userProfile,
@@ -222,12 +246,14 @@ class ClientCaseCls
                 $resp = General::setResponse('SUCCESS', 'Action plan generated and saved.');
                 $resp['case_id'] = $clientCase->id;
                 $resp['data'] = $planData;
+
                 return $resp;
             }
 
-            return General::setResponse('OTHER_ERROR', 'AI Service error: ' . $response->body());
+            return General::setResponse('OTHER_ERROR', 'AI Service error: '.$response->body());
         } catch (Exception $e) {
             Log::error('Plan Generation Error', ['error' => $e->getMessage()]);
+
             return General::setResponse('OTHER_ERROR', $e->getMessage());
         }
     }
