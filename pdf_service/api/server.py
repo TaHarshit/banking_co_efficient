@@ -14,6 +14,7 @@ import uuid
 import time
 from contextlib import asynccontextmanager
 
+import re
 from dotenv import load_dotenv
 
 # Load .env
@@ -113,6 +114,28 @@ def ensure_collections():
 # Initialize collections
 ensure_collections()
 
+def sanitize_json_response(content: str) -> str:
+    """
+    Sanitize AI response to fix common JSON issues:
+    - Replace curly quotes with straight quotes
+    - Remove control characters
+    - Fix other common JSON formatting issues
+    """
+    # Replace curly quotes with straight quotes
+    content = content.replace('"', '"')  # Left double quote
+    content = content.replace('"', '"')  # Right double quote
+    content = content.replace(''', "'")  # Left single quote
+    content = content.replace(''', "'")  # Right single quote
+    
+    # Remove control characters except newlines and tabs
+    content = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', content)
+    
+    # Fix common issues with trailing commas in arrays/objects
+    content = re.sub(r',\s*}', '}', content)
+    content = re.sub(r',\s*]', ']', content)
+    
+    return content
+
 @app.post("/analyze-case")
 def analyze_case(request: CaseAnalysisRequest):
     start_time = time.time()
@@ -191,16 +214,20 @@ def analyze_case(request: CaseAnalysisRequest):
         print(f"[DEBUG] /analyze-case - Raw AI response length: {len(content)} chars", flush=True)
         print(f"[DEBUG] /analyze-case - First 500 chars: {content[:500]}", flush=True)
         
+        # Sanitize the AI response to fix common JSON issues
+        sanitized_content = sanitize_json_response(content)
+        print(f"[DEBUG] /analyze-case - Sanitized response length: {len(sanitized_content)} chars", flush=True)
+        
         # Try to parse JSON with better error handling
         try:
-            analysis = json.loads(content)
+            analysis = json.loads(sanitized_content)
         except json.JSONDecodeError as e:
             print(f"[ERROR] /analyze-case - JSON parsing failed: {str(e)}", flush=True)
-            print(f"[ERROR] /analyze-case - Problematic content around position {e.pos}: {content[max(0, e.pos-100):e.pos+100]}", flush=True)
+            print(f"[ERROR] /analyze-case - Problematic content around position {e.pos}: {sanitized_content[max(0, e.pos-100):e.pos+100]}", flush=True)
             # Return error response instead of crashing
             return {
                 "error": f"AI returned invalid JSON: {str(e)}",
-                "raw_content": content[:1000]  # Return first 1000 chars for debugging
+                "raw_content": sanitized_content[:1000]  # Return first 1000 chars for debugging
             }
         t_ai = time.time() - t0
         print(f"[PERF] /analyze-case - AI Generation finished in {t_ai:.3f}s", flush=True)
@@ -316,19 +343,23 @@ def generate_plan(request: ActionPlanRequest):
         print(f"[DEBUG] /generate-plan - Raw AI response length: {len(content)} chars", flush=True)
         print(f"[DEBUG] /generate-plan - First 500 chars: {content[:500]}", flush=True)
         
+        # Sanitize the AI response to fix common JSON issues
+        sanitized_content = sanitize_json_response(content)
+        print(f"[DEBUG] /generate-plan - Sanitized response length: {len(sanitized_content)} chars", flush=True)
+        
         t_ai = time.time() - t0
         print(f"[PERF] /generate-plan - AI Generation finished in {t_ai:.3f}s", flush=True)
 
         # Try to parse JSON with better error handling
         try:
-            parsed_content = json.loads(content)
+            parsed_content = json.loads(sanitized_content)
         except json.JSONDecodeError as e:
             print(f"[ERROR] /generate-plan - JSON parsing failed: {str(e)}", flush=True)
-            print(f"[ERROR] /generate-plan - Problematic content around position {e.pos}: {content[max(0, e.pos-100):e.pos+100]}", flush=True)
+            print(f"[ERROR] /generate-plan - Problematic content around position {e.pos}: {sanitized_content[max(0, e.pos-100):e.pos+100]}", flush=True)
             # Return error response instead of crashing
             return {
                 "error": f"AI returned invalid JSON: {str(e)}",
-                "raw_content": content[:1000]  # Return first 1000 chars for debugging
+                "raw_content": sanitized_content[:1000]  # Return first 1000 chars for debugging
             }
 
         total_time = time.time() - start_time
