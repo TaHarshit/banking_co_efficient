@@ -76,13 +76,13 @@ def get_ai_client():
         if AI_API_BASE_URL:
             _client = OpenAI(
                 base_url=AI_API_BASE_URL,
-                timeout=30.0,
-                max_retries=2
+                timeout=60.0,  # Increased timeout for larger responses
+                max_retries=3
             )
         else:
             _client = OpenAI(
-                timeout=30.0,
-                max_retries=2
+                timeout=60.0,  # Increased timeout for larger responses
+                max_retries=3
             )
     return _client
 
@@ -158,8 +158,8 @@ def analyze_case(request: CaseAnalysisRequest):
 
         # 2. Search Past Memory
         t0 = time.time()
-        past_cases = vector_db.query_points(collection_name=CASES_COLLECTION, query=query_vector, limit=2).points
-        past_analysis = vector_db.query_points(collection_name=ANALYZED_COLLECTION, query=query_vector, limit=2).points
+        past_cases = vector_db.query_points(collection_name=CASES_COLLECTION, query=query_vector, limit=1).points
+        past_analysis = vector_db.query_points(collection_name=ANALYZED_COLLECTION, query=query_vector, limit=1).points
         t_search_memory = time.time() - t0
         print(f"[PERF] /analyze-case - Memory Search finished in {t_search_memory:.3f}s", flush=True)
         
@@ -173,7 +173,7 @@ def analyze_case(request: CaseAnalysisRequest):
 
         # 3. Search PDF Book
         t0 = time.time()
-        book_result = vector_db.query_points(collection_name=COLLECTION_NAME, query=query_vector, limit=10).points
+        book_result = vector_db.query_points(collection_name=COLLECTION_NAME, query=query_vector, limit=5).points
         context = "\n".join([res.payload["text"] for res in book_result])
         t_search_book = time.time() - t0
         print(f"[PERF] /analyze-case - Book Search finished in {t_search_book:.3f}s", flush=True)
@@ -211,7 +211,7 @@ def analyze_case(request: CaseAnalysisRequest):
             model=AI_CHAT_MODEL,
             messages=[{"role": "system", "content": system_prompt}],
             response_format={ "type": "json_object" },
-            max_tokens=4000
+            max_tokens=16384
         )
 
         content = result.choices[0].message.content
@@ -294,7 +294,7 @@ def generate_plan(request: ActionPlanRequest):
         book_result = vector_db.query_points(
             collection_name=COLLECTION_NAME,
             query=query_vector,
-            limit=10,
+            limit=3,  # Reduced from 5 to leave more tokens for response
             with_payload=True
         ).points
         context = ""
@@ -346,13 +346,13 @@ def generate_plan(request: ActionPlanRequest):
             model=AI_CHAT_MODEL,
             messages=[{"role": "system", "content": system_prompt}],
             response_format={ "type": "json_object" },
-            max_tokens=4000
+            max_tokens=16384
         )
 
         content = result.choices[0].message.content
         if content is None:
             raise ValueError("AI response content is empty (None).")
-        
+
         # Log the raw AI response for debugging
         print(f"[DEBUG] /generate-plan - Raw AI response length: {len(content)} chars", flush=True)
         print(f"[DEBUG] /generate-plan - First 500 chars: {content[:500]}", flush=True)
