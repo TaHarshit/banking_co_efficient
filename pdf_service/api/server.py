@@ -336,21 +336,21 @@ def generate_plan(request: ActionPlanRequest):
         [GOAL]
         Personalize the plan phases and strategic recommendations to complement the user's strengths and mitigate their weaknesses as identified in their profile.
 
-        CRITICAL OUTPUT REQUIREMENT: You MUST respond with a complete valid JSON object with ALL fields listed below. Do NOT truncate or cut off your response:
+        CRITICAL OUTPUT REQUIREMENT: You MUST respond with a complete valid JSON object with ALL fields listed below. Keep responses concise to fit in one response:
         {{
-            "executive_summary": "A concise 2-3 sentence summary",
-            "meeting_objectives": ["obj 1", "obj 2", "obj 3"],
+            "executive_summary": "A concise 1-2 sentence summary",
+            "meeting_objectives": ["obj 1", "obj 2"],
             "action_plan": {{
-                "phase_1_before": {{ "title": "...", "steps": ["step 1", "step 2", "step 3"], "readings": ["Chapter X: Name"] }},
-                "phase_2_during": {{ "title": "...", "steps": ["step 1", "step 2", "step 3"] }},
-                "phase_3_after": {{ "title": "...", "steps": ["step 1", "step 2", "step 3"] }}
+                "phase_1_before": {{ "title": "...", "steps": ["step 1", "step 2"], "readings": ["Chapter X"] }},
+                "phase_2_during": {{ "title": "...", "steps": ["step 1", "step 2"] }},
+                "phase_3_after": {{ "title": "...", "steps": ["step 1", "step 2"] }}
             }},
-            "strategic_recommendations": ["rec 1", "rec 2", "rec 3"],
-            "critical_success_factors": ["factor 1", "factor 2"],
-            "plan_b": ["alternative 1", "alternative 2"]
+            "strategic_recommendations": ["rec 1", "rec 2"],
+            "critical_success_factors": ["factor 1"],
+            "plan_b": ["alternative 1"]
         }}
 
-        You must complete ALL fields including phase_2_during, phase_3_after, executive_summary, meeting_objectives, strategic_recommendations, critical_success_factors, and plan_b. Do NOT stop mid-response.
+        You must complete ALL fields. Keep each step and recommendation short (under 15 words).
         """
 
         result = get_ai_client().chat.completions.create(
