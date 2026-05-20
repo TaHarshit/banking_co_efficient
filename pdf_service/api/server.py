@@ -336,8 +336,7 @@ def generate_plan(request: ActionPlanRequest):
         [GOAL]
         Personalize the plan phases and strategic recommendations to complement the user's strengths and mitigate their weaknesses as identified in their profile.
 
-        [IMPORTANT - OUTPUT FORMAT]
-        You MUST respond with a complete valid JSON object. Do NOT truncate or cut off your response. Include ALL fields listed below:
+        CRITICAL OUTPUT REQUIREMENT: You MUST respond with a complete valid JSON object with ALL fields listed below. Do NOT truncate or cut off your response:
         {{
             "executive_summary": "A concise 2-3 sentence summary",
             "meeting_objectives": ["obj 1", "obj 2", "obj 3"],
@@ -351,7 +350,7 @@ def generate_plan(request: ActionPlanRequest):
             "plan_b": ["alternative 1", "alternative 2"]
         }}
 
-        CRITICAL: You must complete ALL fields including phase_2_during, phase_3_after, executive_summary, meeting_objectives, strategic_recommendations, critical_success_factors, and plan_b. Do NOT stop mid-response.
+        You must complete ALL fields including phase_2_during, phase_3_after, executive_summary, meeting_objectives, strategic_recommendations, critical_success_factors, and plan_b. Do NOT stop mid-response.
         """
 
         result = get_ai_client().chat.completions.create(
