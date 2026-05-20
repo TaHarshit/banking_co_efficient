@@ -320,9 +320,6 @@ def generate_plan(request: ActionPlanRequest):
         [CASE DATA]
         {json.dumps(request.case_data)}
 
-        [ANALYSIS DATA]
-        {json.dumps(request.analysis_data)}
-
         [GOAL]
         Personalize the plan phases and strategic recommendations to complement the user's strengths and mitigate their weaknesses as identified in their profile.
 
