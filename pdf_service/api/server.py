@@ -186,8 +186,22 @@ def analyze_case(request: CaseAnalysisRequest):
         content = result.choices[0].message.content
         if content is None:
             raise ValueError("AI response content is empty (None).")
-            
-        analysis = json.loads(content)
+        
+        # Log the raw AI response for debugging
+        print(f"[DEBUG] /analyze-case - Raw AI response length: {len(content)} chars", flush=True)
+        print(f"[DEBUG] /analyze-case - First 500 chars: {content[:500]}", flush=True)
+        
+        # Try to parse JSON with better error handling
+        try:
+            analysis = json.loads(content)
+        except json.JSONDecodeError as e:
+            print(f"[ERROR] /analyze-case - JSON parsing failed: {str(e)}", flush=True)
+            print(f"[ERROR] /analyze-case - Problematic content around position {e.pos}: {content[max(0, e.pos-100):e.pos+100]}", flush=True)
+            # Return error response instead of crashing
+            return {
+                "error": f"AI returned invalid JSON: {str(e)}",
+                "raw_content": content[:1000]  # Return first 1000 chars for debugging
+            }
         t_ai = time.time() - t0
         print(f"[PERF] /analyze-case - AI Generation finished in {t_ai:.3f}s", flush=True)
 
@@ -297,14 +311,30 @@ def generate_plan(request: ActionPlanRequest):
         content = result.choices[0].message.content
         if content is None:
             raise ValueError("AI response content is empty (None).")
-            
+        
+        # Log the raw AI response for debugging
+        print(f"[DEBUG] /generate-plan - Raw AI response length: {len(content)} chars", flush=True)
+        print(f"[DEBUG] /generate-plan - First 500 chars: {content[:500]}", flush=True)
+        
         t_ai = time.time() - t0
         print(f"[PERF] /generate-plan - AI Generation finished in {t_ai:.3f}s", flush=True)
+
+        # Try to parse JSON with better error handling
+        try:
+            parsed_content = json.loads(content)
+        except json.JSONDecodeError as e:
+            print(f"[ERROR] /generate-plan - JSON parsing failed: {str(e)}", flush=True)
+            print(f"[ERROR] /generate-plan - Problematic content around position {e.pos}: {content[max(0, e.pos-100):e.pos+100]}", flush=True)
+            # Return error response instead of crashing
+            return {
+                "error": f"AI returned invalid JSON: {str(e)}",
+                "raw_content": content[:1000]  # Return first 1000 chars for debugging
+            }
 
         total_time = time.time() - start_time
         print(f"[PERF] /generate-plan - SUCCESS. Total time: {total_time:.3f}s", flush=True)
 
-        return json.loads(content)
+        return parsed_content
 
     except Exception as e:
         print(f"[ERROR] /generate-plan: {str(e)}", flush=True)

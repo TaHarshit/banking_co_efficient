@@ -164,7 +164,7 @@ class ClientCaseCls
             $clientCase->save();
 
             // Call Python AI Service
-            $pythonUrl = config(env('PDF_SERVICE_BASE_URL'), 'http://127.0.0.1:8000');
+            $pythonUrl = env('PDF_SERVICE_BASE_URL', 'http://127.0.0.1:8000');
             $endpoint = rtrim($pythonUrl, '/').'/analyze-case';
 
             $response = Http::timeout(900)->withOptions([
@@ -181,6 +181,12 @@ class ClientCaseCls
 
             if ($response->successful()) {
                 $analysisData = $response->json();
+
+                // Check if the Python service returned an error
+                if (isset($analysisData['error'])) {
+                    Log::error('AI Service returned error', ['error' => $analysisData['error'], 'raw_content' => $analysisData['raw_content'] ?? null]);
+                    return General::setResponse('OTHER_ERROR', 'AI Service error: '.$analysisData['error']);
+                }
 
                 $clientCase->ai_analysis = $analysisData;
                 $clientCase->save();
@@ -223,7 +229,7 @@ class ClientCaseCls
             }
 
             $userProfile = $user->getAiBehaviorProfile();
-            $pythonUrl = config(env('PDF_SERVICE_BASE_URL'), 'http://127.0.0.1:8000');
+            $pythonUrl = env('PDF_SERVICE_BASE_URL', 'http://127.0.0.1:8000');
             $endpoint = rtrim($pythonUrl, '/').'/generate-plan';
 
             $response = Http::timeout(900)->withOptions([
@@ -239,6 +245,12 @@ class ClientCaseCls
 
             if ($response->successful()) {
                 $planData = $response->json();
+
+                // Check if the Python service returned an error
+                if (isset($planData['error'])) {
+                    Log::error('AI Service returned error', ['error' => $planData['error'], 'raw_content' => $planData['raw_content'] ?? null]);
+                    return General::setResponse('OTHER_ERROR', 'AI Service error: '.$planData['error']);
+                }
 
                 $clientCase->action_plan = $planData;
                 $clientCase->save();
