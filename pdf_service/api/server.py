@@ -216,14 +216,16 @@ def analyze_case(request: CaseAnalysisRequest):
 
         content = result.choices[0].message.content
         if content is None:
-            raise ValueError("AI response content is empty (None).")
+            print(f"[ERROR] /analyze-case - AI returned empty response. Finish reason: {result.choices[0].finish_reason if result.choices else 'N/A'}", flush=True)
+            raise ValueError("AI response content is empty (None). This may be due to API error, content filtering, or rate limiting.")
 
         # Log the raw AI response for debugging
         print(f"[DEBUG] /analyze-case - Raw AI response length: {len(content)} chars", flush=True)
         print(f"[DEBUG] /analyze-case - First 500 chars: {content[:500]}", flush=True)
         
         # Sanitize the AI response to fix common JSON issues
-        sanitized_content = sanitize_json_response(content)
+        # TEMPORARILY DISABLED to test if sanitization is causing truncation
+        sanitized_content = content  # sanitize_json_response(content)
         print(f"[DEBUG] /analyze-case - Sanitized response length: {len(sanitized_content)} chars", flush=True)
         
         # Try to parse JSON with better error handling
@@ -351,14 +353,16 @@ def generate_plan(request: ActionPlanRequest):
 
         content = result.choices[0].message.content
         if content is None:
-            raise ValueError("AI response content is empty (None).")
+            print(f"[ERROR] /generate-plan - AI returned empty response. Finish reason: {result.choices[0].finish_reason if result.choices else 'N/A'}", flush=True)
+            raise ValueError("AI response content is empty (None). This may be due to API error, content filtering, or rate limiting.")
 
         # Log the raw AI response for debugging
         print(f"[DEBUG] /generate-plan - Raw AI response length: {len(content)} chars", flush=True)
         print(f"[DEBUG] /generate-plan - First 500 chars: {content[:500]}", flush=True)
-        
+
         # Sanitize the AI response to fix common JSON issues
-        sanitized_content = sanitize_json_response(content)
+        # TEMPORARILY DISABLED to test if sanitization is causing truncation
+        sanitized_content = content  # sanitize_json_response(content)
         print(f"[DEBUG] /generate-plan - Sanitized response length: {len(sanitized_content)} chars", flush=True)
         
         t_ai = time.time() - t0
@@ -476,7 +480,10 @@ def process_question(query: str, history: list = []):
         print(f"[PERF] /ask - AI Generation finished in {t_ai:.3f}s", flush=True)
 
         full_response = result.choices[0].message.content
-        
+        if full_response is None:
+            print(f"[ERROR] /ask - AI returned empty response. Finish reason: {result.choices[0].finish_reason if result.choices else 'N/A'}", flush=True)
+            return {"answer": "Error: AI returned empty response. Please try again.", "images": [], "reference_pages": []}
+
         # Split answer and suggestions
         answer = full_response
         suggestions = []
