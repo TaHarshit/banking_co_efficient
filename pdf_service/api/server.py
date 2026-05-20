@@ -210,13 +210,14 @@ def analyze_case(request: CaseAnalysisRequest):
         result = get_ai_client().chat.completions.create(
             model=AI_CHAT_MODEL,
             messages=[{"role": "system", "content": system_prompt}],
-            response_format={ "type": "json_object" }
+            response_format={ "type": "json_object" },
+            max_tokens=4000
         )
-        
+
         content = result.choices[0].message.content
         if content is None:
             raise ValueError("AI response content is empty (None).")
-        
+
         # Log the raw AI response for debugging
         print(f"[DEBUG] /analyze-case - Raw AI response length: {len(content)} chars", flush=True)
         print(f"[DEBUG] /analyze-case - First 500 chars: {content[:500]}", flush=True)
@@ -324,29 +325,30 @@ def generate_plan(request: ActionPlanRequest):
         Personalize the plan phases and strategic recommendations to complement the user's strengths and mitigate their weaknesses as identified in their profile.
 
         [IMPORTANT - OUTPUT FORMAT]
-        You MUST respond with a valid JSON object ONLY. Do not include any other text, explanations, or fields outside of this structure:
+        You MUST respond with a complete valid JSON object. Do NOT truncate or cut off your response. Include ALL fields listed below:
         {{
-            "executive_summary": "...",
-            "meeting_objectives": ["obj 1", "obj 2"],
+            "executive_summary": "A concise 2-3 sentence summary",
+            "meeting_objectives": ["obj 1", "obj 2", "obj 3"],
             "action_plan": {{
-                "phase_1_before": {{ "title": "...", "steps": ["step 1", "step 2"], "readings": ["Chapter X: Name"] }},
-                "phase_2_during": {{ "title": "...", "steps": ["step 1", "step 2"] }},
-                "phase_3_after": {{ "title": "...", "steps": ["step 1", "step 2"] }}
+                "phase_1_before": {{ "title": "...", "steps": ["step 1", "step 2", "step 3"], "readings": ["Chapter X: Name"] }},
+                "phase_2_during": {{ "title": "...", "steps": ["step 1", "step 2", "step 3"] }},
+                "phase_3_after": {{ "title": "...", "steps": ["step 1", "step 2", "step 3"] }}
             }},
-            "strategic_recommendations": ["rec 1", "rec 2"],
+            "strategic_recommendations": ["rec 1", "rec 2", "rec 3"],
             "critical_success_factors": ["factor 1", "factor 2"],
             "plan_b": ["alternative 1", "alternative 2"]
         }}
 
-        Do NOT include fields like "message", "data", "case_id", or any other fields. Only the fields listed above.
+        CRITICAL: You must complete ALL fields including phase_2_during, phase_3_after, executive_summary, meeting_objectives, strategic_recommendations, critical_success_factors, and plan_b. Do NOT stop mid-response.
         """
 
         result = get_ai_client().chat.completions.create(
             model=AI_CHAT_MODEL,
             messages=[{"role": "system", "content": system_prompt}],
-            response_format={ "type": "json_object" }
+            response_format={ "type": "json_object" },
+            max_tokens=4000
         )
-        
+
         content = result.choices[0].message.content
         if content is None:
             raise ValueError("AI response content is empty (None).")
