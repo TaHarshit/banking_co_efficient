@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from qdrant_client import QdrantClient
@@ -102,6 +102,19 @@ class ActionPlanRequest(BaseModel):
     analysis_data: dict
     user_profile: str = "" # New field for behavioral data
     history: list = []
+
+class Phase(BaseModel):
+    title: str
+    steps: list[str]
+    readings: list[str] = []
+
+class ActionPlanSchema(BaseModel):
+    executive_summary: str
+    meeting_objectives: list[str]
+    action_plan: dict
+    strategic_recommendations: list[str]
+    critical_success_factors: list[str]
+    plan_b: list[str]
 
 # --- Case Memory Storage ---
 CASES_COLLECTION = "past_cases"
@@ -368,6 +381,30 @@ def generate_plan(request: ActionPlanRequest):
         # Try to parse JSON with better error handling
         try:
             parsed_content = json.loads(sanitized_content)
+
+            # Validate all required fields exist
+            required_fields = ["executive_summary", "meeting_objectives", "action_plan", "strategic_recommendations", "critical_success_factors", "plan_b"]
+            missing_fields = [f for f in required_fields if f not in parsed_content]
+            if missing_fields:
+                print(f"[ERROR] /generate-plan - Missing required fields: {missing_fields}", flush=True)
+                print(f"[ERROR] /generate-plan - Available fields: {list(parsed_content.keys())}", flush=True)
+                return {
+                    "error": f"AI response truncated - missing fields: {missing_fields}",
+                    "raw_content": sanitized_content[:1000]
+                }
+
+            # Validate action_plan has all three phases
+            action_plan = parsed_content.get("action_plan", {})
+            required_phases = ["phase_1_before", "phase_2_during", "phase_3_after"]
+            missing_phases = [p for p in required_phases if p not in action_plan]
+            if missing_phases:
+                print(f"[ERROR] /generate-plan - Missing required phases: {missing_phases}", flush=True)
+                print(f"[ERROR] /generate-plan - Available phases: {list(action_plan.keys())}", flush=True)
+                return {
+                    "error": f"AI response truncated - missing phases: {missing_phases}",
+                    "raw_content": sanitized_content[:1000]
+                }
+
         except json.JSONDecodeError as e:
             print(f"[ERROR] /generate-plan - JSON parsing failed: {str(e)}", flush=True)
             print(f"[ERROR] /generate-plan - Problematic content around position {e.pos}: {sanitized_content[max(0, e.pos-100):e.pos+100]}", flush=True)
