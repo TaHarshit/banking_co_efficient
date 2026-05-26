@@ -91,10 +91,12 @@ Route::middleware(['basicFilter'])->group(function () {
             Route::get('case-study-sections', 'caseStudySections');
         });
 
-        // AI Case Analysis and Plan Generation
+        // AI Case Analysis and Plan Generation (async queue-based)
+        // POST endpoints return a job_id immediately; poll GET ai/job-status/{job_id} for results.
         Route::controller(ClientCaseController::class)->group(function () {
             Route::post('ai/analyze-case', 'analyzeCase');
             Route::post('ai/generate-plan', 'generatePlan');
+            Route::get('ai/job-status/{job_id}', 'getAiJobStatus');
         });
     });
 });

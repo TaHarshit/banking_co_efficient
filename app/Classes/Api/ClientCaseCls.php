@@ -4,12 +4,14 @@ namespace App\Classes\Api;
 
 use App\General\General;
 use App\General\Validate;
+use App\Jobs\AnalyzeCaseJob;
+use App\Jobs\GeneratePlanJob;
+use App\Models\AiJob;
 use App\Repositories\Api\CaseStudyQuestionRepository;
 use App\Repositories\Api\ClientCaseRepository;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ClientCaseCls
@@ -37,11 +39,11 @@ class ClientCaseCls
 
             // Structure data for storage
             $data = [
-                'user_id' => Auth::id(),
-                'case_reference' => $postData['case_reference'] ?? null,
-                'client_alias' => $postData['client_alias'],
+                'user_id'          => Auth::id(),
+                'case_reference'   => $postData['case_reference'] ?? null,
+                'client_alias'     => $postData['client_alias'],
                 'context_overview' => $postData['context_overview'] ?? null,
-                'case_details' => $postData['case_details'] ?? [],
+                'case_details'     => $postData['case_details'] ?? [],
             ];
 
             DB::beginTransaction();
@@ -49,7 +51,7 @@ class ClientCaseCls
             DB::commit();
 
             if ($case) {
-                $response = General::setResponse('SUCCESS', 'Case created successfully.');
+                $response         = General::setResponse('SUCCESS', 'Case created successfully.');
                 $response['data'] = $case;
 
                 return $response;
@@ -66,8 +68,8 @@ class ClientCaseCls
     public function GetCases($search = null)
     {
         try {
-            $cases = $this->clientCaseRepository->GetUserCases(Auth::id(), $search);
-            $response = General::setResponse('SUCCESS', 'Cases retrieved successfully.');
+            $cases            = $this->clientCaseRepository->GetUserCases(Auth::id(), $search);
+            $response         = General::setResponse('SUCCESS', 'Cases retrieved successfully.');
             $response['data'] = $cases;
 
             return $response;
@@ -85,7 +87,7 @@ class ClientCaseCls
                 return General::setResponse('VALIDATION_ERROR', 'Case not found.');
             }
 
-            $response = General::setResponse('SUCCESS', 'Case details retrieved successfully.');
+            $response         = General::setResponse('SUCCESS', 'Case details retrieved successfully.');
             $response['data'] = $case;
 
             return $response;
@@ -104,16 +106,16 @@ class ClientCaseCls
             $grouped = $questions->groupBy('section_name')->map(function ($sectionQuestions, $sectionName) use ($locale) {
                 return [
                     'section_name' => $sectionName,
-                    'locale' => $locale,
-                    'questions' => $sectionQuestions->map(function ($question) {
+                    'locale'       => $locale,
+                    'questions'    => $sectionQuestions->map(function ($question) {
                         return [
-                            'id' => $question->id,
+                            'id'            => $question->id,
                             'question_text' => $question->question,
-                            'options' => $question->options->map(function ($option) {
+                            'options'       => $question->options->map(function ($option) {
                                 return [
-                                    'id' => $option->id,
+                                    'id'          => $option->id,
                                     'option_text' => $option->option,
-                                    'is_correct' => $option->is_correct,
+                                    'is_correct'  => $option->is_correct,
                                 ];
                             })->values(),
                         ];
@@ -121,7 +123,7 @@ class ClientCaseCls
                 ];
             })->values();
 
-            $response = General::setResponse('SUCCESS', 'Case study sections retrieved successfully.');
+            $response         = General::setResponse('SUCCESS', 'Case study sections retrieved successfully.');
             $response['data'] = $grouped;
 
             return $response;
@@ -130,132 +132,162 @@ class ClientCaseCls
         }
     }
 
+    /**
+     * Dispatch async case analysis job and return immediately with job_id.
+     */
     public function AnalyzeCase($postData)
     {
         try {
-            set_time_limit(300);
             $validator = Validate::required($postData, ['case_id']);
             if ($validator->fails()) {
                 return General::setResponse('VALIDATION_ERROR', $validator->errors()->first());
             }
 
-            $user = Auth::user();
-            $userProfile = $user->getAiBehaviorProfile();
-
-            // Find Case Record
+            $user       = Auth::user();
             $clientCase = $this->clientCaseRepository->GetCaseDetails($postData['case_id'], $user->id);
             if (! $clientCase) {
                 return General::setResponse('VALIDATION_ERROR', 'Case not found.');
             }
 
-            // Use stored data from existing case
-            $caseDetailsArray = $clientCase->case_details;
-            $clientCase->save();
-
-            // Call Python AI Service
-            $pythonUrl = env('PDF_SERVICE_BASE_URL', 'http://127.0.0.1:8000');
-            $endpoint = rtrim($pythonUrl, '/').'/analyze-case';
-
-            $response = Http::timeout(900)->withOptions([
-                'curl' => [
-                    CURLOPT_TIMEOUT => 900,
-                    CURLOPT_CONNECTTIMEOUT => 60,
-                ],
-            ])->post($endpoint, [
-                'client_alias' => $clientCase->client_alias,
-                'context_overview' => $clientCase->context_overview,
-                'case_details' => $caseDetailsArray,
-                'user_profile' => $userProfile,
+            // Create a tracking record in ai_jobs
+            $aiJob = AiJob::create([
+                'user_id'  => $user->id,
+                'case_id'  => $clientCase->id,
+                'job_type' => 'analyze_case',
+                'status'   => 'pending',
+                'attempts' => 0,
             ]);
 
-            if ($response->successful()) {
-                $analysisData = $response->json();
+            // Dispatch job to queue
+            AnalyzeCaseJob::dispatch($aiJob->id, $clientCase->id, $user->id);
 
-                // Check if the Python service returned an error
-                if (isset($analysisData['error'])) {
-                    Log::error('AI Service returned error', ['error' => $analysisData['error'], 'raw_content' => $analysisData['raw_content'] ?? null]);
-                    return General::setResponse('OTHER_ERROR', 'AI Service error: '.$analysisData['error']);
-                }
+            // Auto-trigger background queue worker (no separate worker process needed)
+            $this->spawnQueueWorker();
 
-                $clientCase->ai_analysis = $analysisData;
-                $clientCase->save();
+            $response           = General::setResponse('SUCCESS', 'Analysis queued. You will be notified when complete.');
+            $response['job_id'] = $aiJob->id;
+            $response['case_id'] = $clientCase->id;
+            $response['status'] = 'pending';
 
-                $resp = General::setResponse('SUCCESS', 'Analysis completed and saved.');
-                $resp['case_id'] = $clientCase->id;
-                $resp['data'] = $analysisData;
-
-                return $resp;
-            }
-
-            return General::setResponse('OTHER_ERROR', 'AI Service error: '.$response->body());
+            return $response;
         } catch (Exception $e) {
-            Log::error('Case Analysis Error', ['error' => $e->getMessage()]);
+            Log::error('AnalyzeCase dispatch error', ['error' => $e->getMessage()]);
 
             return General::setResponse('OTHER_ERROR', $e->getMessage());
         }
     }
 
+    /**
+     * Dispatch async plan generation job and return immediately with job_id.
+     */
     public function GeneratePlan($postData)
     {
         try {
-            set_time_limit(300);
             $validator = Validate::required($postData, ['case_id']);
             if ($validator->fails()) {
                 return General::setResponse('VALIDATION_ERROR', $validator->errors()->first());
             }
 
-            $user = Auth::user();
+            $user       = Auth::user();
             $clientCase = $this->clientCaseRepository->GetCaseDetails($postData['case_id'], $user->id);
             if (! $clientCase) {
                 return General::setResponse('VALIDATION_ERROR', 'Case not found.');
             }
 
-            $caseData = $postData['case_data'] ?? $clientCase->case_details;
+            $caseData     = $postData['case_data'] ?? $clientCase->case_details;
             $analysisData = $postData['analysis_data'] ?? $clientCase->ai_analysis;
 
             if (! $caseData || ! $analysisData) {
-                return General::setResponse('VALIDATION_ERROR', 'Missing case data or analysis data.');
+                return General::setResponse('VALIDATION_ERROR', 'Missing case data or analysis data. Please run AI analysis first.');
             }
 
-            $userProfile = $user->getAiBehaviorProfile();
-            $pythonUrl = env('PDF_SERVICE_BASE_URL', 'http://127.0.0.1:8000');
-            $endpoint = rtrim($pythonUrl, '/').'/generate-plan';
-
-            $response = Http::timeout(900)->withOptions([
-                'curl' => [
-                    CURLOPT_TIMEOUT => 900,
-                    CURLOPT_CONNECTTIMEOUT => 60,
-                ],
-            ])->post($endpoint, [
-                'case_data' => $caseData,
-                'analysis_data' => $analysisData,
-                'user_profile' => $userProfile,
+            // Create a tracking record in ai_jobs
+            $aiJob = AiJob::create([
+                'user_id'  => $user->id,
+                'case_id'  => $clientCase->id,
+                'job_type' => 'generate_plan',
+                'status'   => 'pending',
+                'attempts' => 0,
             ]);
 
-            if ($response->successful()) {
-                $planData = $response->json();
+            // Dispatch job to queue
+            GeneratePlanJob::dispatch($aiJob->id, $clientCase->id, $user->id, $caseData, $analysisData);
 
-                // Check if the Python service returned an error
-                if (isset($planData['error'])) {
-                    Log::error('AI Service returned error', ['error' => $planData['error'], 'raw_content' => $planData['raw_content'] ?? null]);
-                    return General::setResponse('OTHER_ERROR', 'AI Service error: '.$planData['error']);
-                }
+            // Auto-trigger background queue worker (no separate worker process needed)
+            $this->spawnQueueWorker();
 
-                $clientCase->action_plan = $planData;
-                $clientCase->save();
+            $response            = General::setResponse('SUCCESS', 'Plan generation queued. You will be notified when complete.');
+            $response['job_id']  = $aiJob->id;
+            $response['case_id'] = $clientCase->id;
+            $response['status']  = 'pending';
 
-                $resp = General::setResponse('SUCCESS', 'Action plan generated and saved.');
-                $resp['case_id'] = $clientCase->id;
-                $resp['data'] = $planData;
-
-                return $resp;
-            }
-
-            return General::setResponse('OTHER_ERROR', 'AI Service error: '.$response->body());
+            return $response;
         } catch (Exception $e) {
-            Log::error('Plan Generation Error', ['error' => $e->getMessage()]);
+            Log::error('GeneratePlan dispatch error', ['error' => $e->getMessage()]);
 
             return General::setResponse('OTHER_ERROR', $e->getMessage());
+        }
+    }
+
+    /**
+     * Poll the status of an AI job.
+     */
+    public function GetAiJobStatus($jobId)
+    {
+        try {
+            $aiJob = AiJob::where('id', $jobId)
+                ->where('user_id', Auth::id())
+                ->first();
+
+            if (! $aiJob) {
+                return General::setResponse('VALIDATION_ERROR', 'Job not found.');
+            }
+
+            $response           = General::setResponse('SUCCESS', 'Job status retrieved.');
+            $response['job_id'] = $aiJob->id;
+            $response['status'] = $aiJob->status;
+            $response['job_type'] = $aiJob->job_type;
+            $response['case_id']  = $aiJob->case_id;
+            $response['attempts'] = $aiJob->attempts;
+
+            if ($aiJob->isCompleted()) {
+                $response['data'] = $aiJob->result;
+            }
+
+            if ($aiJob->isFailed()) {
+                $response['error'] = $aiJob->error_message;
+            }
+
+            return $response;
+        } catch (Exception $e) {
+            return General::setResponse('OTHER_ERROR', $e->getMessage());
+        }
+    }
+
+    /**
+     * Spawn a background queue worker process so jobs run without a separate
+     * persistent worker. Uses `queue:work --once` to process one job and exit.
+     * Works on both Windows (XAMPP) and Linux.
+     */
+    private function spawnQueueWorker(): void
+    {
+        try {
+            $artisan = base_path('artisan');
+            $phpBin  = PHP_BINARY;
+
+            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+                // Windows: start /B runs process detached in background
+                pclose(popen("start /B \"{$phpBin}\" \"{$artisan}\" queue:work --once --timeout=960 --tries=1 2>NUL", 'r'));
+            } else {
+                // Linux/macOS
+                exec("\"{$phpBin}\" \"{$artisan}\" queue:work --once --timeout=960 --tries=1 > /dev/null 2>&1 &");
+            }
+
+            Log::info('[ClientCaseCls] Queue worker spawned successfully.');
+        } catch (Exception $e) {
+            Log::warning('[ClientCaseCls] Could not spawn queue worker (jobs will run on next manual queue:work)', [
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }

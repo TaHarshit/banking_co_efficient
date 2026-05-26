@@ -51,6 +51,10 @@ class ClientCaseController extends Controller
         return get_response($request, $data);
     }
 
+    /**
+     * Dispatch async AI case analysis.
+     * Returns immediately with job_id. Frontend should poll ai/job-status/{job_id}.
+     */
     public function analyzeCase(Request $request)
     {
         $postData = General::stripRequest($request->all());
@@ -58,10 +62,30 @@ class ClientCaseController extends Controller
         return get_response($request, $data);
     }
 
+    /**
+     * Dispatch async AI plan generation.
+     * Returns immediately with job_id. Frontend should poll ai/job-status/{job_id}.
+     */
     public function generatePlan(Request $request)
     {
         $postData = General::stripRequest($request->all());
         $data = $this->clientCaseCls->GeneratePlan($postData);
+        return get_response($request, $data);
+    }
+
+    /**
+     * Poll the status of an async AI job.
+     * GET ai/job-status/{job_id}
+     *
+     * Response statuses:
+     *   pending    → job is queued, not started yet
+     *   processing → job is currently running
+     *   completed  → result is available in `data`
+     *   failed     → error message in `error`
+     */
+    public function getAiJobStatus($jobId, Request $request)
+    {
+        $data = $this->clientCaseCls->GetAiJobStatus($jobId);
         return get_response($request, $data);
     }
 }
