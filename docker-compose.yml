@@ -19,6 +19,22 @@ services:
     networks:
       - app-network
 
+  # Queue Worker Service (processes AI jobs in background)
+  queue:
+    image: banking-co-efficient-app
+    container_name: banking-queue
+    restart: unless-stopped
+    working_dir: /var/www/banking-coefficient
+    command: php artisan queue:work database --sleep=3 --tries=1 --timeout=960 --max-jobs=100
+    volumes:
+      - ./:/var/www/banking-coefficient
+      - ./docker-compose/php/php.ini:/usr/local/etc/php/conf.d/local.ini
+    depends_on:
+      - app
+      - db
+    networks:
+      - app-network
+
   # Nginx Service
   nginx:
     image: nginx:alpine
