@@ -160,15 +160,17 @@ def sanitize_json_response(content: str) -> str:
     return content.strip()
 
 
-def attempt_json_repair(content: str, required_keys: list) -> dict | None:
+def attempt_json_repair(content: str, required_keys: list, schema_template: str = "") -> dict | None:
     """
     Try to repair truncated JSON by asking the AI to fix it.
     Returns parsed dict on success, None on failure.
     """
     try:
+        template_str = f"\nThe output MUST strictly follow this JSON structure:\n{schema_template}\n" if schema_template else ""
         repair_prompt = f"""The following JSON is incomplete or malformed. Fix it so it is valid JSON 
 and contains ALL these required keys: {required_keys}.
-Return ONLY the corrected JSON with no explanation.
+{template_str}
+Return ONLY the corrected JSON with no explanation. Do NOT return the structure of a case analysis.
 
 BROKEN JSON:
 {content[:3000]}
@@ -411,6 +413,7 @@ def generate_plan(request: ActionPlanRequest):
 5. Phases should flow logically: Before meeting → During meeting → After meeting.
 6. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside JSON.
 7. ALL 6 fields are required. Do not omit any field.
+8. CRITICAL: Do NOT return the structure or keys of a Case Analysis (do not use keys like "ai_recommendations", "suggested_readings", "ai_challenges", or "negotiation_style_tips"). You MUST return strictly the Action Plan structure below.
 
 Required JSON structure (return ALL fields, keep steps detailed but concise):
 {{
@@ -479,11 +482,36 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
                            "strategic_recommendations", "critical_success_factors", "plan_b"]
         required_phases = ["phase_1_before", "phase_2_during", "phase_3_after"]
 
+        schema_template = """{
+  "executive_summary": "Summary string",
+  "meeting_objectives": ["Objective 1", "Objective 2"],
+  "action_plan": {
+    "phase_1_before": {
+      "title": "Pre-Negotiation Preparation",
+      "steps": ["Step 1", "Step 2"],
+      "readings": ["Reading 1"]
+    },
+    "phase_2_during": {
+      "title": "In-Meeting Execution",
+      "steps": ["Step 1", "Step 2"],
+      "readings": []
+    },
+    "phase_3_after": {
+      "title": "Post-Negotiation Follow-Up",
+      "steps": ["Step 1", "Step 2"],
+      "readings": []
+    }
+  },
+  "strategic_recommendations": ["Recommendation 1"],
+  "critical_success_factors": ["Factor 1"],
+  "plan_b": ["Alternative 1", "BATNA fallback"]
+}"""
+
         try:
             parsed_content = json.loads(sanitized)
         except json.JSONDecodeError as e:
             print(f"[WARN] /generate-plan - JSON parse failed, attempting repair: {e}", flush=True)
-            parsed_content = attempt_json_repair(sanitized, required_fields)
+            parsed_content = attempt_json_repair(sanitized, required_fields, schema_template)
             if parsed_content is None:
                 return {
                     "error": f"AI returned malformed JSON and repair failed: {str(e)}",
@@ -494,7 +522,7 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
         missing_fields = [f for f in required_fields if f not in parsed_content]
         if missing_fields:
             print(f"[WARN] /generate-plan - Missing fields: {missing_fields}, attempting repair", flush=True)
-            repaired = attempt_json_repair(sanitized, required_fields)
+            repaired = attempt_json_repair(sanitized, required_fields, schema_template)
             if repaired:
                 parsed_content = repaired
             else:
@@ -505,7 +533,7 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
         missing_phases = [p for p in required_phases if p not in action_plan]
         if missing_phases:
             print(f"[WARN] /generate-plan - Missing phases: {missing_phases}", flush=True)
-            repaired = attempt_json_repair(sanitized, required_fields)
+            repaired = attempt_json_repair(sanitized, required_fields, schema_template)
             if repaired and all(p in repaired.get("action_plan", {}) for p in required_phases):
                 parsed_content = repaired
             else:
