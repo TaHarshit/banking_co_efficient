@@ -210,9 +210,10 @@ class PersonalizedExperienceCls
     /**
      * Get user's responses organized by sections
      */
-    public function GetUserResponses($userId)
+    public function GetUserResponses($userId, $locale = 'en')
     {
         try {
+            app()->setLocale($locale);
             $responses = $this->ResponseRep->GetResponsesByUser($userId);
 
             $sections = $responses->groupBy('question.section.id')->map(function ($sectionResponses, $sectionId) {

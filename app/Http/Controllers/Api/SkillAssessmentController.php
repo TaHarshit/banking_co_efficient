@@ -56,9 +56,16 @@ class SkillAssessmentController extends Controller
      * Start a new exam for an exam template
      * POST /api/skill-assessment/start/{exam_template_id}
      */
-    public function startExam(int $examTemplateId): JsonResponse
+    public function startExam(Request $request, int $examTemplateId): JsonResponse
     {
-        return $this->skillAssessmentCls->startExam($examTemplateId);
+        $locale = $request->header('Accept-Language', 'en');
+        if (str_starts_with($locale, 'fr')) {
+            $locale = 'fr';
+        } else {
+            $locale = 'en';
+        }
+
+        return $this->skillAssessmentCls->startExam($examTemplateId, $locale);
     }
 
     /**
@@ -82,17 +89,31 @@ class SkillAssessmentController extends Controller
      * Get exam result
      * GET /api/skill-assessment/result/{exam_id}
      */
-    public function getResult(int $examId): JsonResponse
+    public function getResult(Request $request, int $examId): JsonResponse
     {
-        return $this->skillAssessmentCls->getResult($examId);
+        $locale = $request->header('Accept-Language', 'en');
+        if (str_starts_with($locale, 'fr')) {
+            $locale = 'fr';
+        } else {
+            $locale = 'en';
+        }
+
+        return $this->skillAssessmentCls->getResult($examId, $locale);
     }
 
     /**
      * Get user's exam history
      * GET /api/skill-assessment/history
      */
-    public function getHistory(): JsonResponse
+    public function getHistory(Request $request): JsonResponse
     {
-        return $this->skillAssessmentCls->getHistory();
+        $locale = $request->header('Accept-Language', 'en');
+        if (str_starts_with($locale, 'fr')) {
+            $locale = 'fr';
+        } else {
+            $locale = 'en';
+        }
+
+        return $this->skillAssessmentCls->getHistory($locale);
     }
 }

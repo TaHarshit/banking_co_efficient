@@ -64,8 +64,9 @@ class SkillAssessmentCls
     /**
      * Start a new exam for an exam template
      */
-    public function startExam(int $examTemplateId): JsonResponse
+    public function startExam(int $examTemplateId, string $locale = 'en'): JsonResponse
     {
+        app()->setLocale($locale);
         $user = Auth::user();
         $businessId = $user->business_id ?? null;
 
@@ -222,8 +223,9 @@ class SkillAssessmentCls
     /**
      * Get exam result
      */
-    public function getResult(int $examId): JsonResponse
+    public function getResult(int $examId, string $locale = 'en'): JsonResponse
     {
+        app()->setLocale($locale);
         $exam = SkillAssessmentExam::where('user_id', Auth::id())
             ->with(['examTemplate', 'answers.question'])
             ->find($examId);
@@ -251,8 +253,9 @@ class SkillAssessmentCls
     /**
      * Get user's exam history grouped by template
      */
-    public function getHistory(): JsonResponse
+    public function getHistory(string $locale = 'en'): JsonResponse
     {
+        app()->setLocale($locale);
         $user = Auth::user();
         $businessId = $user->business_id ?? null;
 

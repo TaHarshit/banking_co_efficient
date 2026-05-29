@@ -107,7 +107,16 @@ class PersonalizedExperienceController extends Controller
     {
         $userId = Auth::id();
 
-        $result = $this->ExperienceCls->GetUserResponses($userId);
+        $locale = $request->header('Accept-Language', 'en');
+
+        // Normalize locale
+        if (str_starts_with($locale, 'fr')) {
+            $locale = 'fr';
+        } else {
+            $locale = 'en';
+        }
+
+        $result = $this->ExperienceCls->GetUserResponses($userId, $locale);
 
         if ($result['success']) {
             return response()->json([
