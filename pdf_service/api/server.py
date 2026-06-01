@@ -788,7 +788,7 @@ Context:
             parts          = full_response.split("Suggestions:")
             answer         = parts[0].strip()
             raw_suggestions = parts[1].strip().split("|")
-            suggestions    = [s.strip() for s in raw_suggestions if s.strip()]
+            suggestions    = [s.strip().strip("[]").strip() for s in raw_suggestions if s.strip()]
 
         total_time = time.time() - start_time
         print(f"[PERF] /ask - SUCCESS. Total: {total_time:.3f}s", flush=True)
