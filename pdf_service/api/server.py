@@ -68,6 +68,9 @@ AI_API_BASE_URL = os.getenv("AI_API_BASE_URL", None)
 AI_CHAT_MODEL   = os.getenv("AI_CHAT_MODEL", "gpt-4o-mini")
 AI_IMAGE_BASE_URL = os.getenv("AI_IMAGE_BASE_URL", "http://127.0.0.1:8000")
 
+print(f"[INIT] AI_API_BASE_URL: {AI_API_BASE_URL}", flush=True)
+print(f"[INIT] AI_CHAT_MODEL: {AI_CHAT_MODEL}", flush=True)
+
 _client = None
 def get_ai_client():
     global _client
@@ -798,6 +801,8 @@ Context:
         }
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"[ERROR] /ask (process_question): {str(e)}", flush=True)
         return {"answer": f"Error: {str(e)}", "images": [], "reference_pages": []}
 
