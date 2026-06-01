@@ -115,6 +115,137 @@ class ActionPlanSchema(BaseModel):
 CASES_COLLECTION    = "past_cases"
 ANALYZED_COLLECTION = "analyzed_cases"
 
+# ---------------------------------------------------------------------------
+# JSON Schemas — enforced via Infomaniak's json_schema response_format.
+# These guarantee the mobile app always receives the exact structure it needs.
+# ---------------------------------------------------------------------------
+
+ANALYZE_CASE_RESPONSE_FORMAT = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "case_analysis",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "ai_recommendations": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "suggested_readings": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "chapter": {"type": "string"},
+                            "title":   {"type": "string"},
+                            "time":    {"type": "string"},
+                            "reason":  {"type": "string"}
+                        },
+                        "required": ["chapter", "title", "time", "reason"],
+                        "additionalProperties": False
+                    }
+                },
+                "ai_challenges": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "negotiation_style_tips": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "confidence_score": {"type": "integer"}
+            },
+            "required": [
+                "ai_recommendations",
+                "suggested_readings",
+                "ai_challenges",
+                "negotiation_style_tips",
+                "confidence_score"
+            ],
+            "additionalProperties": False
+        }
+    }
+}
+
+GENERATE_PLAN_RESPONSE_FORMAT = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "action_plan",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "executive_summary": {"type": "string"},
+                "meeting_objectives": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "action_plan": {
+                    "type": "object",
+                    "properties": {
+                        "phase_1_before": {
+                            "type": "object",
+                            "properties": {
+                                "title":    {"type": "string"},
+                                "steps":    {"type": "array", "items": {"type": "string"}},
+                                "readings": {"type": "array", "items": {"type": "string"}}
+                            },
+                            "required": ["title", "steps", "readings"],
+                            "additionalProperties": False
+                        },
+                        "phase_2_during": {
+                            "type": "object",
+                            "properties": {
+                                "title":    {"type": "string"},
+                                "steps":    {"type": "array", "items": {"type": "string"}},
+                                "readings": {"type": "array", "items": {"type": "string"}}
+                            },
+                            "required": ["title", "steps", "readings"],
+                            "additionalProperties": False
+                        },
+                        "phase_3_after": {
+                            "type": "object",
+                            "properties": {
+                                "title":    {"type": "string"},
+                                "steps":    {"type": "array", "items": {"type": "string"}},
+                                "readings": {"type": "array", "items": {"type": "string"}}
+                            },
+                            "required": ["title", "steps", "readings"],
+                            "additionalProperties": False
+                        }
+                    },
+                    "required": ["phase_1_before", "phase_2_during", "phase_3_after"],
+                    "additionalProperties": False
+                },
+                "strategic_recommendations": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "critical_success_factors": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "plan_b": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                }
+            },
+            "required": [
+                "executive_summary",
+                "meeting_objectives",
+                "action_plan",
+                "strategic_recommendations",
+                "critical_success_factors",
+                "plan_b"
+            ],
+            "additionalProperties": False
+        }
+    }
+}
+
+# ---------------------------------------------------------------------------
+
 def ensure_collections():
     for coll in [CASES_COLLECTION, ANALYZED_COLLECTION]:
         try:
@@ -160,10 +291,11 @@ def sanitize_json_response(content: str) -> str:
     return content.strip()
 
 
-def attempt_json_repair(content: str, required_keys: list, schema_template: str = "") -> dict | None:
+def attempt_json_repair(content: str, required_keys: list, schema_template: str = "", response_format: dict | None = None) -> dict | None:
     """
     Try to repair truncated JSON by asking the AI to fix it.
     Returns parsed dict on success, None on failure.
+    response_format: pass the json_schema dict for the endpoint (e.g. ANALYZE_CASE_RESPONSE_FORMAT).
     """
     try:
         template_str = f"\nThe output MUST strictly follow this JSON structure:\n{schema_template}\n" if schema_template else ""
@@ -175,12 +307,15 @@ Return ONLY the corrected JSON with no explanation. Do NOT return the structure 
 BROKEN JSON:
 {content[:3000]}
 """
-        result = get_ai_client().chat.completions.create(
-            model=AI_CHAT_MODEL,
-            messages=[{"role": "user", "content": repair_prompt}],
-            response_format={"type": "json_object"},
-            max_tokens=4096,
-        )
+        call_kwargs = {
+            "model":      AI_CHAT_MODEL,
+            "messages":   [{"role": "user", "content": repair_prompt}],
+            "max_tokens": 4096,
+        }
+        if response_format:
+            call_kwargs["response_format"] = response_format
+
+        result = get_ai_client().chat.completions.create(**call_kwargs)
         fixed = result.choices[0].message.content
         if fixed:
             return json.loads(sanitize_json_response(fixed))
@@ -189,20 +324,25 @@ BROKEN JSON:
     return None
 
 
-def call_ai_with_retry(messages: list, max_tokens: int = 16384, max_retries: int = 2) -> str | None:
+def call_ai_with_retry(messages: list, max_tokens: int = 16384, max_retries: int = 2, response_format: dict | None = None) -> str | None:
     """
     Call the AI with internal retry on empty/None responses.
     Returns the content string or None if all retries fail.
+    response_format: pass the json_schema dict for the endpoint (e.g. ANALYZE_CASE_RESPONSE_FORMAT).
+                     Leave None for plain-text responses (e.g. /ask endpoint).
     """
     for attempt in range(1, max_retries + 1):
         try:
-            result = get_ai_client().chat.completions.create(
-                model=AI_CHAT_MODEL,
-                messages=messages,
-                response_format={"type": "json_object"},
-                max_tokens=max_tokens,
-                temperature=0.3,       # Lower temperature = more consistent structured output
-            )
+            call_kwargs = {
+                "model":       AI_CHAT_MODEL,
+                "messages":    messages,
+                "max_tokens":  max_tokens,
+                "temperature": 0.3,   # Lower temperature = more consistent structured output
+            }
+            if response_format:
+                call_kwargs["response_format"] = response_format
+
+            result = get_ai_client().chat.completions.create(**call_kwargs)
             content = result.choices[0].message.content
             if content and content.strip():
                 return content
@@ -304,7 +444,7 @@ Required JSON structure:
 }}"""
 
         messages = [{"role": "system", "content": system_prompt}]
-        content  = call_ai_with_retry(messages, max_tokens=8192)
+        content  = call_ai_with_retry(messages, max_tokens=8192, response_format=ANALYZE_CASE_RESPONSE_FORMAT)
 
         if content is None:
             return {"error": "AI returned empty response after retries. Please try again."}
@@ -319,7 +459,7 @@ Required JSON structure:
             analysis = json.loads(sanitized)
         except json.JSONDecodeError as e:
             print(f"[WARN] /analyze-case - JSON parse failed, attempting repair: {e}", flush=True)
-            analysis = attempt_json_repair(sanitized, required_keys)
+            analysis = attempt_json_repair(sanitized, required_keys, response_format=ANALYZE_CASE_RESPONSE_FORMAT)
             if analysis is None:
                 return {
                     "error": f"AI returned malformed JSON and repair failed: {str(e)}",
@@ -329,7 +469,7 @@ Required JSON structure:
         # Validate required fields
         missing = [k for k in required_keys if k not in analysis]
         if missing:
-            repaired = attempt_json_repair(sanitized, required_keys)
+            repaired = attempt_json_repair(sanitized, required_keys, response_format=ANALYZE_CASE_RESPONSE_FORMAT)
             if repaired:
                 analysis = repaired
             else:
@@ -470,7 +610,7 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
 }}"""
 
         messages = [{"role": "system", "content": system_prompt}]
-        content  = call_ai_with_retry(messages, max_tokens=8192)
+        content  = call_ai_with_retry(messages, max_tokens=8192, response_format=GENERATE_PLAN_RESPONSE_FORMAT)
 
         if content is None:
             return {"error": "AI returned empty response after retries. Please try again."}
@@ -511,7 +651,7 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
             parsed_content = json.loads(sanitized)
         except json.JSONDecodeError as e:
             print(f"[WARN] /generate-plan - JSON parse failed, attempting repair: {e}", flush=True)
-            parsed_content = attempt_json_repair(sanitized, required_fields, schema_template)
+            parsed_content = attempt_json_repair(sanitized, required_fields, schema_template, response_format=GENERATE_PLAN_RESPONSE_FORMAT)
             if parsed_content is None:
                 return {
                     "error": f"AI returned malformed JSON and repair failed: {str(e)}",
@@ -522,7 +662,7 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
         missing_fields = [f for f in required_fields if f not in parsed_content]
         if missing_fields:
             print(f"[WARN] /generate-plan - Missing fields: {missing_fields}, attempting repair", flush=True)
-            repaired = attempt_json_repair(sanitized, required_fields, schema_template)
+            repaired = attempt_json_repair(sanitized, required_fields, schema_template, response_format=GENERATE_PLAN_RESPONSE_FORMAT)
             if repaired:
                 parsed_content = repaired
             else:
@@ -533,7 +673,7 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
         missing_phases = [p for p in required_phases if p not in action_plan]
         if missing_phases:
             print(f"[WARN] /generate-plan - Missing phases: {missing_phases}", flush=True)
-            repaired = attempt_json_repair(sanitized, required_fields, schema_template)
+            repaired = attempt_json_repair(sanitized, required_fields, schema_template, response_format=GENERATE_PLAN_RESPONSE_FORMAT)
             if repaired and all(p in repaired.get("action_plan", {}) for p in required_phases):
                 parsed_content = repaired
             else:
