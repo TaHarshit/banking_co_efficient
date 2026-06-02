@@ -97,6 +97,13 @@ class UserCls
             if ($response) {
                 DB::commit();
 
+                // Send welcome email to user
+                try {
+                    Mail::to($response->email)->send(new \App\Mail\SignupWelcomeMail($response));
+                } catch (\Exception $mailEx) {
+                    \Illuminate\Support\Facades\Log::error('Failed to send signup welcome email: ' . $mailEx->getMessage());
+                }
+
                 // If user is pending (status=2), return success without login
                 // if ($userStatus === 2) {
                 //     $data = General::setResponse('SUCCESS', "Registration submitted! Please wait for approval from the business.");

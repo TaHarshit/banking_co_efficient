@@ -1,227 +1,115 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to {{ config('app.name') }}</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f6f9ff;
-            margin: 0;
-            padding: 0;
-        }
-
-        .email-wrapper {
-            max-width: 600px;
-            margin: 40px auto;
-            background: #ffffff;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .header {
-            background: linear-gradient(135deg, #4154f1 0%, #2c3cdd 100%);
-            color: #ffffff;
-            padding: 40px 30px;
-            text-align: center;
-        }
-
-        .logo-container {
-            margin-bottom: 20px;
-        }
-
-        .logo-container img {
-            max-width: 150px;
-            height: auto;
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 28px;
-            font-weight: 600;
-        }
-
-        .content {
-            padding: 40px 30px;
-        }
-
-        .content h2 {
-            color: #4154f1;
-            margin-top: 0;
-            font-size: 24px;
-            font-weight: 600;
-        }
-
-        .content p {
-            margin: 15px 0;
-            color: #555;
-        }
-
-        .info-box {
-            background: #f8f9fa;
-            border-left: 4px solid #4154f1;
-            padding: 20px;
-            margin: 25px 0;
-            border-radius: 4px;
-        }
-
-        .info-box p {
-            margin: 8px 0;
-            color: #333;
-        }
-
-        .info-box strong {
-            color: #4154f1;
-            font-weight: 600;
-        }
-
-        .button-container {
-            text-align: center;
-            margin: 30px 0;
-        }
-
-        .button {
-            display: inline-block;
-            padding: 15px 40px;
-            background: #4154f1;
-            color: #ffffff !important;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 16px;
-            box-shadow: 0 4px 10px rgba(65, 84, 241, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .button:hover {
-            background: #2c3cdd;
-            box-shadow: 0 6px 15px rgba(65, 84, 241, 0.4);
-        }
-
-        .link-box {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 20px 0;
-            word-break: break-all;
-        }
-
-        .link-box p {
-            margin: 5px 0;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .link-box a {
-            color: #4154f1;
-            text-decoration: none;
-        }
-
-        .warning-box {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 20px;
-            margin: 25px 0;
-            border-radius: 4px;
-        }
-
-        .warning-box p {
-            margin: 0;
-            color: #856404;
-        }
-
-        .warning-box strong {
-            color: #856404;
-        }
-
-        .footer {
-            background: #f8f9fa;
-            padding: 30px;
-            text-align: center;
-            border-top: 1px solid #e9ecef;
-        }
-
-        .footer p {
-            margin: 5px 0;
-            font-size: 13px;
-            color: #6c757d;
-        }
-
-        .divider {
-            height: 1px;
-            background: #e9ecef;
-            margin: 30px 0;
-        }
-    </style>
 </head>
-
-<body>
-    <div class="email-wrapper">
-        <div class="header">
-            <div class="logo-container">
-                <img src="{{ asset('public/assets/img/logo.png') }}" alt="{{ config('app.name') }} Logo">
-            </div>
-            <h1>Welcome to {{ config('app.name') }}</h1>
-        </div>
-
-        <div class="content">
-            <h2>Your Business Account Has Been Created! 🎉</h2>
-
-            <p>Hello,</p>
-
-            <p>We're excited to inform you that a business account has been created for you on {{ config('app.name') }}.
-                You're now part of our growing business community!</p>
-
-            <div class="info-box">
-                <p><strong>Business Name:</strong> {{ $data['business_name'] }}</p>
-                <p><strong>Email:</strong> {{ $data['business_email'] }}</p>
-            </div>
-
-            <p>To get started and access your business dashboard, you need to set up your password by clicking the
-                button below:</p>
-
-            <div class="button-container">
-                <a href="{{ $data['setup_link'] }}" class="button">Set Up Your Password</a>
-            </div>
-
-            <div class="link-box">
-                <p><strong>Or copy and paste this link into your browser:</strong></p>
-                <p><a href="{{ $data['setup_link'] }}">{{ $data['setup_link'] }}</a></p>
-            </div>
-
-            <div class="warning-box">
-                <p><strong>⚠️ Important:</strong> This link will expire in 24 hours for security reasons. Please set up
-                    your password as soon as possible.</p>
-            </div>
-
-            <div class="divider"></div>
-
-            <p><strong>What's Next?</strong></p>
-            <p>Once you've set up your password, you'll be able to:</p>
-            <ul style="color: #555; line-height: 1.8;">
-                <li>Access your business dashboard</li>
-                <li>Manage your business profile</li>
-                <li>Update your business information</li>
-                <li>And much more!</li>
-            </ul>
-
-            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
-
-            <p style="margin-top: 30px;">Best regards,<br>
-                <strong>The {{ config('app.name') }} Team</strong>
-            </p>
-        </div>
-
-        <div class="footer">
-            <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
-            <p>This is an automated email. Please do not reply to this message.</p>
-        </div>
-    </div>
+<body style="margin: 0; padding: 0; background-color: #f5f8fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; color: #2d3748;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f5f8fa; padding: 40px 0 20px 0;">
+        <tr>
+            <td align="center">
+                <!-- Outer email container -->
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-top: 6px solid #3756a2; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); overflow: hidden;">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 20px 40px; background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%); border-bottom: 1px solid #e2e8f0;">
+                            <!-- Branding -->
+                            <h2 style="margin: 0; font-size: 20px; font-weight: 700; color: #1a365d; letter-spacing: -0.5px;">
+                                {{ config('app.name') }}
+                            </h2>
+                            <p style="margin: 5px 0 0 0; font-size: 13px; color: #4a5568; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">
+                                by Co-Efficient³
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Main Body -->
+                    <tr>
+                        <td style="padding: 40px 40px 30px 40px;">
+                            <h1 style="margin: 0 0 20px 0; font-size: 22px; font-weight: 700; color: #1a365d; line-height: 1.3;">
+                                Business Account Created
+                            </h1>
+                            
+                            <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6; color: #4a5568;">
+                                Hello,
+                            </p>
+                            
+                            <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #4a5568;">
+                                We are pleased to inform you that a business profile has been successfully set up for you on <strong>{{ config('app.name') }}</strong>.
+                            </p>
+                            
+                            <!-- Credentials / Info Card -->
+                            <div style="background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin: 25px 0;">
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                    <tr>
+                                        <td style="padding-bottom: 8px; font-size: 14px; color: #718096; width: 120px;"><strong>Business Name:</strong></td>
+                                        <td style="padding-bottom: 8px; font-size: 14px; color: #2d3748;">{{ $data['business_name'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-size: 14px; color: #718096;"><strong>Login Email:</strong></td>
+                                        <td style="font-size: 14px; color: #2d3748;">{{ $data['business_email'] }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #4a5568;">
+                                To access your business dashboard and get started, please set up your password by clicking the button below:
+                            </p>
+                            
+                            <!-- Action button -->
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 30px 0 20px 0;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{ $data['setup_link'] }}" style="display: inline-block; background-color: #3756a2; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 30px; border-radius: 6px; box-shadow: 0 4px 6px rgba(55, 86, 162, 0.15); transition: background-color 0.2s ease;">
+                                            Set Up Your Password
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Expiration warning -->
+                            <div style="background-color: #fffaf0; border-left: 4px solid #dd6b20; padding: 15px; margin: 25px 0; border-radius: 0 6px 6px 0; font-size: 14px; color: #7b341e;">
+                                <strong>Important Note:</strong> For security reasons, this setup link is temporary and will expire in 24 hours. Please configure your password at your earliest convenience.
+                            </div>
+                            
+                            <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #718096;">
+                                If the button above does not work, please copy and paste the following URL directly into your web browser:
+                                <br>
+                                <span style="word-break: break-all; color: #3756a2;">
+                                    {{ $data['setup_link'] }}
+                                </span>
+                            </p>
+                            
+                            <div style="margin-top: 30px; border-top: 1px solid #edf2f7; padding-top: 20px;">
+                                <p style="margin: 0 0 10px 0; font-size: 15px; font-weight: 700; color: #2d3748;">What is Next?</p>
+                                <p style="margin: 0 0 15px 0; font-size: 15px; color: #4a5568;">Once your password is set, you will be able to:</p>
+                                <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #4a5568; line-height: 1.6;">
+                                    <li style="margin-bottom: 6px;">Access your custom business dashboard</li>
+                                    <li style="margin-bottom: 6px;">Manage user profiles and learning progress</li>
+                                    <li>Track team performance and assessments</li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 20px 40px 30px 40px; background-color: #edf2f7; border-top: 1px solid #e2e8f0; font-size: 12px; color: #718096; line-height: 1.5;">
+                            <p style="margin: 0 0 8px 0; font-weight: 600; color: #4a5568;">
+                                Co-Efficient³ Training & Consulting
+                            </p>
+                            <p style="margin: 0 0 12px 0;">
+                                Geneva, Switzerland &bull; support@co-efficient.ch
+                            </p>
+                            <p style="margin: 0;">
+                                &copy; {{ date('Y') }} Banking Co-Efficient. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
-
 </html>

@@ -28,58 +28,46 @@
                     <tr>
                         <td style="padding: 40px 40px 30px 40px;">
                             <h1 style="margin: 0 0 20px 0; font-size: 22px; font-weight: 700; color: #1a365d; line-height: 1.3;">
-                                Welcome, {{ $user->name }}!
+                                Welcome to the Program, {{ $user->name }}!
                             </h1>
                             
                             <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6; color: #4a5568;">
-                                Hello {{ $user->name }} {{ $user->surname ?? '' }},
+                                Hello {{ $user->name }},
                             </p>
                             
                             <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #4a5568;">
-                                Your account has been successfully created on <strong>Formation Négociation Banque</strong>. You can now log in using the credentials below:
+                                We are thrilled to welcome you to <strong>Formation Négociation Banque</strong>. Your account has been registered successfully, and you are ready to begin your journey in mastering commercial negotiation for banking professionals.
                             </p>
                             
-                            <!-- Credentials Card -->
-                            <div style="background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin: 25px 0;">
-                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                                    <tr>
-                                        <td style="padding-bottom: 8px; font-size: 14px; color: #718096; width: 100px;"><strong>Email:</strong></td>
-                                        <td style="padding-bottom: 8px; font-size: 14px; color: #2d3748;">{{ $user->email }}</td>
-                                    </tr>
-                                    @if(!empty($password))
-                                    <tr>
-                                        <td style="font-size: 14px; color: #718096;"><strong>Password:</strong></td>
-                                        <td style="font-size: 14px; color: #2d3748;">{{ $password }}</td>
-                                    </tr>
-                                    @endif
-                                </table>
+                            <!-- Key benefits / Call-to-action details -->
+                            <div style="background-color: #f7fafc; border-left: 4px solid #3756a2; padding: 20px; margin: 25px 0; border-radius: 0 6px 6px 0;">
+                                <h3 style="margin: 0 0 8px 0; font-size: 15px; color: #2d3748; font-weight: 700;">
+                                    Getting Started is Easy:
+                                </h3>
+                                <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #4a5568; line-height: 1.6;">
+                                    <li style="margin-bottom: 6px;">Log in to the mobile application using your email address: <strong>{{ $user->email }}</strong></li>
+                                    <li style="margin-bottom: 6px;">Complete your personalized profile to tailor the experience</li>
+                                    <li>Explore the case studies and prepare your negotiation strategies</li>
+                                </ul>
                             </div>
                             
-                            <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #e53e3e; font-weight: 600;">
-                                For security reasons, we strongly recommend that you change your password immediately after your first login.
-                            </p>
-                            
-                            <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #4a5568;">
-                                You can set or reset your password directly by clicking the button below:
+                            <p style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #4a5568;">
+                                Our AI-driven coaching features are tailored to match your specific professional style, helping you build confidence and achieve exceptional real-world negotiation outcomes.
                             </p>
                             
                             <!-- Action button -->
                             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 30px 0 20px 0;">
                                 <tr>
                                     <td align="center">
-                                        <a href="{{ url(route('password.reset', ['token' => $token, 'email' => $user->email])) }}" style="display: inline-block; background-color: #3756a2; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 30px; border-radius: 6px; box-shadow: 0 4px 6px rgba(55, 86, 162, 0.15); transition: background-color 0.2s ease;">
-                                            Set Your Password
+                                        <a href="{{ url('/') }}" style="display: inline-block; background-color: #3756a2; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 30px; border-radius: 6px; box-shadow: 0 4px 6px rgba(55, 86, 162, 0.15); transition: background-color 0.2s ease;">
+                                            Access Your Account
                                         </a>
                                     </td>
                                 </tr>
                             </table>
                             
                             <p style="margin: 30px 0 0 0; font-size: 14px; line-height: 1.6; color: #718096; border-top: 1px solid #edf2f7; padding-top: 20px;">
-                                If the button above doesn't work, copy and paste the following link into your browser:
-                                <br>
-                                <span style="word-break: break-all; color: #3756a2;">
-                                    {{ url(route('password.reset', ['token' => $token, 'email' => $user->email])) }}
-                                </span>
+                                If you did not register for this account, please ignore this email or contact support.
                             </p>
                         </td>
                     </tr>
