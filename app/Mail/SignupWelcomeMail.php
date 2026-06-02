@@ -28,7 +28,7 @@ class SignupWelcomeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome to Formation Négociation Banque!',
+            subject: 'Welcome to NegoMaster!',
         );
     }
 

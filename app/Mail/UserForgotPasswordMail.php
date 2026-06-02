@@ -30,7 +30,7 @@ class UserForgotPasswordMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Reset Your Password - Formation Négociation Banque',
+            subject: 'Reset Your Password - NegoMaster',
         );
     }
 
