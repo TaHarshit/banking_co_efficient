@@ -13,6 +13,8 @@ use Carbon\Carbon;
 use Auth;
 use DB;
 
+use Illuminate\Validation\Rules\Password;
+
 class UserController extends Controller
 {
     protected $UserCls;
@@ -109,7 +111,15 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'token' => 'required',
             'email' => 'required|email',
-            'password' => 'required|confirmed|min:6',
+            'password' => [
+                'required',
+                'confirmed',
+                Password::min(8)
+                    ->mixedCase()
+                    ->letters()
+                    ->numbers()
+                    ->symbols()
+            ],
         ]);
 
         if ($validator->fails()) {

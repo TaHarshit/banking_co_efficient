@@ -72,17 +72,6 @@
                             </p>
 
                             <!-- Action button -->
-                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-                                style="margin: 30px 0 20px 0;">
-                                <tr>
-                                    <td align="center">
-                                        <a href="{{ url('/') }}"
-                                            style="display: inline-block; background-color: #3756a2; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 30px; border-radius: 6px; box-shadow: 0 4px 6px rgba(55, 86, 162, 0.15); transition: background-color 0.2s ease;">
-                                            Access Your Account
-                                        </a>
-                                    </td>
-                                </tr>
-                            </table>
 
                             <p
                                 style="margin: 30px 0 0 0; font-size: 14px; line-height: 1.6; color: #718096; border-top: 1px solid #edf2f7; padding-top: 20px;">
