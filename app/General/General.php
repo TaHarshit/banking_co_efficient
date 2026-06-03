@@ -342,7 +342,7 @@ class General extends \Exception
                 ); 
             }
 
-            $url        = 'https://fcm.googleapis.com/v1/projects/meekle/messages:send';
+            $url        = 'https://fcm.googleapis.com/v1/projects/negomaster-5c83b/messages:send';
             $google_auth_refresh_token =  InAppAuthToken::where('identifier', 'google')->first();
 
                 if(date('Y-m-d H:i:s') > $google_auth_refresh_token->token_expiry_time){
