@@ -111,19 +111,17 @@ class ClientCaseController extends Controller
             'plan' => $plan,
         ]);
 
-        // Generate a unique filename
-        $fileName = 'action_plans/Action_Plan_' . $case->id . '_' . time() . '.pdf';
-        
-        // Save the PDF to the public storage disk
-        \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $pdf->output());
+        // Generate the PDF content in memory
+        $pdfContent = $pdf->output();
 
-        // Get the full URL to the saved PDF
-        $fileUrl = asset('storage/' . $fileName);
+        // Encode the PDF to a base64 string so it can be sent via JSON without saving to disk
+        $base64Pdf = base64_encode($pdfContent);
 
-        // Return a standard JSON API response with the URL
+        // Return a standard JSON API response with the base64 string
         $apiResponse = \App\General\General::setResponse('SUCCESS', 'PDF generated successfully.');
         $apiResponse['data'] = [
-            'pdf_url' => $fileUrl
+            'pdf_base64' => $base64Pdf,
+            'file_name' => 'Action_Plan_' . ($case->client_alias ?? 'Case') . '.pdf'
         ];
 
         return get_response($request, $apiResponse);
