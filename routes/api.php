@@ -88,6 +88,7 @@ Route::middleware(['basicFilter'])->group(function () {
             Route::post('client-cases', 'store');
             Route::get('client-cases', 'index');
             Route::get('client-cases/{id}', 'show');
+            Route::get('client-cases/{id}/export-plan', 'exportPlan');
             Route::get('case-study-sections', 'caseStudySections');
         });
 

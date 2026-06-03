@@ -88,4 +88,29 @@ class ClientCaseController extends Controller
         $data = $this->clientCaseCls->GetAiJobStatus($jobId);
         return get_response($request, $data);
     }
+    /**
+     * Export the generated AI plan as a PDF document.
+     */
+    public function exportPlan($id, Request $request)
+    {
+        $response = $this->clientCaseCls->GetCasePlanForExport($id);
+
+        if (!isset($response['code']) || $response['code'] !== 200 || !isset($response['data'])) {
+            return get_response($request, $response);
+        }
+
+        $case = $response['data'];
+        $plan = $case->action_plan;
+
+        if (is_string($plan)) {
+            $plan = json_decode($plan, true);
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.action-plan', [
+            'case' => $case,
+            'plan' => $plan,
+        ]);
+
+        return $pdf->download('Action_Plan_' . ($case->client_alias ?? 'Case') . '.pdf');
+    }
 }

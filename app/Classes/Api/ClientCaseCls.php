@@ -290,4 +290,29 @@ class ClientCaseCls
             ]);
         }
     }
+
+    /**
+     * Get the case plan for PDF export.
+     */
+    public function GetCasePlanForExport($id)
+    {
+        try {
+            $case = $this->clientCaseRepository->GetCaseDetails($id, Auth::id());
+
+            if (! $case) {
+                return General::setResponse('VALIDATION_ERROR', 'Case not found.');
+            }
+
+            if (empty($case->action_plan)) {
+                return General::setResponse('VALIDATION_ERROR', 'No action plan generated for this case yet.');
+            }
+
+            $response         = General::setResponse('SUCCESS', 'Case plan retrieved successfully.');
+            $response['data'] = $case;
+
+            return $response;
+        } catch (Exception $e) {
+            return General::setResponse('OTHER_ERROR', $e->getMessage());
+        }
+    }
 }
