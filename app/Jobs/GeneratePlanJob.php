@@ -127,8 +127,9 @@ class GeneratePlanJob implements ShouldQueue
                     'result' => $planData,
                 ]);
 
-                // Notify user
-                $notificationsRepo->StoreNotification(
+                // Notify user 
+                
+                \App\General\General::sendNotificationV1(
                     $this->userId,
                     '✅ Action Plan Ready',
                     "Your negotiation action plan for case \"{$clientCase->client_alias}\" has been generated. Tap to view."

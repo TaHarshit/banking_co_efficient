@@ -108,8 +108,7 @@ class AnalyzeCaseJob implements ShouldQueue
                     'result' => $analysisData,
                 ]);
 
-                // Notify user
-                $notificationsRepo->StoreNotification(
+                \App\General\General::sendNotificationV1(
                     $this->userId,
                     '✅ AI Analysis Complete',
                     "Your negotiation analysis for case \"{$clientCase->client_alias}\" is ready. Tap to view."
