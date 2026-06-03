@@ -111,6 +111,21 @@ class ClientCaseController extends Controller
             'plan' => $plan,
         ]);
 
-        return $pdf->download('Action_Plan_' . ($case->client_alias ?? 'Case') . '.pdf');
+        // Generate a unique filename
+        $fileName = 'action_plans/Action_Plan_' . $case->id . '_' . time() . '.pdf';
+        
+        // Save the PDF to the public storage disk
+        \Illuminate\Support\Facades\Storage::disk('public')->put($fileName, $pdf->output());
+
+        // Get the full URL to the saved PDF
+        $fileUrl = asset('storage/' . $fileName);
+
+        // Return a standard JSON API response with the URL
+        $apiResponse = \App\General\General::setResponse('SUCCESS', 'PDF generated successfully.');
+        $apiResponse['data'] = [
+            'pdf_url' => $fileUrl
+        ];
+
+        return get_response($request, $apiResponse);
     }
 }
