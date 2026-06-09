@@ -84,7 +84,7 @@
                                             <div class="input-group has-validation">
                                                 <span class="input-group-text"><i class="bi bi-lock"></i></span>
                                                 <input type="password" name="password" class="form-control" id="password" placeholder="••••••••" required>
-                                                 <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="position: relative; z-index: 5;">
+                                                 <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="position: relative; z-index: 5;" onclick="togglePasswordVisibility(event)">
                                                      <i class="bi bi-eye" id="togglePasswordIcon"></i>
                                                  </button>
                                                 <div class="invalid-feedback">Please enter your new password.</div>
@@ -134,21 +134,23 @@
 
 @section('customjs')
     <script>
+        function togglePasswordVisibility(e) {
+            if (e) e.preventDefault();
+            const passwordInput = $('#password');
+            const confirmInput = $('#password_confirmation');
+            const togglePasswordIcon = $('#togglePasswordIcon');
+            const type = passwordInput.attr('type') === 'password' ? 'text' : 'password';
+            passwordInput.attr('type', type);
+            confirmInput.attr('type', type);
+            togglePasswordIcon.toggleClass('bi-eye bi-eye-slash');
+        }
+
         $(document).ready(function () {
             const passwordInput = $('#password');
             const confirmInput = $('#password_confirmation');
             const form = $('#resetPasswordForm');
             const togglePassword = $('#togglePassword');
             const togglePasswordIcon = $('#togglePasswordIcon');
-            
-            // Toggle password visibility
-            togglePassword.on('click', function (e) {
-                e.preventDefault();
-                const type = passwordInput.attr('type') === 'password' ? 'text' : 'password';
-                passwordInput.attr('type', type);
-                confirmInput.attr('type', type);
-                togglePasswordIcon.toggleClass('bi-eye bi-eye-slash');
-            });
 
             // Rules Definitions
             const rules = {
