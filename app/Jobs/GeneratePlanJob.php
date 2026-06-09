@@ -132,7 +132,7 @@ class GeneratePlanJob implements ShouldQueue
                 \App\General\General::sendNotificationV1(
                     $this->userId,
                     '✅ Action Plan Ready',
-                    "Your negotiation action plan for case \"{$clientCase->client_alias}\" has been generated. Tap to view."
+                    "Your negotiation action plan for case \"{$clientCase->client_alias}\" has been generated."
                 );
 
                 Log::info("[GeneratePlanJob] Completed successfully for case #{$this->caseId}");

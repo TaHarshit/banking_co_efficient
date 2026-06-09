@@ -63,8 +63,32 @@
         @if($case->case_reference)
             <p><span class="bold">Case Reference:</span> {{ $case->case_reference }}</p>
         @endif
-        <p><span class="bold">Generated on:</span> {{ date('F j, Y') }}</p>
+        <p><span class="bold">Created on:</span> {{ $case->created_at ? $case->created_at->format('F j, Y') : 'N/A' }}</p>
+        <p><span class="bold">PDF Generated on:</span> {{ date('F j, Y') }}</p>
     </div>
+
+    @if($case->context_overview || !empty($case->case_details))
+    <div class="section">
+        <h2>Case Study Details</h2>
+        @if($case->context_overview)
+            <p><span class="bold">Context Overview:</span> {{ $case->context_overview }}</p>
+        @endif
+        @if(!empty($case->case_details))
+            @foreach($case->case_details as $key => $value)
+                @if(!empty($value))
+                    <p>
+                        <span class="bold">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span>
+                        @if(is_array($value))
+                            {{ implode(', ', $value) }}
+                        @else
+                            {{ $value }}
+                        @endif
+                    </p>
+                @endif
+            @endforeach
+        @endif
+    </div>
+    @endif
 
     @if(isset($plan['executive_summary']))
     <div class="section">

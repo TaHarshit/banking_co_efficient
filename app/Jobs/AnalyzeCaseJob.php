@@ -111,7 +111,7 @@ class AnalyzeCaseJob implements ShouldQueue
                 \App\General\General::sendNotificationV1(
                     $this->userId,
                     '✅ AI Analysis Complete',
-                    "Your negotiation analysis for case \"{$clientCase->client_alias}\" is ready. Tap to view."
+                    "Your negotiation analysis for case \"{$clientCase->client_alias}\" is ready."
                 );
 
                 Log::info("[AnalyzeCaseJob] Completed successfully for case #{$this->caseId}");
