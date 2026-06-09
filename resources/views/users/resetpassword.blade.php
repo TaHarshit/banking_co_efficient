@@ -31,6 +31,30 @@
 @endsection
 
 @section('content')
+    <script>
+        window.togglePasswordVisibility = function(e) {
+            if (e) e.preventDefault();
+            var passwordInput = document.getElementById('password');
+            var confirmInput = document.getElementById('password_confirmation');
+            var togglePasswordIcon = document.getElementById('togglePasswordIcon');
+            if (passwordInput) {
+                var type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                if (confirmInput) {
+                    confirmInput.setAttribute('type', type);
+                }
+                if (togglePasswordIcon) {
+                    if (togglePasswordIcon.classList.contains('bi-eye')) {
+                        togglePasswordIcon.classList.remove('bi-eye');
+                        togglePasswordIcon.classList.add('bi-eye-slash');
+                    } else {
+                        togglePasswordIcon.classList.remove('bi-eye-slash');
+                        togglePasswordIcon.classList.add('bi-eye');
+                    }
+                }
+            }
+        };
+    </script>
     <main>
         <div class="container">
             <section class="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
@@ -116,6 +140,7 @@
                                         </div>
                                     </form>
 
+
                                 </div>
                             </div>
                             
@@ -134,17 +159,6 @@
 
 @section('customjs')
     <script>
-        function togglePasswordVisibility(e) {
-            if (e) e.preventDefault();
-            const passwordInput = $('#password');
-            const confirmInput = $('#password_confirmation');
-            const togglePasswordIcon = $('#togglePasswordIcon');
-            const type = passwordInput.attr('type') === 'password' ? 'text' : 'password';
-            passwordInput.attr('type', type);
-            confirmInput.attr('type', type);
-            togglePasswordIcon.toggleClass('bi-eye bi-eye-slash');
-        }
-
         $(document).ready(function () {
             const passwordInput = $('#password');
             const confirmInput = $('#password_confirmation');
