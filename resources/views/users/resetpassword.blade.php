@@ -84,9 +84,9 @@
                                             <div class="input-group has-validation">
                                                 <span class="input-group-text"><i class="bi bi-lock"></i></span>
                                                 <input type="password" name="password" class="form-control" id="password" placeholder="••••••••" required>
-                                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
-                                                    <i class="bi bi-eye" id="togglePasswordIcon"></i>
-                                                </button>
+                                                 <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="position: relative; z-index: 5;">
+                                                     <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                                                 </button>
                                                 <div class="invalid-feedback">Please enter your new password.</div>
                                             </div>
 
@@ -142,7 +142,8 @@
             const togglePasswordIcon = $('#togglePasswordIcon');
             
             // Toggle password visibility
-            togglePassword.on('click', function () {
+            togglePassword.on('click', function (e) {
+                e.preventDefault();
                 const type = passwordInput.attr('type') === 'password' ? 'text' : 'password';
                 passwordInput.attr('type', type);
                 confirmInput.attr('type', type);

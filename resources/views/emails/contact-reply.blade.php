@@ -15,12 +15,7 @@
                     <tr>
                         <td align="center" style="padding: 30px 40px 20px 40px; background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%); border-bottom: 1px solid #e2e8f0;">
                             <!-- Branding -->
-                            <h2 style="margin: 0; font-size: 20px; font-weight: 700; color: #1a365d; letter-spacing: -0.5px;">
-                                NegoMaster
-                            </h2>
-                            <p style="margin: 5px 0 0 0; font-size: 13px; color: #4a5568; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;">
-                                by Co-Efficient³
-                            </p>
+                            <img src="{{ url('public/assets/img/logo.png') }}" alt="NegoMaster Logo" style="max-height: 45px; border: 0; display: block; margin: 0 auto;">
                         </td>
                     </tr>
                     
