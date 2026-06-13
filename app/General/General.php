@@ -333,13 +333,22 @@ class General extends \Exception
                 
                 $fcmFields = array(
                     'message' => [
-                        'token' => $receiver_id, 
-                        'notification'  => array(
-                            "title" =>  $title,
-                            "body"  => $message
+                        'token' => $receiver_id,
+                        'notification' => array(
+                            "title" => $title,
+                            "body" => $message
+                        ),
+                        'apns' => array(
+                            'payload' => array(
+                                'aps' => array(
+                                    'sound' => 'default',
+                                    'content-available' => 1,
+                                    'priority' => 1
+                                )
+                            )
                         )
-                    ]    
-                ); 
+                    ]
+                );
             }
 
             $url        = 'https://fcm.googleapis.com/v1/projects/negomaster-5c83b/messages:send';
