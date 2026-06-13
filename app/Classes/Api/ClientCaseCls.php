@@ -31,32 +31,66 @@ class ClientCaseCls
     public function CreateCase($postData)
     {
         try {
-            // Validation
-            $validator = Validate::required($postData, ['client_alias']);
-            if ($validator->fails()) {
-                return General::setResponse('VALIDATION_ERROR', $validator->errors()->first());
-            }
+            $caseId = $postData['id'] ?? $postData['case_id'] ?? null;
 
-            // Structure data for storage
-            $data = [
-                'user_id'          => Auth::id(),
-                'case_reference'   => $postData['case_reference'] ?? null,
-                'client_alias'     => $postData['client_alias'],
-                'context_overview' => $postData['context_overview'] ?? null,
-                'case_details'     => $postData['case_details'] ?? [],
-            ];
+            if ($caseId) {
+                // Edit existing case
+                $case = $this->clientCaseRepository->GetCaseDetails($caseId, Auth::id());
+                if (! $case) {
+                    return General::setResponse('VALIDATION_ERROR', 'Case not found.');
+                }
 
-            DB::beginTransaction();
-            $case = $this->clientCaseRepository->Store($data);
-            DB::commit();
+                if (array_key_exists('client_alias', $postData)) {
+                    $validator = Validate::required($postData, ['client_alias']);
+                    if ($validator->fails()) {
+                        return General::setResponse('VALIDATION_ERROR', $validator->errors()->first());
+                    }
+                }
 
-            if ($case) {
-                $response         = General::setResponse('SUCCESS', 'Case created successfully.');
-                $response['data'] = $case;
+                $data = [
+                    'case_reference'   => $postData['case_reference'] ?? $case->case_reference,
+                    'client_alias'     => $postData['client_alias'] ?? $case->client_alias,
+                    'context_overview' => $postData['context_overview'] ?? $case->context_overview,
+                    'case_details'     => $postData['case_details'] ?? $case->case_details,
+                ];
+
+                DB::beginTransaction();
+                $case->update($data);
+                DB::commit();
+
+                $response         = General::setResponse('SUCCESS', 'Case updated successfully.');
+                $response['data'] = $case->fresh();
 
                 return $response;
             } else {
-                return General::setResponse('VALIDATION_ERROR', 'Failed to create case.');
+                // Create new case
+                // Validation
+                $validator = Validate::required($postData, ['client_alias']);
+                if ($validator->fails()) {
+                    return General::setResponse('VALIDATION_ERROR', $validator->errors()->first());
+                }
+
+                // Structure data for storage
+                $data = [
+                    'user_id'          => Auth::id(),
+                    'case_reference'   => $postData['case_reference'] ?? null,
+                    'client_alias'     => $postData['client_alias'],
+                    'context_overview' => $postData['context_overview'] ?? null,
+                    'case_details'     => $postData['case_details'] ?? [],
+                ];
+
+                DB::beginTransaction();
+                $case = $this->clientCaseRepository->Store($data);
+                DB::commit();
+
+                if ($case) {
+                    $response         = General::setResponse('SUCCESS', 'Case created successfully.');
+                    $response['data'] = $case;
+
+                    return $response;
+                } else {
+                    return General::setResponse('VALIDATION_ERROR', 'Failed to create case.');
+                }
             }
         } catch (Exception $e) {
             DB::rollBack();
