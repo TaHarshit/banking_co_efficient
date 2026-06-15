@@ -136,7 +136,7 @@ class GeneratePlanJob implements ShouldQueue
                 ]);
 
                 // Notify user 
-                Log:info("user id is ".$this->userId);
+                Log::info("user id is ".$this->userId);
                 
                 General::sendNotificationV1(
                     $this->userId,
