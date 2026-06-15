@@ -468,7 +468,14 @@ class General extends \Exception
                 );
                 
                 return $saved_access_token ? $saved_access_token : response('google auth has failed2', 400);
+            } else {
+                Log::error('[Google Auth] Refresh token request failed', [
+                    'status' => $refresh_token_response ? $refresh_token_response->status() : 'N/A',
+                    'body'   => $refresh_token_response ? $refresh_token_response->body() : 'No response',
+                ]);
             }
+        } else {
+            Log::error('[Google Auth] No saved access token found for google in database');
         }
         return response('something went wrong2', 400);
     }
