@@ -30,6 +30,39 @@ Route::GET('user/reset_password/{token}', [UserController::class, 'ResetPassword
 Route::POST('user/update_password', [UserController::class, 'UpdatePassword'])->name('updatepassword');
 Route::POST('contact_us', [\App\Http\Controllers\Api\ContactUsController::class, 'Submit'])->name('contactus');
 
+Route::get('test-fcm-notification', function () {
+    try {
+        $userId = 138;
+        $token = 'ceBojdX-qEDFlULEIjF0xz:APA91bFaXL6apxfcy3la9bO07YXHS8DSPuWAb7CDU2Dge-hpIvv2my6l5QYgSS8fgpS95AR0kw3qX3GElKMi-ot4H2C3SSyS71R-mPDyg3EeCeoF0W2WE0Y';
+        
+        $user = \App\Models\User::find($userId);
+        if ($user) {
+            $user->device_token = $token;
+            $user->platform = 'IOS';
+            $user->save();
+        } else {
+            return response()->json(['error' => 'User 138 not found'], 404);
+        }
+
+        \App\General\General::sendNotificationV1(
+            $userId,
+            'Test Notification',
+            'If you see this, notifications and token updates are working!',
+            ['case_id' => 123]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'General::sendNotificationV1() called successfully for user 138'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
+
 Route::middleware(['basicFilter'])->group(function () {
     Route::controller(UserController::class)->group(function () {
         Route::POST('user/signup', 'SignUp');

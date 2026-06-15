@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\General\General;
 use App\Models\AiJob;
 use App\Models\ClientCase;
 use App\Repositories\Api\NotificationsRepository;
@@ -115,7 +116,7 @@ class AnalyzeCaseJob implements ShouldQueue
                     'result' => $analysisData,
                 ]);
 
-                \App\General\General::sendNotificationV1(
+                General::sendNotificationV1(
                     $this->userId,
                     '✅ AI Analysis Complete',
                     "Your negotiation analysis for case \"{$clientCase->client_alias}\" is ready.",
