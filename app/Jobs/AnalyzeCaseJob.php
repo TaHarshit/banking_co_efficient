@@ -62,7 +62,7 @@ class AnalyzeCaseJob implements ShouldQueue
         \App\General\General::sendNotificationV1(
             $this->userId,
             '🔄 AI Analysis Started',
-            "Your negotiation analysis for case \"{$clientCase->client_alias}\" has started.",
+            "Your negotiation analysis for case ".$clientCase->client_alias." has started.",
             ['case_id' => $this->caseId]
         );
 
