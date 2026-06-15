@@ -55,6 +55,10 @@ class AnalyzeCaseJob implements ShouldQueue
 
         $aiJob->update(['status' => 'processing']);
 
+         Log::info("user id is ".$this->userId);
+         Log::info("case id is ".$this->caseId);
+
+
         \App\General\General::sendNotificationV1(
             $this->userId,
             '🔄 AI Analysis Started',
@@ -115,8 +119,6 @@ class AnalyzeCaseJob implements ShouldQueue
                     'status' => 'completed',
                     // 'result' => $analysisData,
                 ]);
-
-                Log::info("user id is ".$this->userId);
 
                 General::sendNotificationV1(
                     $this->userId,
