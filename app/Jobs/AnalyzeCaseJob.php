@@ -61,9 +61,9 @@ class AnalyzeCaseJob implements ShouldQueue
 
         \App\General\General::sendNotificationV1(
             $this->userId,
-            '🔄 AI Analysis Started',
-            "Your negotiation analysis for case ".$clientCase->client_alias." has started.",
-            ['case_id' => $this->caseId]
+            'AI Analysis Started',
+            "Your negotiation analysis has started."
+            // ['case_id' => $this->caseId]
         );
 
         $pythonUrl = config('services.pdf_service.base_url');
