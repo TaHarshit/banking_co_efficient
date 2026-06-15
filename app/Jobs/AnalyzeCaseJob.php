@@ -116,7 +116,7 @@ class AnalyzeCaseJob implements ShouldQueue
                     // 'result' => $analysisData,
                 ]);
 
-                Log::info("[AnalyzeCaseJob] Completed successfully for case #{$this->userId}");
+                Log::info("user id #{$this->userId}");
 
                 General::sendNotificationV1(
                     $this->userId,
