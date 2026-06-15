@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\General\General;
 use App\Models\AiJob;
 use App\Models\ClientCase;
 use App\Repositories\Api\NotificationsRepository;
@@ -33,11 +34,11 @@ class GeneratePlanJob implements ShouldQueue
     public int $timeout = 960;
 
     public function __construct(
-        protected int $aiJobId,
-        protected int $caseId,
-        protected int $userId,
-        protected ?array $caseData     = null,
-        protected ?array $analysisData = null
+        protected $aiJobId,
+        protected $caseId,
+        protected $userId,
+        protected $caseData     = null,
+        protected $analysisData = null
     ) {}
 
     public function handle(NotificationsRepository $notificationsRepo): void
@@ -56,7 +57,7 @@ class GeneratePlanJob implements ShouldQueue
 
         $aiJob->update(['status' => 'processing']);
 
-        \App\General\General::sendNotificationV1(
+        General::sendNotificationV1(
             $this->userId,
             '🔄 Action Plan Generation Started',
             "Your negotiation action plan for case \"{$clientCase->client_alias}\" has started.",
@@ -136,7 +137,7 @@ class GeneratePlanJob implements ShouldQueue
 
                 // Notify user 
                 
-                \App\General\General::sendNotificationV1(
+                General::sendNotificationV1(
                     $this->userId,
                     '✅ Action Plan Ready',
                     "Your negotiation action plan for case \"{$clientCase->client_alias}\" has been generated.",

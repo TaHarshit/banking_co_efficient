@@ -34,9 +34,9 @@ class AnalyzeCaseJob implements ShouldQueue
     public int $timeout = 960;
 
     public function __construct(
-        protected int $aiJobId,
-        protected int $caseId,
-        protected int $userId
+        protected $aiJobId,
+        protected $caseId,
+        protected $userId
     ) {}
 
     public function handle(NotificationsRepository $notificationsRepo): void
