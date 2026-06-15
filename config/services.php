@@ -35,4 +35,20 @@ return [
         ],
     ],
 
+    'pdf_service' => [
+        'base_url' => env('PDF_SERVICE_BASE_URL', 'http://127.0.0.1:8000'),
+        'url'      => env('PDF_SERVICE_URL', 'http://127.0.0.1:8000/ask'),
+    ],
+
+    'google' => [
+        'client_id'     => env('CLIENT_ID'),
+        'client_secret' => env('CLIENT_SECRET'),
+        'redirect_url'  => env('REDIRECT_URL'),
+        'code'          => env('CODE'),
+    ],
+
+    'fcm' => [
+        'server_key' => env('FCM_SERVER_KEY'),
+    ],
+
 ];

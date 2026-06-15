@@ -292,7 +292,7 @@ class General extends \Exception
             }
 
             $url        = 'https://fcm.googleapis.com/fcm/send';
-            $server_key = env('FCM_SERVER_KEY');
+            $server_key = config('services.fcm.server_key');
             $headers    = array('Content-Type:application/json', 'Authorization:key='.$server_key);
             $ch         = curl_init();
 
@@ -312,7 +312,7 @@ class General extends \Exception
         }
     } 
     
-    public static function sendNotificationV1($user_id, $title, $message)
+    public static function sendNotificationV1($user_id, $title, $message, array $payload = [])
     {
         try{
             $user           = User::select('device_token', 'platform')->where('id', $user_id)->first();
@@ -322,7 +322,7 @@ class General extends \Exception
             if($type!='IOS') { 
                 
                 $msg = array('vibrate'=>0, 'sound'=>'default', 'title'=>$title, 'message'=>$message);
-                $msg = array_merge($msg);
+                $msg = array_merge($msg, $payload);
                 $fcmFields = array(
                     'registration_ids'  => is_array($receiver_id) ? $receiver_id : array($receiver_id), 
                     'priority'          => 'high', 
@@ -331,6 +331,11 @@ class General extends \Exception
 
             } else { 
                 
+                $stringPayload = [];
+                foreach ($payload as $key => $value) {
+                    $stringPayload[$key] = (string) $value;
+                }
+
                 $fcmFields = array(
                     'message' => [
                         'token' => $receiver_id,
@@ -338,6 +343,7 @@ class General extends \Exception
                             "title" => $title,
                             "body" => $message
                         ),
+                        'data' => $stringPayload,
                         'apns' => array(
                             'payload' => array(
                                 'aps' => array(
@@ -354,7 +360,7 @@ class General extends \Exception
             $url        = 'https://fcm.googleapis.com/v1/projects/negomaster-5c83b/messages:send';
             $google_auth_refresh_token =  InAppAuthToken::where('identifier', 'google')->first();
 
-                if(date('Y-m-d H:i:s') > $google_auth_refresh_token->token_expiry_time){
+                if(now()->toDateTimeString() > $google_auth_refresh_token->token_expiry_time){
                     $api = self::getGoogleAuthRefreshToken();
                     $google_auth_refresh_token =  InAppAuthToken::where('identifier', 'google')->first();
                 }
@@ -364,7 +370,14 @@ class General extends \Exception
                     'Authorization' => 'Bearer' . ' ' .  $google_auth_refresh_token['access_token']
                 ])
                 ->post($url, $fcmFields);
-            ;
+
+            if ($response->failed()) {
+                Log::error('[FCM] Notification dispatch failed', [
+                    'user_id' => $user_id,
+                    'status'  => $response->status(),
+                    'body'    => $response->body()
+                ]);
+            }
         
             Notification::create([
                 'user_id'   =>$user_id, 
@@ -400,18 +413,18 @@ class General extends \Exception
                 'Content-Type' => 'application/json',
             ])->post('https://accounts.google.com/o/oauth2/token', [
                 'grant_type'                    =>  "authorization_code",
-                'code'                          =>  env('CODE'),
-                'client_id'                     =>  env('CLIENT_ID'),
-                'client_secret'                 =>  env('CLIENT_SECRET'),
-                'redirect_uri'                  =>  env('REDIRECT_URL'),
+                'code'                          =>  config('services.google.code'),
+                'client_id'                     =>  config('services.google.client_id'),
+                'client_secret'                 =>  config('services.google.client_secret'),
+                'redirect_uri'                  =>  config('services.google.redirect_url'),
             ]);
         } catch(Exception $e){
             return $e;
         }
-        return ['code'                          =>  env('CODE'),
-        'client_id'                     =>  env('CLIENT_ID'),
-        'client_secret'                 =>  env('CLIENT_SECRET'),
-        'redirect_uri'                  =>  env('REDIRECT_URL'),];
+        return ['code'                          =>  config('services.google.code'),
+        'client_id'                     =>  config('services.google.client_id'),
+        'client_secret'                 =>  config('services.google.client_secret'),
+        'redirect_uri'                  =>  config('services.google.redirect_url'),];
 
         if ($response && ($response->status() == 200)) {
 
@@ -437,8 +450,8 @@ class General extends \Exception
                     'Content-Type' => 'application/json',
                 ])->post('https://accounts.google.com/o/oauth2/token', [
                     'grant_type'                    =>      "refresh_token",
-                    'client_id'                     =>      env('CLIENT_ID'),
-                    'client_secret'                 =>      env('CLIENT_SECRET'),
+                    'client_id'                     =>      config('services.google.client_id'),
+                    'client_secret'                 =>      config('services.google.client_secret'),
                     'refresh_token'                 =>      $saved_access_token['refresh_token'],
                 ]);
             // } catch (\Throwable $th) {

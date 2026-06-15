@@ -56,6 +56,13 @@ class GeneratePlanJob implements ShouldQueue
 
         $aiJob->update(['status' => 'processing']);
 
+        \App\General\General::sendNotificationV1(
+            $this->userId,
+            '🔄 Action Plan Generation Started',
+            "Your negotiation action plan for case \"{$clientCase->client_alias}\" has started.",
+            ['case_id' => $this->caseId]
+        );
+
         $caseData     = $this->caseData     ?? $clientCase->case_details;
         $analysisData = $this->analysisData ?? $clientCase->ai_analysis;
 
@@ -64,7 +71,7 @@ class GeneratePlanJob implements ShouldQueue
             return;
         }
 
-        $pythonUrl = env('PDF_SERVICE_BASE_URL', 'http://127.0.0.1:8000');
+        $pythonUrl = config('services.pdf_service.base_url');
         $endpoint  = rtrim($pythonUrl, '/') . '/generate-plan';
 
         $user        = $clientCase->user;
@@ -132,7 +139,8 @@ class GeneratePlanJob implements ShouldQueue
                 \App\General\General::sendNotificationV1(
                     $this->userId,
                     '✅ Action Plan Ready',
-                    "Your negotiation action plan for case \"{$clientCase->client_alias}\" has been generated."
+                    "Your negotiation action plan for case \"{$clientCase->client_alias}\" has been generated.",
+                    ['case_id' => $this->caseId]
                 );
 
                 Log::info("[GeneratePlanJob] Completed successfully for case #{$this->caseId}");
@@ -164,10 +172,11 @@ class GeneratePlanJob implements ShouldQueue
         ]);
 
         $caseLabel = $alias ? "for case \"{$alias}\"" : '';
-        $notificationsRepo->StoreNotification(
+        \App\General\General::sendNotificationV1(
             $this->userId,
             '❌ Action Plan Failed',
-            "The action plan generation {$caseLabel} could not be completed. Error: {$error}"
+            "The action plan generation {$caseLabel} could not be completed. Error: {$error}",
+            ['case_id' => $this->caseId]
         );
 
         Log::error("[GeneratePlanJob] Marked as failed for case #{$this->caseId}", ['error' => $error]);

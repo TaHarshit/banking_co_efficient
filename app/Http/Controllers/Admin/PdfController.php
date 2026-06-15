@@ -73,7 +73,7 @@ class PdfController extends Controller
             }
 
             // Call Python service /reload to reload index
-            $pythonServiceUrl = env('PDF_SERVICE_URL', 'http://127.0.0.1:8000');
+            $pythonServiceUrl = config('services.pdf_service.url');
             $baseUrl = str_replace('/ask', '', $pythonServiceUrl);
 
             try {

@@ -30,7 +30,7 @@ class PdfQuestionController extends Controller
             $history = $validated['history'] ?? [];
 
             // Get Python service URL from environment or use default
-            $pythonServiceUrl = env('PDF_SERVICE_URL', 'http://127.0.0.1:8000/ask');
+            $pythonServiceUrl = config('services.pdf_service.url');
 
             // Log the request
             Log::info('PDF Question API called', ['question' => $question]);
@@ -150,7 +150,7 @@ class PdfQuestionController extends Controller
     public function status()
     {
         try {
-            $pythonServiceUrl = env('PDF_SERVICE_URL', 'http://127.0.0.1:8000');
+            $pythonServiceUrl = config('services.pdf_service.url');
 
             // Remove /ask from the URL if present
             $baseUrl = str_replace('/ask', '', $pythonServiceUrl);

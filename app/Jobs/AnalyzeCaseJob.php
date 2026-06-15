@@ -54,7 +54,14 @@ class AnalyzeCaseJob implements ShouldQueue
 
         $aiJob->update(['status' => 'processing']);
 
-        $pythonUrl = env('PDF_SERVICE_BASE_URL', 'http://127.0.0.1:8000');
+        \App\General\General::sendNotificationV1(
+            $this->userId,
+            '🔄 AI Analysis Started',
+            "Your negotiation analysis for case \"{$clientCase->client_alias}\" has started.",
+            ['case_id' => $this->caseId]
+        );
+
+        $pythonUrl = config('services.pdf_service.base_url');
         $endpoint  = rtrim($pythonUrl, '/') . '/analyze-case';
 
         // Build user profile from the user model
@@ -111,7 +118,8 @@ class AnalyzeCaseJob implements ShouldQueue
                 \App\General\General::sendNotificationV1(
                     $this->userId,
                     '✅ AI Analysis Complete',
-                    "Your negotiation analysis for case \"{$clientCase->client_alias}\" is ready."
+                    "Your negotiation analysis for case \"{$clientCase->client_alias}\" is ready.",
+                    ['case_id' => $this->caseId]
                 );
 
                 Log::info("[AnalyzeCaseJob] Completed successfully for case #{$this->caseId}");
@@ -144,10 +152,11 @@ class AnalyzeCaseJob implements ShouldQueue
         ]);
 
         $caseLabel = $alias ? "for case \"{$alias}\"" : '';
-        $notificationsRepo->StoreNotification(
+        \App\General\General::sendNotificationV1(
             $this->userId,
             '❌ AI Analysis Failed',
-            "The AI analysis {$caseLabel} could not be completed. Error: {$error}"
+            "The AI analysis {$caseLabel} could not be completed. Error: {$error}",
+            ['case_id' => $this->caseId]
         );
 
         Log::error("[AnalyzeCaseJob] Marked as failed for case #{$this->caseId}", ['error' => $error]);
