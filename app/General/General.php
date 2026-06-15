@@ -314,6 +314,8 @@ class General extends \Exception
     
     public static function sendNotificationV1($user_id, $title, $message, array $payload = [])
     {
+        log::debug('user id is ',[$user_id, $title, $message, $payload]);
+
         try{
             $user           = User::select('device_token', 'platform')->where('id', $user_id)->first();
             $receiver_id    = $user->device_token;
