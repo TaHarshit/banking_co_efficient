@@ -87,37 +87,37 @@ class AnalyzeCaseJob implements ShouldQueue
             Log::info("[AnalyzeCaseJob] Attempt {$attempt} for case #{$this->caseId}");
 
             try {
-                // $response = Http::timeout(900)->withOptions([
-                //     'curl' => [
-                //         CURLOPT_TIMEOUT        => 900,
-                //         CURLOPT_CONNECTTIMEOUT => 60,
-                //     ],
-                // ])->post($endpoint, $payload);
+                $response = Http::timeout(900)->withOptions([
+                    'curl' => [
+                        CURLOPT_TIMEOUT        => 900,
+                        CURLOPT_CONNECTTIMEOUT => 60,
+                    ],
+                ])->post($endpoint, $payload);
 
-                // if (! $response->successful()) {
-                //     $lastError = 'Python service HTTP error: ' . $response->status() . ' - ' . $response->body();
-                //     Log::warning("[AnalyzeCaseJob] Attempt {$attempt} HTTP error", ['error' => $lastError]);
-                //     $this->sleepBetweenRetries($attempt);
-                //     continue;
-                // }
+                if (! $response->successful()) {
+                    $lastError = 'Python service HTTP error: ' . $response->status() . ' - ' . $response->body();
+                    Log::warning("[AnalyzeCaseJob] Attempt {$attempt} HTTP error", ['error' => $lastError]);
+                    $this->sleepBetweenRetries($attempt);
+                    continue;
+                }
 
-                // $analysisData = $response->json();
+                $analysisData = $response->json();
 
-                // // Detect blank or error responses from Python
-                // if (empty($analysisData) || isset($analysisData['error'])) {
-                //     $lastError = $analysisData['error'] ?? 'AI returned empty/invalid response.';
-                //     Log::warning("[AnalyzeCaseJob] Attempt {$attempt} AI error", ['error' => $lastError]);
-                //     $this->sleepBetweenRetries($attempt);
-                //     continue;
-                // }
+                // Detect blank or error responses from Python
+                if (empty($analysisData) || isset($analysisData['error'])) {
+                    $lastError = $analysisData['error'] ?? 'AI returned empty/invalid response.';
+                    Log::warning("[AnalyzeCaseJob] Attempt {$attempt} AI error", ['error' => $lastError]);
+                    $this->sleepBetweenRetries($attempt);
+                    continue;
+                }
 
-                // // Success — save result
-                // $clientCase->ai_analysis = $analysisData;
-                // $clientCase->save();
+                // Success — save result
+                $clientCase->ai_analysis = $analysisData;
+                $clientCase->save();
 
                 $aiJob->update([
                     'status' => 'completed',
-                    // 'result' => $analysisData,
+                    'result' => $analysisData,
                 ]);
 
                 General::sendNotificationV1(
