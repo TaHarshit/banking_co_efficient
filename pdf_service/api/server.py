@@ -692,6 +692,50 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
         return {"error": str(e)}
 
 
+TRANSLATION_RESPONSE_FORMAT = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "language_translation",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "detected_language": {"type": "string"},
+                "translated_text": {"type": "string"}
+            },
+            "required": ["detected_language", "translated_text"],
+            "additionalProperties": False
+        }
+    }
+}
+
+
+def detect_and_translate(text: str) -> dict:
+    try:
+        system_prompt = (
+            "You are a translation helper. Analyze the user's query.\n"
+            "1. Detect the language of the query.\n"
+            "2. If it is NOT English, translate it to English.\n"
+            "3. Return a JSON object with 'detected_language' (e.g., 'French', 'English', etc.) and 'translated_text' (the English translation, or original text if already English)."
+        )
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": text}
+        ]
+        result = get_ai_client().chat.completions.create(
+            model=AI_CHAT_MODEL,
+            messages=messages,
+            temperature=0.0,
+            response_format=TRANSLATION_RESPONSE_FORMAT
+        )
+        content = result.choices[0].message.content
+        if content:
+            return json.loads(content)
+    except Exception as e:
+        print(f"[WARN] detect_and_translate failed: {e}", flush=True)
+    return {"detected_language": "English", "translated_text": text}
+
+
 @app.post("/ask")
 def ask_post(request: QuestionRequest):
     return process_question(request.question, request.history)
@@ -700,9 +744,16 @@ def ask_post(request: QuestionRequest):
 def process_question(query: str, history: list = []):
     start_time = time.time()
     try:
+        # 0. Language Detection & Translation
+        t0_lang = time.time()
+        translation_info = detect_and_translate(query)
+        detected_lang = translation_info.get("detected_language", "English")
+        search_query = translation_info.get("translated_text", query)
+        print(f"[INFO] Detected language: {detected_lang}, Search query: {search_query} (time: {time.time()-t0_lang:.3f}s)", flush=True)
+
         # 1. Embedding
         t0 = time.time()
-        query_vector = embed_model.encode(query).tolist()
+        query_vector = embed_model.encode(search_query).tolist()
         print(f"[PERF] /ask - Embedding: {time.time()-t0:.3f}s", flush=True)
 
         # 2. Qdrant Search
@@ -717,13 +768,15 @@ def process_question(query: str, history: list = []):
         print(f"[PERF] /ask - Qdrant Search: {time.time()-t0:.3f}s", flush=True)
 
         if not search_result:
+            if detected_lang.lower() == "french":
+                return {"answer": "Aucune information pertinente trouvée.", "images": [], "reference_pages": []}
             return {"answer": "No relevant information found.", "images": [], "reference_pages": []}
 
         # 3. Re-ranking
         t0 = time.time()
         print(f"[INFO] Re-ranking {len(search_result)} candidates...", flush=True)
 
-        pairs  = [[query, res.payload["text"]] for res in search_result]
+        pairs  = [[search_query, res.payload["text"]] for res in search_result]
         scores = rerank_model.predict(pairs)
 
         for i, score in enumerate(scores):
@@ -762,6 +815,9 @@ Suggestions: [Suggestion 1] | [Suggestion 2] | [Suggestion 3]
 Context:
 {context}
 """
+
+        if detected_lang.lower() != "english":
+            system_content += f"\n[LANGUAGE] The user's query is in {detected_lang}. You MUST respond to the user and write the Suggestions in {detected_lang}. If the answer is not in the context, translate 'I cannot find the answer to that in the document.' to {detected_lang}."
 
         messages = [{"role": "system", "content": system_content}]
         if history:

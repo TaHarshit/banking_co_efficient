@@ -314,25 +314,37 @@ class General extends \Exception
     
     public static function sendNotificationV1($user_id, $title, $message, array $payload = [])
     {
-        log::debug('user id is ',[$user_id, $title, $message, $payload]);
+        Log::debug('user id is ', [$user_id, $title, $message, $payload]);
 
-        try{
-            $user           = User::select('device_token', 'platform')->where('id', $user_id)->first();
-            $receiver_id    = $user->device_token;
-            $type           = $user->platform;
+        try {
+            $user = User::select('device_token', 'platform')->where('id', $user_id)->first();
+            if (!$user) {
+                Log::warning('[FCM] User not found for notification', ['user_id' => $user_id]);
+                return 'User not found.';
+            }
 
-            if($type!='IOS') { 
-                
-                $msg = array('vibrate'=>0, 'sound'=>'default', 'title'=>$title, 'message'=>$message);
+            $receiver_id = $user->device_token;
+            $type        = $user->platform;
+
+            if (empty($receiver_id)) {
+                Log::info('[FCM] Skipping push notification: User has no device token', ['user_id' => $user_id]);
+                Notification::create([
+                    'user_id' => $user_id,
+                    'title'   => $title,
+                    'message' => $message
+                ]);
+                return 'Notification logged (no device token).';
+            }
+
+            if ($type != 'IOS') { 
+                $msg = array('vibrate' => 0, 'sound' => 'default', 'title' => $title, 'message' => $message);
                 $msg = array_merge($msg, $payload);
                 $fcmFields = array(
                     'registration_ids'  => is_array($receiver_id) ? $receiver_id : array($receiver_id), 
                     'priority'          => 'high', 
                     'data'              => $msg
                 );
-
             } else { 
-                
                 $stringPayload = [];
                 foreach ($payload as $key => $value) {
                     $stringPayload[$key] = (string) $value;
@@ -359,19 +371,23 @@ class General extends \Exception
                 );
             }
 
-            $url        = 'https://fcm.googleapis.com/v1/projects/negomaster-5c83b/messages:send';
-            $google_auth_refresh_token =  InAppAuthToken::where('identifier', 'google')->first();
+            $url = 'https://fcm.googleapis.com/v1/projects/negomaster-5c83b/messages:send';
+            $google_auth_refresh_token = InAppAuthToken::where('identifier', 'google')->first();
 
-                if(now()->toDateTimeString() > $google_auth_refresh_token->token_expiry_time){
-                    $api = self::getGoogleAuthRefreshToken();
-                    $google_auth_refresh_token =  InAppAuthToken::where('identifier', 'google')->first();
-                }
+            if (!$google_auth_refresh_token) {
+                Log::error('[FCM] Google auth token record ("google") is missing from database.');
+                return 'Google auth token missing.';
+            }
+
+            if (now()->toDateTimeString() > $google_auth_refresh_token->token_expiry_time) {
+                $api = self::getGoogleAuthRefreshToken();
+                $google_auth_refresh_token = InAppAuthToken::where('identifier', 'google')->first();
+            }
                 
             $response = Http::withHeaders([
-                    'Content-Type' => 'application/json',
-                    'Authorization' => 'Bearer' . ' ' .  $google_auth_refresh_token['access_token']
-                ])
-                ->post($url, $fcmFields);
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $google_auth_refresh_token['access_token']
+            ])->post($url, $fcmFields);
 
             if ($response->failed()) {
                 Log::error('[FCM] Notification dispatch failed', [
@@ -382,11 +398,17 @@ class General extends \Exception
             }
         
             Notification::create([
-                'user_id'   =>$user_id, 
-                'title'     =>$title, 
-                'message'   =>$message]);
+                'user_id' => $user_id,
+                'title'   => $title,
+                'message' => $message
+            ]);
         
-        } catch (Exception $e){
+        } catch (\Throwable $e) {
+            Log::error('[FCM] Unexpected notification error', [
+                'user_id' => $user_id,
+                'error'   => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
             return 'Something went wrong.';
         }
     }

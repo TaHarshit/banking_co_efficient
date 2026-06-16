@@ -114,16 +114,16 @@ class AnalyzeCaseJob implements ShouldQueue
                 // Success — save result
                 $clientCase->ai_analysis = $analysisData;
                 $clientCase->save();
-
+                
                 $aiJob->update([
                     'status' => 'completed',
                     'result' => $analysisData,
                 ]);
 
-                General::sendNotificationV1(
+                \App\General\General::sendNotificationV1(
                     $this->userId,
-                    '✅ AI Analysis Complete',
-                    "Your negotiation analysis for case \"{$clientCase->client_alias}\" is ready.",
+                    'AI Analysis Complete',
+                    'Your negotiation analysis for case '.$clientCase->client_alias.' is ready.',
                     ['case_id' => $this->caseId]
                 );
 
