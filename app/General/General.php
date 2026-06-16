@@ -337,12 +337,25 @@ class General extends \Exception
             }
 
             if ($type != 'IOS') { 
-                $msg = array('vibrate' => 0, 'sound' => 'default', 'title' => $title, 'message' => $message);
-                $msg = array_merge($msg, $payload);
+                $stringPayload = [];
+                foreach ($payload as $key => $value) {
+                    $stringPayload[$key] = (string) $value;
+                }
+
                 $fcmFields = array(
-                    'registration_ids'  => is_array($receiver_id) ? $receiver_id : array($receiver_id), 
-                    'priority'          => 'high', 
-                    'data'              => $msg
+                    'message' => [
+                        'token' => $receiver_id,
+                        'notification' => array(
+                            "title" => $title,
+                            "body"  => $message
+                        ),
+                        'data' => $stringPayload,
+                        'android' => array(
+                            'notification' => array(
+                                'sound' => 'default',
+                            )
+                        )
+                    ]
                 );
             } else { 
                 $stringPayload = [];
@@ -355,7 +368,7 @@ class General extends \Exception
                         'token' => $receiver_id,
                         'notification' => array(
                             "title" => $title,
-                            "body" => $message
+                            "body"  => $message
                         ),
                         'data' => $stringPayload,
                         'apns' => array(
