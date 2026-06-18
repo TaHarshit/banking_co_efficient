@@ -114,6 +114,12 @@ Route::middleware(['basicFilter'])->group(function () {
             Route::POST('pdf/ask', 'ask');
             Route::GET('pdf/history', 'getHistory');
             Route::GET('pdf/status', 'status');
+            
+            // Chat Sessions Management
+            Route::POST('pdf/sessions/list', 'getSessions');
+            Route::POST('pdf/sessions/create', 'createSession');
+            Route::POST('pdf/sessions/rename', 'renameSession');
+            Route::POST('pdf/sessions/delete', 'deleteSession');
         });
 
         // Client Case Management

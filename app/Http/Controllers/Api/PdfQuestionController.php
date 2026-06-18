@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ChatHistory;
+use App\Models\ChatSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -23,17 +24,48 @@ class PdfQuestionController extends Controller
             // Validate the request
             $validated = $request->validate([
                 'question' => 'required|string|min:3|max:500',
+                'chat_session_id' => 'nullable|exists:chat_sessions,id,user_id,' . Auth::id(),
                 'history' => 'nullable|array'
             ]);
 
             $question = $validated['question'];
+            $sessionId = $validated['chat_session_id'] ?? null;
             $history = $validated['history'] ?? [];
+            $session = null;
+
+            // Auto-create session if not provided
+            if ($sessionId) {
+                $session = ChatSession::find($sessionId);
+            } else {
+                $session = ChatSession::create([
+                    'user_id' => Auth::id(),
+                    'title' => 'New Chat'
+                ]);
+                $sessionId = $session->id;
+            }
+
+            // Retrieve past messages as history if not manually provided
+            if (empty($history)) {
+                $pastMessages = ChatHistory::where('chat_session_id', $sessionId)
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get()
+                    ->reverse();
+
+                foreach ($pastMessages as $msg) {
+                    $history[] = ['role' => 'user', 'content' => $msg->question];
+                    $history[] = ['role' => 'assistant', 'content' => $msg->answer];
+                }
+            }
 
             // Get Python service URL from environment or use default
             $pythonServiceUrl = config('services.pdf_service.url');
 
             // Log the request
-            Log::info('PDF Question API called', ['question' => $question]);
+            Log::info('PDF Question API called', [
+                'question' => $question,
+                'chat_session_id' => $sessionId
+            ]);
 
             // Call the Python microservice
             $response = Http::timeout(60)->post($pythonServiceUrl, [
@@ -54,12 +86,21 @@ class PdfQuestionController extends Controller
                 try {
                     ChatHistory::create([
                         'user_id' => Auth::id(),
+                        'chat_session_id' => $sessionId,
                         'question' => $question,
                         'answer' => $answer,
                         'suggestions' => $suggestions,
                         'images' => $images,
                         'reference_pages' => $reference_pages
                     ]);
+
+                    // Auto-update title if it's default 'New Chat' and touch session to update timestamp
+                    if ($session) {
+                        if ($session->title === 'New Chat' || empty($session->title)) {
+                            $session->title = mb_substr($question, 0, 40) . (mb_strlen($question) > 40 ? '...' : '');
+                        }
+                        $session->touch();
+                    }
                 } catch (\Exception $e) {
                     Log::error('Failed to save chat history', ['error' => $e->getMessage()]);
                     // Don't fail the request if history storage fails
@@ -71,6 +112,8 @@ class PdfQuestionController extends Controller
                     'suggestions' => !empty($suggestions) ? $suggestions : 'No Suggestion',
                     'images' => $images,
                     'reference_pages' => $reference_pages,
+                    'chat_session_id' => $sessionId,
+                    'chat_session_title' => $session ? $session->title : null,
                     'message' => 'Answer retrieved successfully'
                 ], 200);
             } else {
@@ -117,13 +160,22 @@ class PdfQuestionController extends Controller
     /**
      * Get chat history for the authenticated user
      * 
+     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getHistory()
+    public function getHistory(Request $request)
     {
         try {
-            $history = ChatHistory::where('user_id', Auth::id())
-                ->orderBy('created_at', 'desc')
+            $query = ChatHistory::where('user_id', Auth::id());
+
+            if ($request->has('chat_session_id')) {
+                $query->where('chat_session_id', $request->query('chat_session_id'));
+                $order = 'asc';
+            } else {
+                $order = 'desc';
+            }
+
+            $history = $query->orderBy('created_at', $order)
                 ->paginate(20);
 
             return response()->json([
@@ -137,6 +189,149 @@ class PdfQuestionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while retrieving chat history',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * List chat sessions for the authenticated user
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getSessions(Request $request)
+    {
+        try {
+            $sessions = ChatSession::where('user_id', Auth::id())
+                ->withCount('messages')
+                ->orderBy('updated_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'sessions' => $sessions,
+                'message' => 'Chat sessions retrieved successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve chat sessions', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve chat sessions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Create a new chat session
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function createSession(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'title' => 'nullable|string|max:100'
+            ]);
+
+            $session = ChatSession::create([
+                'user_id' => Auth::id(),
+                'title' => $validated['title'] ?? 'New Chat'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'session' => $session,
+                'message' => 'Chat session created successfully'
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Failed to create chat session', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create chat session',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Rename an existing chat session
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function renameSession(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'chat_session_id' => 'required|exists:chat_sessions,id,user_id,' . Auth::id(),
+                'title' => 'required|string|min:1|max:100'
+            ]);
+
+            $session = ChatSession::findOrFail($validated['chat_session_id']);
+            $session->title = $validated['title'];
+            $session->save();
+
+            return response()->json([
+                'success' => true,
+                'session' => $session,
+                'message' => 'Chat session renamed successfully'
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Failed to rename chat session', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to rename chat session',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a chat session and its history
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteSession(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'chat_session_id' => 'required|exists:chat_sessions,id,user_id,' . Auth::id()
+            ]);
+
+            $session = ChatSession::findOrFail($validated['chat_session_id']);
+            $session->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Chat session deleted successfully'
+            ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Failed to delete chat session', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete chat session',
                 'error' => $e->getMessage()
             ], 500);
         }

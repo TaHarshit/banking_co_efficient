@@ -1,0 +1,293 @@
+{
+	"info": {
+		"_postman_id": "7fa84d1a-4638-4e89-bdc9-2785d9be2b0f",
+		"name": "PDF Chat Sessions API",
+		"description": "Postman collection for the new PDF Q&A Chat Sessions and Conversation History APIs in Banking Co-efficient.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "List Chat Sessions",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "api-key",
+						"value": "{{api_key}}",
+						"type": "text"
+					},
+					{
+						"key": "platform",
+						"value": "WEB",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{}"
+				},
+				"url": {
+					"raw": "{{base_url}}/pdf/sessions/list",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"pdf",
+						"sessions",
+						"list"
+					]
+				},
+				"description": "Lists all chat sessions for the authenticated user, ordered by last activity."
+			},
+			"response": []
+		},
+		{
+			"name": "Create Chat Session",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "api-key",
+						"value": "{{api_key}}",
+						"type": "text"
+					},
+					{
+						"key": "platform",
+						"value": "WEB",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"Custom Chat Title\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/pdf/sessions/create",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"pdf",
+						"sessions",
+						"create"
+					]
+				},
+				"description": "Creates a new empty chat session. The 'title' parameter is optional (defaults to 'New Chat' and auto-renames upon the first message)."
+			},
+			"response": []
+		},
+		{
+			"name": "Rename Chat Session",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "api-key",
+						"value": "{{api_key}}",
+						"type": "text"
+					},
+					{
+						"key": "platform",
+						"value": "WEB",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"chat_session_id\": 1,\n    \"title\": \"Updated Session Title\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/pdf/sessions/rename",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"pdf",
+						"sessions",
+						"rename"
+					]
+				},
+				"description": "Renames an existing chat session belonging to the authenticated user."
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Chat Session",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "api-key",
+						"value": "{{api_key}}",
+						"type": "text"
+					},
+					{
+						"key": "platform",
+						"value": "WEB",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"chat_session_id\": 1\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/pdf/sessions/delete",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"pdf",
+						"sessions",
+						"delete"
+					]
+				},
+				"description": "Deletes the chat session and cascade-deletes all message history associated with it."
+			},
+			"response": []
+		},
+		{
+			"name": "Ask Question (PDF Q&A)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "api-key",
+						"value": "{{api_key}}",
+						"type": "text"
+					},
+					{
+						"key": "platform",
+						"value": "WEB",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"question\": \"What are the capital requirements for banks?\",\n    \"chat_session_id\": 1\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/pdf/ask",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"pdf",
+						"ask"
+					]
+				},
+				"description": "Sends a question to the PDF Q&A system. If 'chat_session_id' is omitted, a new chat session is automatically created. Returns the answer, suggestions, reference pages, images, and session metadata."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Session History",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "api-key",
+						"value": "{{api_key}}",
+						"type": "text"
+					},
+					{
+						"key": "platform",
+						"value": "WEB",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/pdf/history?chat_session_id=1",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"pdf",
+						"history"
+					],
+					"query": [
+						{
+							"key": "chat_session_id",
+							"value": "1",
+							"description": "ID of the chat session to load history for"
+						}
+					]
+				},
+				"description": "Retrieves the message history (Q&A pairs) within the specified session ordered chronologically."
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost/banking_co_efficient/api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "your_bearer_token_here",
+			"type": "string"
+		},
+		{
+			"key": "api_key",
+			"value": "BANKING-CO-EFFICIENT",
+			"type": "string"
+		}
+	]
+}

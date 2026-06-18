@@ -8,6 +8,7 @@ class ChatHistory extends Model
 {
     protected $fillable = [
         'user_id',
+        'chat_session_id',
         'question',
         'answer',
         'suggestions',
@@ -24,5 +25,10 @@ class ChatHistory extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function session()
+    {
+        return $this->belongsTo(ChatSession::class, 'chat_session_id');
     }
 }

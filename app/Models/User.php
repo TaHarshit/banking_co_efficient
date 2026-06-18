@@ -80,6 +80,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the chat sessions for the user.
+     */
+    public function chatSessions()
+    {
+        return $this->hasMany(ChatSession::class);
+    }
+
+    /**
      * Generates a text summary of the user's behavioral profile based on their signup responses.
      */
     public function getAiBehaviorProfile()
