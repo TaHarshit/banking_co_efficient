@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ChatHistory;
 use App\Models\ChatSession;
+use App\General\General;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -16,7 +17,7 @@ class PdfQuestionController extends Controller
      * Ask a question and get answer from PDF
      * 
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function ask(Request $request)
     {
@@ -106,16 +107,17 @@ class PdfQuestionController extends Controller
                     // Don't fail the request if history storage fails
                 }
                 
-                return response()->json([
-                    'success' => true,
+                $apiResponse = General::setResponse('SUCCESS', 'Answer retrieved successfully');
+                $apiResponse['data'] = [
                     'answer' => $answer,
                     'suggestions' => !empty($suggestions) ? $suggestions : 'No Suggestion',
                     'images' => $images,
                     'reference_pages' => $reference_pages,
                     'chat_session_id' => $sessionId,
                     'chat_session_title' => $session ? $session->title : null,
-                    'message' => 'Answer retrieved successfully'
-                ], 200);
+                ];
+
+                return get_response($request, $apiResponse);
             } else {
                 // Python service returned an error
                 Log::error('PDF Service Error', [
@@ -123,37 +125,30 @@ class PdfQuestionController extends Controller
                     'body' => $response->body()
                 ]);
 
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to get answer from PDF service',
-                    'error' => 'Service unavailable'
-                ], 503);
+                $apiResponse = General::setResponse('OTHER_ERROR', 'Failed to get answer from PDF service');
+
+                return get_response($request, $apiResponse);
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
+            $apiResponse = General::setResponse('VALIDATION_ERROR', 'Validation failed');
+            $apiResponse['errors'] = $e->errors();
+
+            return get_response($request, $apiResponse);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             Log::error('PDF Service Connection Error', ['error' => $e->getMessage()]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot connect to PDF service. Please ensure the Python service is running.',
-                'error' => 'Connection failed'
-            ], 503);
+            $apiResponse = General::setResponse('OTHER_ERROR', 'Cannot connect to PDF service. Please ensure the Python service is running.');
+
+            return get_response($request, $apiResponse);
         } catch (\Exception $e) {
             Log::error('PDF Question API Error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while processing your question',
-                'error' => $e->getMessage()
-            ], 500);
+            $apiResponse = General::setResponse('OTHER_ERROR', 'An error occurred while processing your question');
+
+            return get_response($request, $apiResponse);
         }
     }
 
@@ -161,7 +156,7 @@ class PdfQuestionController extends Controller
      * Get chat history for the authenticated user
      * 
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function getHistory(Request $request)
     {
@@ -178,19 +173,16 @@ class PdfQuestionController extends Controller
             $history = $query->orderBy('created_at', $order)
                 ->paginate(20);
 
-            return response()->json([
-                'success' => true,
-                'history' => $history,
-                'message' => 'Chat history retrieved successfully'
-            ], 200);
+            $apiResponse = General::setResponse('SUCCESS', 'Chat history retrieved successfully');
+            $apiResponse['data'] = $history;
+
+            return get_response($request, $apiResponse);
         } catch (\Exception $e) {
             Log::error('Failed to retrieve chat history', ['error' => $e->getMessage()]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while retrieving chat history',
-                'error' => $e->getMessage()
-            ], 500);
+            $apiResponse = General::setResponse('OTHER_ERROR', 'An error occurred while retrieving chat history');
+
+            return get_response($request, $apiResponse);
         }
     }
 
@@ -198,7 +190,7 @@ class PdfQuestionController extends Controller
      * List chat sessions for the authenticated user
      * 
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function getSessions(Request $request)
     {
@@ -208,18 +200,16 @@ class PdfQuestionController extends Controller
                 ->orderBy('updated_at', 'desc')
                 ->get();
 
-            return response()->json([
-                'success' => true,
-                'sessions' => $sessions,
-                'message' => 'Chat sessions retrieved successfully'
-            ], 200);
+            $apiResponse = General::setResponse('SUCCESS', 'Chat sessions retrieved successfully');
+            $apiResponse['data'] = $sessions;
+
+            return get_response($request, $apiResponse);
         } catch (\Exception $e) {
             Log::error('Failed to retrieve chat sessions', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve chat sessions',
-                'error' => $e->getMessage()
-            ], 500);
+
+            $apiResponse = General::setResponse('OTHER_ERROR', 'Failed to retrieve chat sessions');
+
+            return get_response($request, $apiResponse);
         }
     }
 
@@ -227,7 +217,7 @@ class PdfQuestionController extends Controller
      * Create a new chat session
      * 
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function createSession(Request $request)
     {
@@ -241,24 +231,22 @@ class PdfQuestionController extends Controller
                 'title' => $validated['title'] ?? 'New Chat'
             ]);
 
-            return response()->json([
-                'success' => true,
-                'session' => $session,
-                'message' => 'Chat session created successfully'
-            ], 201);
+            $apiResponse = General::setResponse('SUCCESS', 'Chat session created successfully');
+            $apiResponse['code'] = 201;
+            $apiResponse['data'] = $session;
+
+            return get_response($request, $apiResponse);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
+            $apiResponse = General::setResponse('VALIDATION_ERROR', 'Validation failed');
+            $apiResponse['errors'] = $e->errors();
+
+            return get_response($request, $apiResponse);
         } catch (\Exception $e) {
             Log::error('Failed to create chat session', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create chat session',
-                'error' => $e->getMessage()
-            ], 500);
+
+            $apiResponse = General::setResponse('OTHER_ERROR', 'Failed to create chat session');
+
+            return get_response($request, $apiResponse);
         }
     }
 
@@ -266,7 +254,7 @@ class PdfQuestionController extends Controller
      * Rename an existing chat session
      * 
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function renameSession(Request $request)
     {
@@ -280,24 +268,21 @@ class PdfQuestionController extends Controller
             $session->title = $validated['title'];
             $session->save();
 
-            return response()->json([
-                'success' => true,
-                'session' => $session,
-                'message' => 'Chat session renamed successfully'
-            ], 200);
+            $apiResponse = General::setResponse('SUCCESS', 'Chat session renamed successfully');
+            $apiResponse['data'] = $session;
+
+            return get_response($request, $apiResponse);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
+            $apiResponse = General::setResponse('VALIDATION_ERROR', 'Validation failed');
+            $apiResponse['errors'] = $e->errors();
+
+            return get_response($request, $apiResponse);
         } catch (\Exception $e) {
             Log::error('Failed to rename chat session', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to rename chat session',
-                'error' => $e->getMessage()
-            ], 500);
+
+            $apiResponse = General::setResponse('OTHER_ERROR', 'Failed to rename chat session');
+
+            return get_response($request, $apiResponse);
         }
     }
 
@@ -305,7 +290,7 @@ class PdfQuestionController extends Controller
      * Delete a chat session and its history
      * 
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function deleteSession(Request $request)
     {
@@ -317,32 +302,31 @@ class PdfQuestionController extends Controller
             $session = ChatSession::findOrFail($validated['chat_session_id']);
             $session->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Chat session deleted successfully'
-            ], 200);
+            $apiResponse = General::setResponse('SUCCESS', 'Chat session deleted successfully');
+            $apiResponse['data'] = (object)[];
+
+            return get_response($request, $apiResponse);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
+            $apiResponse = General::setResponse('VALIDATION_ERROR', 'Validation failed');
+            $apiResponse['errors'] = $e->errors();
+
+            return get_response($request, $apiResponse);
         } catch (\Exception $e) {
             Log::error('Failed to delete chat session', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to delete chat session',
-                'error' => $e->getMessage()
-            ], 500);
+
+            $apiResponse = General::setResponse('OTHER_ERROR', 'Failed to delete chat session');
+
+            return get_response($request, $apiResponse);
         }
     }
 
     /**
      * Check if PDF service is running
      * 
-     * @return \Illuminate\Http\JsonResponse
+     * @param Request $request
+     * @return \Illuminate\Http\Response
      */
-    public function status()
+    public function status(Request $request)
     {
         try {
             $pythonServiceUrl = config('services.pdf_service.url');
@@ -353,24 +337,24 @@ class PdfQuestionController extends Controller
             $response = Http::timeout(5)->get($baseUrl . '/docs');
 
             if ($response->successful()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'PDF service is running',
+                $apiResponse = General::setResponse('SUCCESS', 'PDF service is running');
+                $apiResponse['data'] = [
                     'service_url' => $baseUrl
-                ], 200);
+                ];
+
+                return get_response($request, $apiResponse);
             } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'PDF service is not responding',
+                $apiResponse = General::setResponse('OTHER_ERROR', 'PDF service is not responding');
+                $apiResponse['data'] = [
                     'service_url' => $baseUrl
-                ], 503);
+                ];
+
+                return get_response($request, $apiResponse);
             }
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'PDF service is not running',
-                'error' => $e->getMessage()
-            ], 503);
+            $apiResponse = General::setResponse('OTHER_ERROR', 'PDF service is not running');
+
+            return get_response($request, $apiResponse);
         }
     }
 }
