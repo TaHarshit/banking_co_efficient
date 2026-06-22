@@ -33,12 +33,12 @@ Route::POST('contact_us', [\App\Http\Controllers\Api\ContactUsController::class,
 Route::get('test-fcm-notification', function () {
     try {
         $userId = 138;
-        $token = 'ceBojdX-qEDFlULEIjF0xz:APA91bFaXL6apxfcy3la9bO07YXHS8DSPuWAb7CDU2Dge-hpIvv2my6l5QYgSS8fgpS95AR0kw3qX3GElKMi-ot4H2C3SSyS71R-mPDyg3EeCeoF0W2WE0Y';
+        $token = 'fxevcRa8SM-aXDy01mNxJ0:APA91bHNPDxKXtPO_CFNwVfUrTyv_Mflt8MyU3qGXjUfUrQR3GbFUlQIXws_1i_1iUeT98AQ4B2GtutmsLWg9zumQg_8iKjB4ZwBfcJlNG1xJ1CRH7BcQoo';
         
         $user = \App\Models\User::find($userId);
         if ($user) {
             $user->device_token = $token;
-            $user->platform = 'IOS';
+            $user->platform = 'WEB';
             $user->save();
         } else {
             return response()->json(['error' => 'User 138 not found'], 404);
