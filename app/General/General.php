@@ -345,16 +345,16 @@ class General extends \Exception
                             "title" => $title,
                             "body" => $message
                         ),
-                        'data' => $stringPayload,
-                        'apns' => array(
-                            'payload' => array(
-                                'aps' => array(
-                                    'sound' => 'default',
-                                    'content-available' => 1,
-                                    'priority' => 1
-                                )
-                            )
-                        )
+                        'data' => $stringPayload
+                        // 'apns' => array(
+                        //     'payload' => array(
+                        //         'aps' => array(
+                        //             'sound' => 'default',
+                        //             'content-available' => 1,
+                        //             'priority' => 1
+                        //         )
+                        //     )
+                        // )
                     ]
                 );
             }
