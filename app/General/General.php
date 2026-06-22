@@ -364,7 +364,7 @@ class General extends \Exception
                 ])
                 ->post($url, $fcmFields);
 
-                return $response;
+                return $response->body();
 
             if ($response->failed()) {
                 Log::error('[FCM] Notification dispatch failed', [
