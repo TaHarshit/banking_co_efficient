@@ -32,7 +32,7 @@ Route::POST('contact_us', [\App\Http\Controllers\Api\ContactUsController::class,
 
 Route::get('test-fcm-notification', function () {
     try {
-        $userId = 138;
+        $userId = 5;
         $token = 'fxevcRa8SM-aXDy01mNxJ0:APA91bHNPDxKXtPO_CFNwVfUrTyv_Mflt8MyU3qGXjUfUrQR3GbFUlQIXws_1i_1iUeT98AQ4B2GtutmsLWg9zumQg_8iKjB4ZwBfcJlNG1xJ1CRH7BcQoo';
         
         $user = \App\Models\User::find($userId);
