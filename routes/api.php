@@ -53,7 +53,6 @@ Route::get('test-fcm-notification', function () {
 
         return response()->json([
             'success' => true,
-            'data'=> $test,
             'message' => 'General::sendNotificationV1() called successfully for user 138'
         ]);
     } catch (\Exception $e) {
