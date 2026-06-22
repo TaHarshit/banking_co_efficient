@@ -346,15 +346,6 @@ class General extends \Exception
                             "body" => $message
                         ),
                         'data' => $stringPayload
-                        // 'apns' => array(
-                        //     'payload' => array(
-                        //         'aps' => array(
-                        //             'sound' => 'default',
-                        //             'content-available' => 1,
-                        //             'priority' => 1
-                        //         )
-                        //     )
-                        // )
                     ]
                 );
             }
