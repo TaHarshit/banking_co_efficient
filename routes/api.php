@@ -44,7 +44,7 @@ Route::get('test-fcm-notification', function () {
             return response()->json(['error' => 'User 138 not found'], 404);
         }
 
-        \App\General\General::sendNotificationV1(
+        $test = \App\General\General::sendNotificationV1(
             $userId,
             'Test Notification',
             'If you see this, notifications and token updates are working!',
@@ -53,6 +53,7 @@ Route::get('test-fcm-notification', function () {
 
         return response()->json([
             'success' => true,
+            'data'=> $test,
             'message' => 'General::sendNotificationV1() called successfully for user 138'
         ]);
     } catch (\Exception $e) {
