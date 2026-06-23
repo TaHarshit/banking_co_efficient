@@ -75,7 +75,7 @@
                                                         <td>{{ $i }}</td>
                                                         <td>
                                                             @if ($val->logo && Storage::exists('public/business_logos/' . $val->logo))
-                                                                <img src="{{ url('business_logos/' . $val->logo) }}"
+                                                                <img src="{{ url('public/business_logos/' . $val->logo) }}"
                                                                     height="40" width="40"
                                                                     style="object-fit: cover; border-radius: 4px;">
                                                             @else
