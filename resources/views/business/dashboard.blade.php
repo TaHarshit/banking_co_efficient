@@ -20,7 +20,7 @@
                     <div class="card-body py-3">
                         <div class="d-flex align-items-center">
                             @if ($business->logo && Storage::exists('public/business_logos/' . $business->logo))
-                                <img src="{{ asset('storage/app/public/business_logos/' . $business->logo) }}" height="50"
+                                <img src="{{ asset('business_logos/' . $business->logo) }}" height="50"
                                     width="50" style="object-fit: cover; border-radius: 8px;" class="me-3">
                             @else
                                 <div class="me-3"
