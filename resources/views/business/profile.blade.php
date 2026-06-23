@@ -84,7 +84,7 @@
                                 <div class="{{ $errors->has('logo') ? 'is-invalid' : '' }}">
                                     <input type="file" name="logo"
                                         class="dropify {{ $errors->has('logo') ? 'is-invalid' : '' }}" id="logo"
-                                        data-default-file="{{ $business->logo && Storage::exists('business_logos/' . $business->logo) ? asset('storage/app/public/business_logos/' . $business->logo) : '' }}">
+                                        data-default-file="{{ $business->logo && Storage::exists('public/business_logos/' . $business->logo) ? asset('storage/app/public/business_logos/' . $business->logo) : '' }}">
                                 </div>
                                 <label class="pl-1 mt-1 col-md-12 col-lg-12">{{ __('messages.recommended_size') }}</label>
                                 @if ($errors->has('logo'))

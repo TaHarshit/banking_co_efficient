@@ -90,7 +90,7 @@
                     <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#"
                         data-bs-toggle="dropdown">
                         @if (auth()->guard('business')->user()->logo &&
-                                Storage::exists('business_logos/' . auth()->guard('business')->user()->logo))
+                                Storage::exists('public/business_logos/' . auth()->guard('business')->user()->logo))
                             <img src="{{ asset('storage/app/public/business_logos/' . auth()->guard('business')->user()->logo) }}"
                                 alt="Profile" class="rounded-circle">
                         @else

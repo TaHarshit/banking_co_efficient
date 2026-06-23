@@ -144,7 +144,7 @@
                                 {{-- <div class="col-12 position-relative">
                                     <label for="profile_image" class="form-label">Profile Image</label>
                                     <div class="{{ $errors->has('profile_image') ? 'is-invalid' : '' }}">
-                                        <input type="file" name="profile_image" class="dropify" id="profile_image" data-default-file="{{isset($data) && Storage::exists('profile_image/'.$data->profile_image) ? asset('storage/app/public/profile_image/'.$data->profile_image) : ''}}">
+                                        <input type="file" name="profile_image" class="dropify" id="profile_image" data-default-file="{{isset($data) && Storage::exists('public/profile_image/'.$data->profile_image) ? asset('storage/app/public/profile_image/'.$data->profile_image) : ''}}">
                                     </div>
                                     <label class="pl-1 mt-1 col-md-12 col-lg-12">Image dimension should be : 591 X 591</label>
                                     @if ($errors->has('profile_image')) 
