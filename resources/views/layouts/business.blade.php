@@ -9,8 +9,8 @@
     <meta content="" name="keywords">
 
     <!-- Favicons -->
-    <link href="{{ url('public/assets/img/favicon.png') }}" rel="icon">
-    <link href="{{ url('public/assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
+    <link href="{{ url('assets/img/favicon.png') }}" rel="icon">
+    <link href="{{ url('assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
 
     <!-- Google Fonts -->
     <link href="https://fonts.gstatic.com" rel="preconnect">
@@ -19,16 +19,16 @@
         rel="stylesheet">
 
     <!-- Vendor CSS Files -->
-    <link href="{{ url('public/assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ url('public/assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
-    <link href="{{ url('public/assets/vendor/boxicons/css/boxicons.min.css') }}" rel="stylesheet">
-    <link href="{{ url('public/assets/vendor/quill/quill.snow.css') }}" rel="stylesheet">
-    <link href="{{ url('public/assets/vendor/quill/quill.bubble.css') }}" rel="stylesheet">
-    <link href="{{ url('public/assets/vendor/remixicon/remixicon.css') }}" rel="stylesheet">
-    <link href="{{ url('public/assets/vendor/simple-datatables/style.css') }}" rel="stylesheet">
+    <link href="{{ url('assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+    <link href="{{ url('assets/vendor/boxicons/css/boxicons.min.css') }}" rel="stylesheet">
+    <link href="{{ url('assets/vendor/quill/quill.snow.css') }}" rel="stylesheet">
+    <link href="{{ url('assets/vendor/quill/quill.bubble.css') }}" rel="stylesheet">
+    <link href="{{ url('assets/vendor/remixicon/remixicon.css') }}" rel="stylesheet">
+    <link href="{{ url('assets/vendor/simple-datatables/style.css') }}" rel="stylesheet">
 
     <!-- Template Main CSS File -->
-    <link href="{{ url('public/assets/css/style.css') }}" rel="stylesheet">
+    <link href="{{ url('assets/css/style.css') }}" rel="stylesheet">
 
     <style>
         :root {
@@ -46,7 +46,7 @@
     <header id="header" class="header fixed-top d-flex align-items-center">
         <div class="d-flex align-items-center justify-content-between">
             <a href="{{ route('business.dashboard') }}" class="logo d-flex align-items-center">
-                <img src="{{ url('public/assets/img/logo.png') }}" alt="">
+                <img src="{{ url('assets/img/logo.png') }}" alt="">
             </a>
             <i class="bi bi-list toggle-sidebar-btn"></i>
         </div>
@@ -57,7 +57,7 @@
                 <li class="nav-item dropdown pe-3">
                     <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#"
                         data-bs-toggle="dropdown">
-                        <img src="{{ url('public/assets/img/flags/' . app()->getLocale() . '.svg') }}"
+                        <img src="{{ url('assets/img/flags/' . app()->getLocale() . '.svg') }}"
                             alt="{{ app()->getLocale() }}" style="width: 24px; height: 16px; border: 1px solid #ddd;">
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
@@ -70,7 +70,7 @@
                         <li>
                             <a class="dropdown-item d-flex align-items-center {{ app()->getLocale() == 'en' ? 'active' : '' }}"
                                 href="{{ route('business.locale.switch', 'en') }}">
-                                <img src="{{ url('public/assets/img/flags/en.svg') }}" alt="English"
+                                <img src="{{ url('assets/img/flags/en.svg') }}" alt="English"
                                     style="width: 20px; height: 14px; margin-right: 8px; border: 1px solid #ddd;">
                                 <span>{{ __('messages.english') }}</span>
                             </a>
@@ -78,7 +78,7 @@
                         <li>
                             <a class="dropdown-item d-flex align-items-center {{ app()->getLocale() == 'fr' ? 'active' : '' }}"
                                 href="{{ route('business.locale.switch', 'fr') }}">
-                                <img src="{{ url('public/assets/img/flags/fr.svg') }}" alt="French"
+                                <img src="{{ url('assets/img/flags/fr.svg') }}" alt="French"
                                     style="width: 20px; height: 14px; margin-right: 8px; border: 1px solid #ddd;">
                                 <span>{{ __('messages.french') }}</span>
                             </a>
@@ -90,7 +90,7 @@
                     <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#"
                         data-bs-toggle="dropdown">
                         @if (auth()->guard('business')->user()->logo &&
-                                Storage::exists('public/business_logos/' . auth()->guard('business')->user()->logo))
+                                Storage::exists('business_logos/' . auth()->guard('business')->user()->logo))
                             <img src="{{ asset('storage/app/public/business_logos/' . auth()->guard('business')->user()->logo) }}"
                                 alt="Profile" class="rounded-circle">
                         @else
@@ -226,19 +226,19 @@
             class="bi bi-arrow-up-short"></i></a>
 
     <!-- Vendor JS Files -->
-    <script src="{{ url('public/assets/vendor/js/vendor.bundle.base.js') }}"></script>
-    <script src="{{ url('public/assets/vendor/apexcharts/apexcharts.min.js') }}"></script>
-    <script src="{{ url('public/assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ url('public/assets/vendor/chart.js/chart.umd.js') }}"></script>
-    <script src="{{ url('public/assets/vendor/echarts/echarts.min.js') }}"></script>
-    <script src="{{ url('public/assets/vendor/quill/quill.js') }}"></script>
-    <script src="{{ url('public/assets/vendor/simple-datatables/simple-datatables.js') }}"></script>
-    <script src="{{ url('public/assets/vendor/tinymce/tinymce.min.js') }}"></script>
-    <script src="{{ url('public/assets/vendor/php-email-form/validate.js') }}"></script>
+    <script src="{{ url('assets/vendor/js/vendor.bundle.base.js') }}"></script>
+    <script src="{{ url('assets/vendor/apexcharts/apexcharts.min.js') }}"></script>
+    <script src="{{ url('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url('assets/vendor/chart.js/chart.umd.js') }}"></script>
+    <script src="{{ url('assets/vendor/echarts/echarts.min.js') }}"></script>
+    <script src="{{ url('assets/vendor/quill/quill.js') }}"></script>
+    <script src="{{ url('assets/vendor/simple-datatables/simple-datatables.js') }}"></script>
+    <script src="{{ url('assets/vendor/tinymce/tinymce.min.js') }}"></script>
+    <script src="{{ url('assets/vendor/php-email-form/validate.js') }}"></script>
     @yield('pagewisescript')
 
     <!-- Template Main JS File -->
-    <script src="{{ url('public/assets/js/main.js') }}"></script>
+    <script src="{{ url('assets/js/main.js') }}"></script>
 
     @yield('customjs')
 </body>

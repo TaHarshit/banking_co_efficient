@@ -3,8 +3,8 @@
     <!-- Page Wise Style Sheet -->
 @endsection
 @section('pagewisescript')
-    <script src="{{ url('public/assets/vendor/chart.js/chart.umd.js') }}"></script>
-    <script src="{{ url('public/assets/vendor/echarts/echarts.min.js') }}"></script>
+    <script src="{{ url('assets/vendor/chart.js/chart.umd.js') }}"></script>
+    <script src="{{ url('assets/vendor/echarts/echarts.min.js') }}"></script>
 @endsection
 @section('customjs')
     {{-- <script type="text/javascript">
@@ -238,13 +238,16 @@
                         <div class="col-xxl-4 col-md-6">
                             <div class="card info-card revenue-card">
                                 <div class="card-body">
-                                    <h5 class="card-title">{{ __('messages.personalized_experience') }} {{ __('messages.questions') }}</h5>
+                                    <h5 class="card-title">{{ __('messages.personalized_experience') }}
+                                        {{ __('messages.questions') }}</h5>
                                     <div class="d-flex align-items-center">
-                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                        <div
+                                            class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                                             <i class="bi bi-question-circle"></i>
                                         </div>
                                         <div class="ps-3">
-                                            <h6>{{ isset($personalized_question_count) ? $personalized_question_count : 0 }}</h6>
+                                            <h6>{{ isset($personalized_question_count) ? $personalized_question_count : 0 }}
+                                            </h6>
                                         </div>
                                     </div>
                                 </div>
@@ -255,9 +258,11 @@
                         <div class="col-xxl-4 col-md-6">
                             <div class="card info-card revenue-card">
                                 <div class="card-body">
-                                    <h5 class="card-title">{{ __('messages.skill_assessment') }} {{ __('messages.questions') }}</h5>
+                                    <h5 class="card-title">{{ __('messages.skill_assessment') }}
+                                        {{ __('messages.questions') }}</h5>
                                     <div class="d-flex align-items-center">
-                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                        <div
+                                            class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                                             <i class="bi bi-ui-checks"></i>
                                         </div>
                                         <div class="ps-3">
@@ -274,11 +279,13 @@
                                 <div class="card-body">
                                     <h5 class="card-title">{{ __('messages.case_study_questions') }}</h5>
                                     <div class="d-flex align-items-center">
-                                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                                        <div
+                                            class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                                             <i class="bi bi-journal-text"></i>
                                         </div>
                                         <div class="ps-3">
-                                            <h6>{{ isset($case_study_question_count) ? $case_study_question_count : 0 }}</h6>
+                                            <h6>{{ isset($case_study_question_count) ? $case_study_question_count : 0 }}
+                                            </h6>
                                         </div>
                                     </div>
                                 </div>
@@ -307,7 +314,8 @@
                         <div class="col-12">
                             <div class="card info-card customers-card">
                                 <div class="card-body">
-                                    <h5 class="card-title">{{ __('messages.quick_actions') }} <span>| {{ __('messages.dashboard') }}</span></h5>
+                                    <h5 class="card-title">{{ __('messages.quick_actions') }} <span>|
+                                            {{ __('messages.dashboard') }}</span></h5>
                                     <div class="d-flex align-items-center mt-3 flex-wrap gap-2">
                                         <a href="{{ route('createuser') }}" class="btn btn-primary btn-sm"><i
                                                 class="bi bi-person-plus"></i> {{ __('messages.add_user') }}</a>
@@ -316,7 +324,8 @@
                                         <a href="{{ route('managebusinesses') }}" class="btn btn-success btn-sm"><i
                                                 class="bi bi-briefcase"></i> {{ __('messages.manage_businesses') }}</a>
                                         <a href="{{ route('managesections') }}"
-                                            class="btn btn-warning btn-sm text-white"><i class="bi bi-list-task"></i> {{ __('messages.manage_sections') }}</a>
+                                            class="btn btn-warning btn-sm text-white"><i class="bi bi-list-task"></i>
+                                            {{ __('messages.manage_sections') }}</a>
                                         <a href="{{ route('managecontacts') }}" class="btn btn-info btn-sm text-white"><i
                                                 class="bi bi-envelope"></i> {{ __('messages.view_contacts') }}</a>
                                         <a href="{{ route('setting') }}" class="btn btn-dark btn-sm text-white"><i
@@ -405,38 +414,47 @@
                             <div class="card">
                                 <div class="card-body pb-0">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h5 class="card-title mb-0">{{ __('messages.skill_assessment_results') }} <span>| Cumulative</span></h5>
-										@if((isset($exam_types) && count($exam_types) > 0) || (isset($exam_templates) && count($exam_templates) > 0))
-											<div class="d-flex align-items-center">
-												@if(isset($exam_types) && count($exam_types) > 0)
-													<label for="examTypeFilter" class="form-label me-2 mb-0">{{ __('messages.filter_by_type') ?? 'Filter by Type' }}</label>
-													<select id="examTypeFilter" class="form-select form-select-sm me-2" style="width: 200px;">
-														<option value="">{{ __('messages.all_exam_types') ?? 'All Types' }}</option>
-														@foreach($exam_types as $key => $label)
-															<option value="{{ $key }}" {{ (isset($selected_exam_type) && $selected_exam_type == $key) ? 'selected' : '' }}>{{ $label }}</option>
-														@endforeach
-													</select>
-												@endif
+                                        <h5 class="card-title mb-0">{{ __('messages.skill_assessment_results') }} <span>|
+                                                Cumulative</span></h5>
+                                        @if ((isset($exam_types) && count($exam_types) > 0) || (isset($exam_templates) && count($exam_templates) > 0))
+                                            <div class="d-flex align-items-center">
+                                                @if (isset($exam_types) && count($exam_types) > 0)
+                                                    <label for="examTypeFilter"
+                                                        class="form-label me-2 mb-0">{{ __('messages.filter_by_type') ?? 'Filter by Type' }}</label>
+                                                    <select id="examTypeFilter" class="form-select form-select-sm me-2"
+                                                        style="width: 200px;">
+                                                        <option value="">
+                                                            {{ __('messages.all_exam_types') ?? 'All Types' }}</option>
+                                                        @foreach ($exam_types as $key => $label)
+                                                            <option value="{{ $key }}"
+                                                                {{ isset($selected_exam_type) && $selected_exam_type == $key ? 'selected' : '' }}>
+                                                                {{ $label }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                @endif
 
-												@if(isset($exam_templates) && count($exam_templates) > 0)
-													<label for="examTemplateFilter" class="form-label me-2 mb-0">{{ __('messages.filter_by_exam') }}</label>
-													<select id="examTemplateFilter" class="form-select form-select-sm" style="width: 250px;">
-														<option value="">{{ __('messages.all_exams') }}</option>
-														@foreach($exam_templates as $id => $title)
-															<option value="{{ $id }}" {{ $selected_exam_template == $id ? 'selected' : '' }}>
-																{{ $title }}
-															</option>
-														@endforeach
-													</select>
-												@endif
-											</div>
-										@endif
+                                                @if (isset($exam_templates) && count($exam_templates) > 0)
+                                                    <label for="examTemplateFilter"
+                                                        class="form-label me-2 mb-0">{{ __('messages.filter_by_exam') }}</label>
+                                                    <select id="examTemplateFilter" class="form-select form-select-sm"
+                                                        style="width: 250px;">
+                                                        <option value="">{{ __('messages.all_exams') }}</option>
+                                                        @foreach ($exam_templates as $id => $title)
+                                                            <option value="{{ $id }}"
+                                                                {{ $selected_exam_template == $id ? 'selected' : '' }}>
+                                                                {{ $title }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                @endif
+                                            </div>
+                                        @endif
                                     </div>
                                     <div id="resultPieChart" style="min-height: 400px;" class="echart"></div>
                                     <script>
                                         document.addEventListener("DOMContentLoaded", () => {
                                             const chartInstance = echarts.init(document.querySelector("#resultPieChart"));
-                                            
+
                                             const updateChart = (data) => {
                                                 chartInstance.setOption({
                                                     tooltip: {
@@ -451,11 +469,22 @@
                                                         name: 'User Count',
                                                         type: 'pie',
                                                         radius: '50%',
-                                                        data: [
-                                                            { value: data['0-50'], name: '0-50%' },
-                                                            { value: data['51-70'], name: '51-70%' },
-                                                            { value: data['71-90'], name: '71-90%' },
-                                                            { value: data['91-100'], name: '91-100%' }
+                                                        data: [{
+                                                                value: data['0-50'],
+                                                                name: '0-50%'
+                                                            },
+                                                            {
+                                                                value: data['51-70'],
+                                                                name: '51-70%'
+                                                            },
+                                                            {
+                                                                value: data['71-90'],
+                                                                name: '71-90%'
+                                                            },
+                                                            {
+                                                                value: data['91-100'],
+                                                                name: '91-100%'
+                                                            }
                                                         ],
                                                         emphasis: {
                                                             itemStyle: {
@@ -490,22 +519,22 @@
                                                     window.location.href = url.toString();
                                                 });
                                             }
-											// Handle exam type filter change (reloads and resets selected template)
-											const examTypeFilter = document.getElementById('examTypeFilter');
-											if (examTypeFilter) {
-												examTypeFilter.addEventListener('change', function() {
-													const examType = this.value;
-													const url = new URL(window.location);
-													if (examType) {
-														url.searchParams.set('exam_type', examType);
-													} else {
-														url.searchParams.delete('exam_type');
-													}
-													// Clear selected template when changing type
-													url.searchParams.delete('exam_template_id');
-													window.location.href = url.toString();
-												});
-											}
+                                            // Handle exam type filter change (reloads and resets selected template)
+                                            const examTypeFilter = document.getElementById('examTypeFilter');
+                                            if (examTypeFilter) {
+                                                examTypeFilter.addEventListener('change', function() {
+                                                    const examType = this.value;
+                                                    const url = new URL(window.location);
+                                                    if (examType) {
+                                                        url.searchParams.set('exam_type', examType);
+                                                    } else {
+                                                        url.searchParams.delete('exam_type');
+                                                    }
+                                                    // Clear selected template when changing type
+                                                    url.searchParams.delete('exam_template_id');
+                                                    window.location.href = url.toString();
+                                                });
+                                            }
                                         });
                                     </script>
                                 </div>
@@ -516,7 +545,8 @@
                         <div class="col-12">
                             <div class="card recent-sales overflow-auto">
                                 <div class="card-body">
-                                    <h5 class="card-title">{{ __('messages.recent_businesses') }} <span>| {{ __('messages.latest_additions') }}</span></h5>
+                                    <h5 class="card-title">{{ __('messages.recent_businesses') }} <span>|
+                                            {{ __('messages.latest_additions') }}</span></h5>
                                     <table class="table table-borderless datatable">
                                         <thead>
                                             <tr>
@@ -540,15 +570,18 @@
                                                     <td>{{ $business->users_count }}</td>
                                                     <td>
                                                         @if ($business->status == 1)
-                                                            <span class="badge bg-success">{{ __('messages.active') }}</span>
+                                                            <span
+                                                                class="badge bg-success">{{ __('messages.active') }}</span>
                                                         @else
-                                                            <span class="badge bg-danger">{{ __('messages.inactive') }}</span>
+                                                            <span
+                                                                class="badge bg-danger">{{ __('messages.inactive') }}</span>
                                                         @endif
                                                     </td>
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="5" class="text-center">{{ __('messages.no_recent_businesses') }}</td>
+                                                    <td colspan="5" class="text-center">
+                                                        {{ __('messages.no_recent_businesses') }}</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
@@ -561,7 +594,8 @@
                         <div class="col-12">
                             <div class="card top-selling overflow-auto">
                                 <div class="card-body">
-                                    <h5 class="card-title">{{ __('messages.recent_contact_inquiries') }} <span>| {{ __('messages.latest') }}</span></h5>
+                                    <h5 class="card-title">{{ __('messages.recent_contact_inquiries') }} <span>|
+                                            {{ __('messages.latest') }}</span></h5>
                                     <table class="table table-borderless datatable">
                                         <thead>
                                             <tr>
@@ -585,7 +619,8 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="5" class="text-center">{{ __('messages.no_recent_contacts') }}</td>
+                                                    <td colspan="5" class="text-center">
+                                                        {{ __('messages.no_recent_contacts') }}</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
@@ -620,35 +655,35 @@
 										</thead>
 										<tbody>
 											<tr>
-												<th scope="row"><a href="#"><img src="{{url('public/assets/img/product-1.jpg')}}" alt=""></a></th>
+												<th scope="row"><a href="#"><img src="{{url('assets/img/product-1.jpg')}}" alt=""></a></th>
 												<td><a href="#" class="text-primary fw-bold">Ut inventore ipsa voluptas nulla</a></td>
 												<td>$64</td>
 												<td class="fw-bold">124</td>
 												<td>$5,828</td>
 											</tr>
 											<tr>
-												<th scope="row"><a href="#"><img src="{{url('public/assets/img/product-2.jpg')}}" alt=""></a></th>
+												<th scope="row"><a href="#"><img src="{{url('assets/img/product-2.jpg')}}" alt=""></a></th>
 												<td><a href="#" class="text-primary fw-bold">Exercitationem similique doloremque</a></td>
 												<td>$46</td>
 												<td class="fw-bold">98</td>
 												<td>$4,508</td>
 											</tr>
 											<tr>
-												<th scope="row"><a href="#"><img src="{{url('public/assets/img/product-3.jpg')}}" alt=""></a></th>
+												<th scope="row"><a href="#"><img src="{{url('assets/img/product-3.jpg')}}" alt=""></a></th>
 												<td><a href="#" class="text-primary fw-bold">Doloribus nisi exercitationem</a></td>
 												<td>$59</td>
 												<td class="fw-bold">74</td>
 												<td>$4,366</td>
 											</tr>
 											<tr>
-												<th scope="row"><a href="#"><img src="{{url('public/assets/img/product-4.jpg')}}" alt=""></a></th>
+												<th scope="row"><a href="#"><img src="{{url('assets/img/product-4.jpg')}}" alt=""></a></th>
 												<td><a href="#" class="text-primary fw-bold">Officiis quaerat sint rerum error</a></td>
 												<td>$32</td>
 												<td class="fw-bold">63</td>
 												<td>$2,016</td>
 											</tr>
 											<tr>
-												<th scope="row"><a href="#"><img src="{{url('public/assets/img/product-5.jpg')}}" alt=""></a></th>
+												<th scope="row"><a href="#"><img src="{{url('assets/img/product-5.jpg')}}" alt=""></a></th>
 												<td><a href="#" class="text-primary fw-bold">Sit unde debitis delectus repellendus</a></td>
 												<td>$79</td>
 												<td class="fw-bold">41</td>
@@ -764,27 +799,27 @@
 							<h5 class="card-title">News &amp; Updates <span>| Today</span></h5>
 							<div class="news">
 								<div class="post-item clearfix">
-									<img src="{{url('public/assets/img/news-1.jpg')}}" alt="">
+									<img src="{{url('assets/img/news-1.jpg')}}" alt="">
 									<h4><a href="#">Nihil blanditiis at in nihil autem</a></h4>
 									<p>Sit recusandae non aspernatur laboriosam. Quia enim eligendi sed ut harum...</p>
 								</div>
 								<div class="post-item clearfix">
-									<img src="{{url('public/assets/img/news-2.jpg')}}" alt="">
+									<img src="{{url('assets/img/news-2.jpg')}}" alt="">
 									<h4><a href="#">Quidem autem et impedit</a></h4>
 									<p>Illo nemo neque maiores vitae officiis cum eum turos elan dries werona nande...</p>
 								</div>
 								<div class="post-item clearfix">
-									<img src="{{url('public/assets/img/news-3.jpg')}}" alt="">
+									<img src="{{url('assets/img/news-3.jpg')}}" alt="">
 									<h4><a href="#">Id quia et et ut maxime similique occaecati ut</a></h4>
 									<p>Fugiat voluptas vero eaque accusantium eos. Consequuntur sed ipsam et totam...</p>
 								</div>
 								<div class="post-item clearfix">
-									<img src="{{url('public/assets/img/news-4.jpg')}}" alt="">
+									<img src="{{url('assets/img/news-4.jpg')}}" alt="">
 									<h4><a href="#">Laborum corporis quo dara net para</a></h4>
 									<p>Qui enim quia optio. Eligendi aut asperiores enim repellendusvel rerum cuder...</p>
 								</div>
 								<div class="post-item clearfix">
-									<img src="{{url('public/assets/img/news-5.jpg')}}" alt="">
+									<img src="{{url('assets/img/news-5.jpg')}}" alt="">
 									<h4><a href="#">Et dolores corrupti quae illo quod dolor</a></h4>
 									<p>Odit ut eveniet modi reiciendis. Atque cupiditate libero beatae dignissimos eius...</p>
 								</div>

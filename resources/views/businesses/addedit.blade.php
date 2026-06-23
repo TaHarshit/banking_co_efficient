@@ -1,9 +1,9 @@
 @extends('layouts.app')
 @section('pagewisestyle')
-    <link rel="stylesheet" href="{{ url('public/assets/vendor/dropify/dropify.min.css') }}">
+    <link rel="stylesheet" href="{{ url('assets/vendor/dropify/dropify.min.css') }}">
 @endsection
 @section('pagewisescript')
-    <script src="{{ url('public/assets/vendor/dropify/dropify.min.js') }}"></script>
+    <script src="{{ url('assets/vendor/dropify/dropify.min.js') }}"></script>
 @endsection
 @section('customjs')
     <script type="text/javascript">
@@ -68,7 +68,7 @@
                                     <div class="{{ $errors->has('logo') ? 'is-invalid' : '' }}">
                                         <input type="file" name="logo"
                                             class="dropify {{ $errors->has('logo') ? 'is-invalid' : '' }}" id="logo"
-                                            data-default-file="{{ isset($data) && $data->logo && Storage::exists('public/business_logos/' . $data->logo) ? asset('storage/app/public/business_logos/' . $data->logo) : '' }}">
+                                            data-default-file="{{ isset($data) && $data->logo && Storage::exists('business_logos/' . $data->logo) ? asset('storage/app/public/business_logos/' . $data->logo) : '' }}">
                                     </div>
                                     <label class="pl-1 mt-1 col-md-12 col-lg-12">Recommended size: 200x200px (JPG,
                                         PNG)</label>

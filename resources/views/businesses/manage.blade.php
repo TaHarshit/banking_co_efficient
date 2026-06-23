@@ -17,7 +17,8 @@
                 status: status
             }, function(data) {
                 if (data == 1) {
-                    NotifMsg('{{ __('messages.business_status_updated') }}', 'success', '{{ __('messages.success') }}');
+                    NotifMsg('{{ __('messages.business_status_updated') }}', 'success',
+                        '{{ __('messages.success') }}');
                 } else {
                     NotifMsg('{{ __('messages.something_went_wrong') }}', 'danger', '{{ __('messages.danger') }}');
                 }
@@ -46,7 +47,8 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">{{ __('messages.manage_businesses') }}
-                                <a href="{{ route('createbusiness') }}" class="btn btn-primary" style="float: right;">{{ __('messages.add_new') }} {{ __('messages.business') }}</a>
+                                <a href="{{ route('createbusiness') }}" class="btn btn-primary"
+                                    style="float: right;">{{ __('messages.add_new') }} {{ __('messages.business') }}</a>
                             </h5>
                             <div class="row">
                                 <div class="col-12">
@@ -72,7 +74,7 @@
                                                     <tr>
                                                         <td>{{ $i }}</td>
                                                         <td>
-                                                            @if ($val->logo && Storage::exists('public/business_logos/' . $val->logo))
+                                                            @if ($val->logo && Storage::exists('business_logos/' . $val->logo))
                                                                 <img src="{{ url('storage/app/public/business_logos/' . $val->logo) }}"
                                                                     height="40" width="40"
                                                                     style="object-fit: cover; border-radius: 4px;">

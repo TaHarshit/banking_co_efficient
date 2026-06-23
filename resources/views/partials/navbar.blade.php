@@ -2,7 +2,7 @@
 <header id="header" class="header fixed-top d-flex align-items-center">
     <div class="d-flex align-items-center justify-content-between">
         <a href="{{ route('dashboard') }}" class="logo d-flex align-items-center">
-            <img src="{{ url('public/assets/img/logo.png') }}" alt="logo">
+            <img src="{{ url('assets/img/logo.png') }}" alt="logo">
             {{-- <span class="d-none d-lg-block">Your Logo</span> --}}
         </a>
         <i class="bi bi-list toggle-sidebar-btn"></i>
@@ -92,7 +92,7 @@
      </li>
      <li class="message-item">
       <a href="#">
-       <img src="{{ url('public/assets/img/messages-1.jpg') }}" alt="" class="rounded-circle">
+       <img src="{{ url('assets/img/messages-1.jpg') }}" alt="" class="rounded-circle">
        <div>
         <h4>Maria Hudson</h4>
         <p>Velit asperiores et ducimus soluta repudiandae labore officia est ut...</p>
@@ -105,7 +105,7 @@
      </li>
      <li class="message-item">
       <a href="#">
-       <img src="{{ url('public/assets/img/messages-2.jpg') }}" alt="" class="rounded-circle">
+       <img src="{{ url('assets/img/messages-2.jpg') }}" alt="" class="rounded-circle">
        <div>
         <h4>Anna Nelson</h4>
         <p>Velit asperiores et ducimus soluta repudiandae labore officia est ut...</p>
@@ -118,7 +118,7 @@
      </li>
      <li class="message-item">
       <a href="#">
-       <img src="{{ url('public/assets/img/messages-3.jpg') }}" alt="" class="rounded-circle">
+       <img src="{{ url('assets/img/messages-3.jpg') }}" alt="" class="rounded-circle">
        <div>
         <h4>David Muldon</h4>
         <p>Velit asperiores et ducimus soluta repudiandae labore officia est ut...</p>
@@ -138,7 +138,7 @@
             <!-- Language Switcher -->
             <li class="nav-item dropdown pe-3">
                 <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-                    <img src="{{ url('public/assets/img/flags/' . app()->getLocale() . '.svg') }}"
+                    <img src="{{ url('assets/img/flags/' . app()->getLocale() . '.svg') }}"
                         alt="{{ app()->getLocale() }}" style="width: 24px; height: 16px; border: 1px solid #ddd;">
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
@@ -151,7 +151,7 @@
                     <li>
                         <a class="dropdown-item d-flex align-items-center {{ app()->getLocale() == 'en' ? 'active' : '' }}"
                             href="{{ route('locale.switch', 'en') }}">
-                            <img src="{{ url('public/assets/img/flags/en.svg') }}" alt="English"
+                            <img src="{{ url('assets/img/flags/en.svg') }}" alt="English"
                                 style="width: 20px; height: 14px; margin-right: 8px; border: 1px solid #ddd;">
                             <span>{{ __('messages.english') }}</span>
                         </a>
@@ -159,7 +159,7 @@
                     <li>
                         <a class="dropdown-item d-flex align-items-center {{ app()->getLocale() == 'fr' ? 'active' : '' }}"
                             href="{{ route('locale.switch', 'fr') }}">
-                            <img src="{{ url('public/assets/img/flags/fr.svg') }}" alt="French"
+                            <img src="{{ url('assets/img/flags/fr.svg') }}" alt="French"
                                 style="width: 20px; height: 14px; margin-right: 8px; border: 1px solid #ddd;">
                             <span>{{ __('messages.french') }}</span>
                         </a>

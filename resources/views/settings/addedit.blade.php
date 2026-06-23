@@ -1,9 +1,9 @@
 @extends('layouts.app')
 @section('pagewisestyle')
-    <link rel="stylesheet" href="{{ url('public/assets/vendor/dropify/dropify.min.css') }}">
+    <link rel="stylesheet" href="{{ url('assets/vendor/dropify/dropify.min.css') }}">
 @endsection
 @section('pagewisescript')
-    <script src="{{ url('public/assets/vendor/dropify/dropify.min.js') }}"></script>
+    <script src="{{ url('assets/vendor/dropify/dropify.min.js') }}"></script>
 @endsection
 @section('customjs')
     <script type="text/javascript">

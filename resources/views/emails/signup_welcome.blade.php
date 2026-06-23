@@ -21,7 +21,8 @@
                         <td align="center"
                             style="padding: 30px 40px 20px 40px; background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%); border-bottom: 1px solid #e2e8f0;">
                             <!-- Branding -->
-                            <img src="{{ url('public/assets/img/logo.png') }}" alt="NegoMaster Logo" style="max-height: 45px; border: 0; display: block; margin: 0 auto;">
+                            <img src="{{ url('assets/img/logo.png') }}" alt="NegoMaster Logo"
+                                style="max-height: 45px; border: 0; display: block; margin: 0 auto;">
                         </td>
                     </tr>
 

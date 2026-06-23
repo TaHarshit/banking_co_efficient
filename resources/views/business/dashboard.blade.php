@@ -19,7 +19,7 @@
                 <div class="card">
                     <div class="card-body py-3">
                         <div class="d-flex align-items-center">
-                            @if ($business->logo && Storage::exists('public/business_logos/' . $business->logo))
+                            @if ($business->logo && Storage::exists('business_logos/' . $business->logo))
                                 <img src="{{ asset('storage/app/public/business_logos/' . $business->logo) }}" height="50"
                                     width="50" style="object-fit: cover; border-radius: 8px;" class="me-3">
                             @else
@@ -162,9 +162,11 @@
                                     <div class="ps-3">
                                         <h6>{{ $seatsRemaining }}</h6>
                                         @if ($seatsRemaining > 0)
-                                            <span class="text-success small text-nowrap">{{ __('messages.available') }}</span>
+                                            <span
+                                                class="text-success small text-nowrap">{{ __('messages.available') }}</span>
                                         @else
-                                            <span class="text-danger small text-nowrap">{{ __('messages.fully_booked') }}</span>
+                                            <span
+                                                class="text-danger small text-nowrap">{{ __('messages.fully_booked') }}</span>
                                         @endif
                                     </div>
                                 </div>
@@ -179,25 +181,34 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="card-title mb-0">{{ __('messages.skill_assessment_results') }} <span>| {{ __('messages.employees_performance') }}</span></h5>
-                            @if((isset($exam_types) && count($exam_types) > 0) || (isset($exam_templates) && count($exam_templates) > 0))
+                            <h5 class="card-title mb-0">{{ __('messages.skill_assessment_results') }} <span>|
+                                    {{ __('messages.employees_performance') }}</span></h5>
+                            @if ((isset($exam_types) && count($exam_types) > 0) || (isset($exam_templates) && count($exam_templates) > 0))
                                 <div class="d-flex align-items-center">
-                                    @if(isset($exam_types) && count($exam_types) > 0)
-                                        <label for="examTypeFilter" class="form-label me-2 mb-0">{{ __('messages.filter_by_exam_type') ?? 'Filter by Type' }}</label>
-                                        <select id="examTypeFilter" class="form-select form-select-sm me-2" style="width: 200px;">
-                                            <option value="">{{ __('messages.all_exam_types') ?? 'All Types' }}</option>
-                                            @foreach($exam_types as $key => $label)
-                                                <option value="{{ $key }}" {{ (isset($selected_exam_type) && $selected_exam_type == $key) ? 'selected' : '' }}>{{ $label }}</option>
+                                    @if (isset($exam_types) && count($exam_types) > 0)
+                                        <label for="examTypeFilter"
+                                            class="form-label me-2 mb-0">{{ __('messages.filter_by_exam_type') ?? 'Filter by Type' }}</label>
+                                        <select id="examTypeFilter" class="form-select form-select-sm me-2"
+                                            style="width: 200px;">
+                                            <option value="">{{ __('messages.all_exam_types') ?? 'All Types' }}
+                                            </option>
+                                            @foreach ($exam_types as $key => $label)
+                                                <option value="{{ $key }}"
+                                                    {{ isset($selected_exam_type) && $selected_exam_type == $key ? 'selected' : '' }}>
+                                                    {{ $label }}</option>
                                             @endforeach
                                         </select>
                                     @endif
 
-                                    @if(isset($exam_templates) && count($exam_templates) > 0)
-                                        <label for="examTemplateFilter" class="form-label me-2 mb-0">{{ __('messages.filter_by_exam') }}</label>
-                                        <select id="examTemplateFilter" class="form-select form-select-sm" style="width: 250px;">
+                                    @if (isset($exam_templates) && count($exam_templates) > 0)
+                                        <label for="examTemplateFilter"
+                                            class="form-label me-2 mb-0">{{ __('messages.filter_by_exam') }}</label>
+                                        <select id="examTemplateFilter" class="form-select form-select-sm"
+                                            style="width: 250px;">
                                             <option value="">{{ __('messages.all_exams') }}</option>
-                                            @foreach($exam_templates as $id => $title)
-                                                <option value="{{ $id }}" {{ $selected_exam_template == $id ? 'selected' : '' }}>
+                                            @foreach ($exam_templates as $id => $title)
+                                                <option value="{{ $id }}"
+                                                    {{ $selected_exam_template == $id ? 'selected' : '' }}>
                                                     {{ $title }}
                                                 </option>
                                             @endforeach
@@ -209,11 +220,11 @@
                         <div style="height: 300px; position: relative;">
                             <canvas id="resultPieChart"></canvas>
                         </div>
-                        <script src="{{ url('public/assets/vendor/chart.js/chart.umd.js') }}"></script>
+                        <script src="{{ url('assets/vendor/chart.js/chart.umd.js') }}"></script>
                         <script>
                             document.addEventListener("DOMContentLoaded", () => {
                                 const ctx = document.getElementById('resultPieChart').getContext('2d');
-                                
+
                                 const updateChart = (data) => {
                                     new Chart(ctx, {
                                         type: 'pie',
@@ -262,8 +273,9 @@
                                                             if (label) {
                                                                 label += ': ';
                                                             }
-                                                            const total = data['0-50'] + data['51-70'] + data['71-90'] + data['91-100'];
-                                                            label += context.raw + ' Users (' + 
+                                                            const total = data['0-50'] + data['51-70'] + data['71-90'] +
+                                                                data['91-100'];
+                                                            label += context.raw + ' Users (' +
                                                                 Math.round(context.raw / (total || 1) * 100) + '%)';
                                                             return label;
                                                         }

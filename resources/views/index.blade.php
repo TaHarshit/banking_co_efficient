@@ -54,7 +54,7 @@
                         <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
                             <div class="d-flex justify-content-center py-4">
                                 <a href="index.html" class="logo d-flex align-items-center w-auto">
-                                    <img src="{{ url('public/assets/img/logo.png') }}" alt="">
+                                    <img src="{{ url('assets/img/logo.png') }}" alt="">
                                     {{-- <span class="d-none d-lg-block">{{env('APP_NAME')}}</span> --}}
                                 </a>
                             </div><!-- End Logo -->
@@ -108,12 +108,12 @@
                                             <a href="{{ route('locale.switch', 'fr') }}"
                                                 class="lang-flag-btn {{ app()->getLocale() == 'fr' ? 'active' : '' }}"
                                                 title="Français">
-                                                <img src="{{ url('public/assets/img/flags/fr.svg') }}" alt="Français">
+                                                <img src="{{ url('assets/img/flags/fr.svg') }}" alt="Français">
                                             </a>
                                             <a href="{{ route('locale.switch', 'en') }}"
                                                 class="lang-flag-btn {{ app()->getLocale() == 'en' ? 'active' : '' }}"
                                                 title="English">
-                                                <img src="{{ url('public/assets/img/flags/en.svg') }}" alt="English">
+                                                <img src="{{ url('assets/img/flags/en.svg') }}" alt="English">
                                             </a>
                                         </div>
                                     </div>
@@ -121,8 +121,8 @@
                                 </div>
                             </div>
                             <!-- <div class="credits">
-                                                                Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
-                                                            </div> -->
+                                                                    Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+                                                                </div> -->
                         </div>
                     </div>
                 </div>

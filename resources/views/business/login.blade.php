@@ -7,15 +7,15 @@
     <title>{{ __('messages.business_login') }} - {{ config('app.name') }}</title>
     <meta content="" name="description">
     <meta content="" name="keywords">
-    <link href="{{ url('public/assets/img/favicon.png') }}" rel="icon">
-    <link href="{{ url('public/assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
+    <link href="{{ url('assets/img/favicon.png') }}" rel="icon">
+    <link href="{{ url('assets/img/apple-touch-icon.png') }}" rel="apple-touch-icon">
     <link href="https://fonts.gstatic.com" rel="preconnect">
     <link
         href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i"
         rel="stylesheet">
-    <link href="{{ url('public/assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ url('public/assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
-    <link href="{{ url('public/assets/css/style.css') }}" rel="stylesheet">
+    <link href="{{ url('assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+    <link href="{{ url('assets/css/style.css') }}" rel="stylesheet">
     <style>
         :root {
             --primary: {{ env('APP_THEME_COLOR', '#4154f1') }};
@@ -151,12 +151,12 @@
                                             <a href="{{ route('business.locale.switch', 'fr') }}"
                                                 class="lang-flag-btn {{ app()->getLocale() == 'fr' ? 'active' : '' }}"
                                                 title="Français">
-                                                <img src="{{ url('public/assets/img/flags/fr.svg') }}" alt="Français">
+                                                <img src="{{ url('assets/img/flags/fr.svg') }}" alt="Français">
                                             </a>
                                             <a href="{{ route('business.locale.switch', 'en') }}"
                                                 class="lang-flag-btn {{ app()->getLocale() == 'en' ? 'active' : '' }}"
                                                 title="English">
-                                                <img src="{{ url('public/assets/img/flags/en.svg') }}" alt="English">
+                                                <img src="{{ url('assets/img/flags/en.svg') }}" alt="English">
                                             </a>
                                         </div>
                                     </div>
@@ -169,8 +169,8 @@
             </section>
         </div>
     </main>
-    <script src="{{ url('public/assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ url('public/assets/js/main.js') }}"></script>
+    <script src="{{ url('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url('assets/js/main.js') }}"></script>
 </body>
 
 </html>

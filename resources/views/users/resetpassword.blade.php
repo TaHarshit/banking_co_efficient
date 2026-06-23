@@ -61,34 +61,41 @@
                 <div class="container">
                     <div class="row justify-content-center">
                         <div class="col-lg-5 col-md-7 d-flex flex-column align-items-center justify-content-center">
-                            
+
                             <!-- Logo -->
                             <div class="d-flex justify-content-center py-4">
-                                <a href="{{ url('/') }}" class="logo d-flex align-items-center w-auto text-decoration-none">
-                                    <img src="{{ url('public/assets/img/logo.png') }}" alt="Logo" style="max-height: 45px;">
+                                <a href="{{ url('/') }}"
+                                    class="logo d-flex align-items-center w-auto text-decoration-none">
+                                    <img src="{{ url('assets/img/logo.png') }}" alt="Logo" style="max-height: 45px;">
                                 </a>
                             </div>
 
                             <!-- Card Wrapper -->
-                            <div class="card mb-3" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                            <div class="card mb-3"
+                                style="width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
                                 <div class="card-body p-4">
-                                    
+
                                     <div class="pt-2 pb-3">
                                         <h5 class="card-title text-center pb-0 fs-4 text-primary">Reset Password</h5>
-                                        <p class="text-center small text-muted">Create a strong and secure password for your account</p>
+                                        <p class="text-center small text-muted">Create a strong and secure password for your
+                                            account</p>
                                     </div>
 
                                     <!-- Status Message -->
                                     @if (isset($message))
-                                        <div class="alert alert-{{ $icon === 'danger' ? 'danger' : 'success' }} alert-dismissible fade show" role="alert">
-                                            <i class="bi {{ $icon === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill' }} me-2"></i>
+                                        <div class="alert alert-{{ $icon === 'danger' ? 'danger' : 'success' }} alert-dismissible fade show"
+                                            role="alert">
+                                            <i
+                                                class="bi {{ $icon === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-check-circle-fill' }} me-2"></i>
                                             {{ $message }}
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                                aria-label="Close"></button>
                                         </div>
                                     @endif
 
                                     <!-- Reset Form -->
-                                    <form class="row g-3 needs-validation" action="{{ route('updatepassword') }}" method="POST" id="resetPasswordForm" novalidate>
+                                    <form class="row g-3 needs-validation" action="{{ route('updatepassword') }}"
+                                        method="POST" id="resetPasswordForm" novalidate>
                                         @csrf
                                         <input type="hidden" name="token" value="{{ $token }}" />
 
@@ -96,8 +103,10 @@
                                         <div class="col-12">
                                             <label for="email" class="form-label">Email Address</label>
                                             <div class="input-group has-validation">
-                                                <span class="input-group-text" id="inputGroupPrepend"><i class="bi bi-envelope"></i></span>
-                                                <input type="email" name="email" class="form-control" id="email" placeholder="name@example.com" required>
+                                                <span class="input-group-text" id="inputGroupPrepend"><i
+                                                        class="bi bi-envelope"></i></span>
+                                                <input type="email" name="email" class="form-control" id="email"
+                                                    placeholder="name@example.com" required>
                                                 <div class="invalid-feedback">Please enter a valid email address.</div>
                                             </div>
                                         </div>
@@ -107,20 +116,28 @@
                                             <label for="password" class="form-label">New Password</label>
                                             <div class="input-group has-validation">
                                                 <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                                                <input type="password" name="password" class="form-control" id="password" placeholder="••••••••" required>
-                                                 <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="position: relative; z-index: 5;" onclick="togglePasswordVisibility(event)">
-                                                     <i class="bi bi-eye" id="togglePasswordIcon"></i>
-                                                 </button>
+                                                <input type="password" name="password" class="form-control" id="password"
+                                                    placeholder="••••••••" required>
+                                                <button class="btn btn-outline-secondary" type="button" id="togglePassword"
+                                                    style="position: relative; z-index: 5;"
+                                                    onclick="togglePasswordVisibility(event)">
+                                                    <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                                                </button>
                                                 <div class="invalid-feedback">Please enter your new password.</div>
                                             </div>
 
                                             <!-- Visual Password Criteria Indicators -->
                                             <ul class="validation-checklist" id="checklist">
-                                                <li id="rule-length"><i class="bi bi-x-circle-fill"></i> At least 8 characters</li>
-                                                <li id="rule-lowercase"><i class="bi bi-x-circle-fill"></i> Lowercase letter (a-z)</li>
-                                                <li id="rule-uppercase"><i class="bi bi-x-circle-fill"></i> Uppercase letter (A-Z)</li>
-                                                <li id="rule-number"><i class="bi bi-x-circle-fill"></i> At least one number (0-9)</li>
-                                                <li id="rule-special"><i class="bi bi-x-circle-fill"></i> At least one special symbol (#?!@$%^&*-)</li>
+                                                <li id="rule-length"><i class="bi bi-x-circle-fill"></i> At least 8
+                                                    characters</li>
+                                                <li id="rule-lowercase"><i class="bi bi-x-circle-fill"></i> Lowercase letter
+                                                    (a-z)</li>
+                                                <li id="rule-uppercase"><i class="bi bi-x-circle-fill"></i> Uppercase letter
+                                                    (A-Z)</li>
+                                                <li id="rule-number"><i class="bi bi-x-circle-fill"></i> At least one number
+                                                    (0-9)</li>
+                                                <li id="rule-special"><i class="bi bi-x-circle-fill"></i> At least one
+                                                    special symbol (#?!@$%^&*-)</li>
                                             </ul>
                                         </div>
 
@@ -129,21 +146,24 @@
                                             <label for="password_confirmation" class="form-label">Confirm Password</label>
                                             <div class="input-group has-validation">
                                                 <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-                                                <input type="password" name="password_confirmation" class="form-control" id="password_confirmation" placeholder="••••••••" required>
-                                                <div class="invalid-feedback" id="confirmFeedback">Please confirm your password.</div>
+                                                <input type="password" name="password_confirmation" class="form-control"
+                                                    id="password_confirmation" placeholder="••••••••" required>
+                                                <div class="invalid-feedback" id="confirmFeedback">Please confirm your
+                                                    password.</div>
                                             </div>
                                         </div>
 
                                         <!-- Submit Button -->
                                         <div class="col-12 pt-2">
-                                            <button class="btn btn-primary w-100" type="submit" id="submitBtn">Update Password</button>
+                                            <button class="btn btn-primary w-100" type="submit" id="submitBtn">Update
+                                                Password</button>
                                         </div>
                                     </form>
 
 
                                 </div>
                             </div>
-                            
+
                             <!-- Copyright info -->
                             <div class="text-center small text-muted mt-2">
                                 &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
@@ -159,7 +179,7 @@
 
 @section('customjs')
     <script>
-        $(document).ready(function () {
+        $(document).ready(function() {
             const passwordInput = $('#password');
             const confirmInput = $('#password_confirmation');
             const form = $('#resetPasswordForm');
@@ -196,7 +216,7 @@
                 return allValid;
             }
 
-            passwordInput.on('input', function () {
+            passwordInput.on('input', function() {
                 validatePassword();
                 checkConfirmPassword();
             });
@@ -222,14 +242,14 @@
             confirmInput.on('input', checkConfirmPassword);
 
             // Form Submit Check
-            form.on('submit', function (e) {
+            form.on('submit', function(e) {
                 const isPasswordValid = validatePassword();
                 const isConfirmValid = checkConfirmPassword();
-                
+
                 if (!isPasswordValid || !isConfirmValid) {
                     e.preventDefault();
                     e.stopPropagation();
-                    
+
                     if (!isPasswordValid) {
                         passwordInput.addClass('is-invalid');
                     }
@@ -238,7 +258,7 @@
                     }
                     return false;
                 }
-                
+
                 form.addClass('was-validated');
             });
         });

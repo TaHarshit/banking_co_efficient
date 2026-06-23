@@ -29,5 +29,5 @@ return [
     'default' => 'en',
 
     // Flag images path (relative to public folder)
-    'flags_path' => 'public/assets/img/flags/',
+    'flags_path' => 'assets/img/flags/',
 ];
