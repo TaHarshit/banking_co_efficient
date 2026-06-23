@@ -49,6 +49,7 @@ services:
       - ./docker-compose/nginx/laravel.conf:/etc/nginx/conf.d/default.conf
       - ./docker-compose/certbot/conf:/etc/letsencrypt
       - ./docker-compose/certbot/www:/var/www/certbot
+      - ./storage/app/public:/var/www/banking-coefficient/public/storage
     depends_on:
       - app
       - pdf-service
