@@ -33,7 +33,7 @@ if(!function_exists('addLog')){
     function addLog($request='', $response='')
     {
         $cyd        = date('Y/m');
-        $cf         = 'public/api-log/'.$cyd;
+        $cf         = 'api-log/'.$cyd;
         $fname      = $cf.'/logs-'.date('Y-m-d').'.html';
         $datetime   = date('YmdHis');
 
