@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from qdrant_client import QdrantClient
-from qdrant_client.models import PointStruct, VectorParams, Distance
+from qdrant_client.models import PointStruct, VectorParams, Distance, Filter, FieldCondition, MatchValue
 import uuid
 import time
 from contextlib import asynccontextmanager
@@ -390,7 +390,7 @@ def analyze_case(request: CaseAnalysisRequest, accept_language: str | None = Hea
         details       = request.case_details
         combined_input = f"{request.client_alias} {request.context_overview} {json.dumps(details)}"
 
-        # 1. Embedding
+        # 1. Embedding — embed as-is; Qdrant filter selects the correct language book
         t0 = time.time()
         query_vector = embed_model.encode(combined_input).tolist()
         print(f"[PERF] /analyze-case - Embedding: {time.time()-t0:.3f}s", flush=True)
@@ -410,9 +410,15 @@ def analyze_case(request: CaseAnalysisRequest, accept_language: str | None = Hea
 
         # 3. Search PDF Book
         t0 = time.time()
-        book_result = vector_db.query_points(collection_name=COLLECTION_NAME, query=query_vector, limit=5).points
+        source_file, source_filter = get_pdf_source_filter(output_lang)
+        book_result = vector_db.query_points(
+            collection_name=COLLECTION_NAME,
+            query=query_vector,
+            query_filter=source_filter,
+            limit=5
+        ).points
         context     = "\n\n".join([res.payload["text"] for res in book_result])
-        print(f"[PERF] /analyze-case - Book Search: {time.time()-t0:.3f}s", flush=True)
+        print(f"[PERF] /analyze-case - Book Search ({source_file}): {time.time()-t0:.3f}s", flush=True)
 
         # 4. Generate Analysis
         t0 = time.time()
@@ -564,21 +570,23 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
                     output_lang = target_lang
         combined_input = json.dumps(request.case_data) + json.dumps(request.analysis_data)
 
-        # 1. Embedding
+        # 1. Embedding — embed as-is; Qdrant filter selects the correct language book
         t0 = time.time()
         query_vector = embed_model.encode(combined_input).tolist()
         print(f"[PERF] /generate-plan - Embedding: {time.time()-t0:.3f}s", flush=True)
 
         # 2. Search PDF
         t0 = time.time()
+        source_file, source_filter = get_pdf_source_filter(output_lang)
         book_result = vector_db.query_points(
             collection_name=COLLECTION_NAME,
             query=query_vector,
+            query_filter=source_filter,
             limit=4,
             with_payload=True
         ).points
         context = "\n\n".join([res.payload["text"] for res in book_result])
-        print(f"[PERF] /generate-plan - PDF Search: {time.time()-t0:.3f}s", flush=True)
+        print(f"[PERF] /generate-plan - PDF Search ({source_file}): {time.time()-t0:.3f}s", flush=True)
 
         # 3. AI Generation
         t0 = time.time()
@@ -753,6 +761,24 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
         return {"error": str(e)}
 
 
+
+def get_pdf_source_filter(output_lang: str | None) -> tuple[str, Filter | None]:
+    if output_lang and output_lang.lower() == "french":
+        source_file = "Vente_et_negociation_bancaire_png_fr.pdf"
+    else:
+        source_file = "Sales_and_negociation_OK-2.pdf"
+    
+    q_filter = Filter(
+        must=[
+            FieldCondition(
+                key="source",
+                match=MatchValue(value=source_file)
+            )
+        ]
+    )
+    return source_file, q_filter
+
+
 TRANSLATION_RESPONSE_FORMAT = {
     "type": "json_schema",
     "json_schema": {
@@ -806,13 +832,7 @@ def ask_post(request: QuestionRequest, accept_language: str | None = Header(defa
 def process_question(query: str, history: list = [], target_lang: str | None = None):
     start_time = time.time()
     try:
-        # 0. Language Detection & Translation
-        t0_lang = time.time()
-        translation_info = detect_and_translate(query)
-        detected_lang = translation_info.get("detected_language", "English")
-        search_query = translation_info.get("translated_text", query)
-        
-        # Determine output language
+        # Determine output language first
         output_lang = None
         if target_lang:
             target_lang_lower = target_lang.lower()
@@ -828,10 +848,18 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
                 else:
                     output_lang = target_lang
 
+        # 0. Language Detection & Translation
+        t0_lang = time.time()
+        translation_info = detect_and_translate(query)
+        detected_lang = translation_info.get("detected_language", "English")
+        
         if not output_lang:
             output_lang = detected_lang
+
+        # Use the original query for embedding — Qdrant filter selects the correct language book
+        search_query = query
             
-        print(f"[INFO] Detected language: {detected_lang}, Output language: {output_lang}, Search query: {search_query} (time: {time.time()-t0_lang:.3f}s)", flush=True)
+        print(f"[INFO] Detected language: {detected_lang}, Output language: {output_lang} (time: {time.time()-t0_lang:.3f}s)", flush=True)
 
         # 1. Embedding
         t0 = time.time()
@@ -840,9 +868,11 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
 
         # 2. Qdrant Search
         t0 = time.time()
+        source_file, source_filter = get_pdf_source_filter(output_lang)
         response = vector_db.query_points(
             collection_name=COLLECTION_NAME,
             query=query_vector,
+            query_filter=source_filter,
             limit=20,
             with_payload=True
         )
