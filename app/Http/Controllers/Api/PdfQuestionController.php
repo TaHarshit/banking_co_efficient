@@ -141,9 +141,12 @@ class PdfQuestionController extends Controller
 
             return get_response($request, $apiResponse);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            Log::error('PDF Service Connection Error', ['error' => $e->getMessage()]);
+            Log::error('PDF Service Connection Error', [
+                'url' => $pythonServiceUrl,
+                'error' => $e->getMessage()
+            ]);
 
-            $apiResponse = General::setResponse('OTHER_ERROR', 'Cannot connect to PDF service. Please ensure the Python service is running.');
+            $apiResponse = General::setResponse('OTHER_ERROR', 'Cannot connect to PDF service (' . $pythonServiceUrl . '). Error: ' . $e->getMessage());
 
             return get_response($request, $apiResponse);
         } catch (\Exception $e) {
