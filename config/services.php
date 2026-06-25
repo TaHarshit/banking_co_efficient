@@ -36,8 +36,8 @@ return [
     ],
 
     'pdf_service' => [
-        'base_url' => env('PDF_SERVICE_BASE_URL', 'https://negomaster.ch:8001'),
-        'url'      => env('PDF_SERVICE_URL', 'https://negomaster.ch:8001/ask'),
+        'base_url' => env('PDF_SERVICE_BASE_URL', 'http://negomaster.ch:8001'),
+        'url'      => env('PDF_SERVICE_URL', 'http://negomaster.ch:8001/ask'),
     ],
 
     'google' => [
