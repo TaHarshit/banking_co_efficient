@@ -69,7 +69,7 @@ class PdfQuestionController extends Controller
             ]);
 
             // Retrieve client language preference
-            $locale = $request->header('Accept-Language', 'en');
+            $locale = $request->input('lang', $request->header('Accept-Language', 'en'));
 
             // Call the Python microservice
             $response = Http::timeout(60)->withHeaders([

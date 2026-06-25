@@ -192,7 +192,12 @@ class ClientCaseCls
                 'attempts' => 0,
             ]);
 
-            $locale = request()->header('Accept-Language', 'en');
+            $locale = request()->input('lang', request()->header('Accept-Language', 'en'));
+            if (str_starts_with(strtolower($locale), 'fr')) {
+                $locale = 'fr';
+            } else {
+                $locale = 'en';
+            }
             // Dispatch job to queue
             AnalyzeCaseJob::dispatch($aiJob->id, $clientCase->id, $user->id, $locale);
 
@@ -245,7 +250,12 @@ class ClientCaseCls
                 'attempts' => 0,
             ]);
 
-            $locale = request()->header('Accept-Language', 'en');
+            $locale = request()->input('lang', request()->header('Accept-Language', 'en'));
+            if (str_starts_with(strtolower($locale), 'fr')) {
+                $locale = 'fr';
+            } else {
+                $locale = 'en';
+            }
             // Dispatch job to queue
             GeneratePlanJob::dispatch($aiJob->id, $clientCase->id, $user->id, $caseData, $analysisData, $locale);
 
