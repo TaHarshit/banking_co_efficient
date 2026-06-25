@@ -3,7 +3,7 @@ import numpy as np
 import json
 import os
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -71,16 +71,62 @@ with open(str(BASE_DIR / "embeddings" / "meta.json")) as f:
 class QuestionRequest(BaseModel):
     question: str
     history: list = []
+    lang: str | None = None
+
+
+TRANSLATION_RESPONSE_FORMAT = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "language_translation",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "detected_language": {"type": "string"},
+                "translated_text": {"type": "string"}
+            },
+            "required": ["detected_language", "translated_text"],
+            "additionalProperties": False
+        }
+    }
+}
+
+
+def detect_and_translate(text: str) -> dict:
+    try:
+        system_prompt = (
+            "You are a translation helper. Analyze the user's query.\n"
+            "1. Detect the language of the query.\n"
+            "2. If it is NOT English, translate it to English.\n"
+            "3. Return a JSON object with 'detected_language' (e.g., 'French', 'English', etc.) and 'translated_text' (the English translation, or original text if already English)."
+        )
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": text}
+        ]
+        result = get_client().chat.completions.create(
+            model=DEEPSEEK_MODEL,
+            messages=messages,
+            temperature=0.0,
+            response_format=TRANSLATION_RESPONSE_FORMAT
+        )
+        content = result.choices[0].message.content
+        if content:
+            return json.loads(content)
+    except Exception as e:
+        print(f"[WARN] detect_and_translate failed: {e}", flush=True)
+    return {"detected_language": "English", "translated_text": text}
 
 
 @app.get("/ask")
-def ask(query: str):
-    return process_question(query)
+def ask(query: str, accept_language: str | None = Header(default=None)):
+    return process_question(query, target_lang=accept_language)
 
 
 @app.post("/ask")
-def ask_post(request: QuestionRequest):
-    return process_question(request.question, request.history)
+def ask_post(request: QuestionRequest, accept_language: str | None = Header(default=None)):
+    target_lang = request.lang or accept_language
+    return process_question(request.question, request.history, target_lang)
 
 
 @app.post("/reload")
@@ -99,15 +145,41 @@ def reload_index():
         return {"success": False, "message": f"Failed to reload: {str(e)}"}
 
 
-def process_question(query: str, history: list = None):
+def process_question(query: str, history: list = None, target_lang: str | None = None):
     if history is None:
         history = []
     try:
         print(f"[INFO] Processing question: {query[:50]}...")
 
+        # Language Detection & Translation
+        translation_info = detect_and_translate(query)
+        detected_lang = translation_info.get("detected_language", "English")
+        search_query = translation_info.get("translated_text", query)
+        
+        # Determine output language
+        output_lang = None
+        if target_lang:
+            target_lang_lower = target_lang.lower()
+            if target_lang_lower.startswith("fr"):
+                output_lang = "French"
+            elif target_lang_lower.startswith("en"):
+                output_lang = "English"
+            else:
+                if "french" in target_lang_lower:
+                    output_lang = "French"
+                elif "english" in target_lang_lower:
+                    output_lang = "English"
+                else:
+                    output_lang = target_lang
+
+        if not output_lang:
+            output_lang = detected_lang
+
+        print(f"[INFO] Detected language: {detected_lang}, Output language: {output_lang}, Search query: {search_query}...")
+
         # --- STEP 1: Embed the query (local, free) ---
         print("[INFO] Step 1: Creating embeddings (local model)...")
-        q_embed = embed_model.encode([query])
+        q_embed = embed_model.encode([search_query])
         q_embed = np.array(q_embed).astype("float32")
 
         # --- STEP 2: Search FAISS ---
@@ -140,6 +212,12 @@ def process_question(query: str, history: list = None):
         Context:
         {context}
         """
+
+        if output_lang.lower() != "english":
+            system_prompt += f"\n[LANGUAGE] You MUST respond to the user in {output_lang}. If the answer is not in the context, translate 'I cannot find the answer to that in the document.' to {output_lang}."
+        else:
+            if detected_lang.lower() != "english":
+                system_prompt += f"\n[LANGUAGE] Although the user asked in {detected_lang}, you MUST respond to the user in English. If the answer is not in the context, respond with 'I cannot find the answer to that in the document.' in English."
 
         messages = [{"role": "system", "content": system_prompt}]
         

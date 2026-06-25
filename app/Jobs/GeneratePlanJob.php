@@ -38,7 +38,8 @@ class GeneratePlanJob implements ShouldQueue
         protected $caseId,
         protected $userId,
         protected $caseData     = null,
-        protected $analysisData = null
+        protected $analysisData = null,
+        protected $locale       = 'en'
     ) {}
 
     public function handle(NotificationsRepository $notificationsRepo): void
@@ -91,7 +92,10 @@ class GeneratePlanJob implements ShouldQueue
             Log::info("[GeneratePlanJob] Attempt {$attempt} for case #{$this->caseId}");
 
             try {
-                $response = Http::timeout(900)->withOptions([
+                $payload['lang'] = $this->locale;
+                $response = Http::timeout(900)->withHeaders([
+                    'Accept-Language' => $this->locale
+                ])->withOptions([
                     'curl' => [
                         CURLOPT_TIMEOUT        => 900,
                         CURLOPT_CONNECTTIMEOUT => 60,

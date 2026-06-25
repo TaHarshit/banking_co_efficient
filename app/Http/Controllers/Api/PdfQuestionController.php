@@ -68,10 +68,16 @@ class PdfQuestionController extends Controller
                 'chat_session_id' => $sessionId
             ]);
 
+            // Retrieve client language preference
+            $locale = $request->header('Accept-Language', 'en');
+
             // Call the Python microservice
-            $response = Http::timeout(60)->post($pythonServiceUrl, [
+            $response = Http::timeout(60)->withHeaders([
+                'Accept-Language' => $locale
+            ])->post($pythonServiceUrl, [
                 'question' => $question,
-                'history' => $history
+                'history' => $history,
+                'lang' => $locale
             ]);
 
             // Check if the request was successful

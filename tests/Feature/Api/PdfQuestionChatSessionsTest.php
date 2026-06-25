@@ -291,4 +291,34 @@ class PdfQuestionChatSessionsTest extends TestCase
         $this->assertEquals('Message 1', $historyData[0]['question']);
         $this->assertEquals('Message 2', $historyData[1]['question']);
     }
+
+    /** @test */
+    public function asking_question_passes_language_header_and_parameter_to_python_service()
+    {
+        Http::fake([
+            '*' => Http::response([
+                'answer' => 'This is a mocked PDF answer',
+                'suggestions' => ['suggestion A', 'suggestion B'],
+                'images' => ['image.png'],
+                'reference_pages' => [2]
+            ], 200)
+        ]);
+
+        $headers = array_merge($this->headers, [
+            'Accept-Language' => 'fr'
+        ]);
+
+        $response = $this->actingAs($this->user, 'api')
+            ->postJson('/api/pdf/ask', [
+                'question' => 'What is the coefficient of bank capital requirements?'
+            ], $headers);
+
+        $response->assertStatus(200);
+
+        // Verify that the HTTP request to the Python microservice had the language parameter and header
+        Http::assertSent(function ($request) {
+            return $request->hasHeader('Accept-Language', 'fr') &&
+                   isset($request['lang']) && $request['lang'] === 'fr';
+        });
+    }
 }

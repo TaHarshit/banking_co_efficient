@@ -192,8 +192,9 @@ class ClientCaseCls
                 'attempts' => 0,
             ]);
 
+            $locale = request()->header('Accept-Language', 'en');
             // Dispatch job to queue
-            AnalyzeCaseJob::dispatch($aiJob->id, $clientCase->id, $user->id);
+            AnalyzeCaseJob::dispatch($aiJob->id, $clientCase->id, $user->id, $locale);
 
             // Auto-trigger background queue worker (no separate worker process needed)
             $this->spawnQueueWorker();
@@ -244,8 +245,9 @@ class ClientCaseCls
                 'attempts' => 0,
             ]);
 
+            $locale = request()->header('Accept-Language', 'en');
             // Dispatch job to queue
-            GeneratePlanJob::dispatch($aiJob->id, $clientCase->id, $user->id, $caseData, $analysisData);
+            GeneratePlanJob::dispatch($aiJob->id, $clientCase->id, $user->id, $caseData, $analysisData, $locale);
 
             // Auto-trigger background queue worker (no separate worker process needed)
             $this->spawnQueueWorker();

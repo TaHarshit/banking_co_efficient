@@ -2,7 +2,7 @@ import numpy as np
 import json
 import os
 from pathlib import Path
-from fastapi import FastAPI
+from fastapi import FastAPI, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -87,6 +87,7 @@ def get_ai_client():
 class QuestionRequest(BaseModel):
     question: str
     history: list = []
+    lang: str | None = None
 
 class CaseAnalysisRequest(BaseModel):
     client_alias:     str
@@ -94,12 +95,14 @@ class CaseAnalysisRequest(BaseModel):
     case_details:     dict
     user_profile:     str = ""
     history:          list = []
+    lang:             str | None = None
 
 class ActionPlanRequest(BaseModel):
     case_data:     dict
     analysis_data: dict
     user_profile:  str = ""
     history:       list = []
+    lang:             str | None = None
 
 class Phase(BaseModel):
     title:    str
@@ -365,9 +368,25 @@ def health():
 
 
 @app.post("/analyze-case")
-def analyze_case(request: CaseAnalysisRequest):
+def analyze_case(request: CaseAnalysisRequest, accept_language: str | None = Header(default=None)):
     start_time = time.time()
     try:
+        # Determine output language
+        target_lang = request.lang or accept_language
+        output_lang = None
+        if target_lang:
+            target_lang_lower = target_lang.lower()
+            if target_lang_lower.startswith("fr"):
+                output_lang = "French"
+            elif target_lang_lower.startswith("en"):
+                output_lang = "English"
+            else:
+                if "french" in target_lang_lower:
+                    output_lang = "French"
+                elif "english" in target_lang_lower:
+                    output_lang = "English"
+                else:
+                    output_lang = target_lang
         details       = request.case_details
         combined_input = f"{request.client_alias} {request.context_overview} {json.dumps(details)}"
 
@@ -446,6 +465,12 @@ Required JSON structure:
   "confidence_score": 85
 }}"""
 
+        system_prompt += "\n\n"
+        if output_lang and output_lang.lower() != "english":
+            system_prompt += f"7. CRITICAL: All textual values in the output JSON (such as recommendations, challenges, style tips, reading reasons/titles) MUST be written in {output_lang}. The JSON keys themselves MUST remain strictly in English as specified."
+        else:
+            system_prompt += "7. CRITICAL: All textual values in the output JSON MUST be written in English. The JSON keys themselves MUST remain strictly in English as specified."
+
         messages = [{"role": "system", "content": system_prompt}]
         content  = call_ai_with_retry(messages, max_tokens=8192, response_format=ANALYZE_CASE_RESPONSE_FORMAT)
 
@@ -511,9 +536,25 @@ Required JSON structure:
 
 
 @app.post("/generate-plan")
-def generate_plan(request: ActionPlanRequest):
+def generate_plan(request: ActionPlanRequest, accept_language: str | None = Header(default=None)):
     start_time = time.time()
     try:
+        # Determine output language
+        target_lang = request.lang or accept_language
+        output_lang = None
+        if target_lang:
+            target_lang_lower = target_lang.lower()
+            if target_lang_lower.startswith("fr"):
+                output_lang = "French"
+            elif target_lang_lower.startswith("en"):
+                output_lang = "English"
+            else:
+                if "french" in target_lang_lower:
+                    output_lang = "French"
+                elif "english" in target_lang_lower:
+                    output_lang = "English"
+                else:
+                    output_lang = target_lang
         combined_input = json.dumps(request.case_data) + json.dumps(request.analysis_data)
 
         # 1. Embedding
@@ -611,6 +652,12 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
     "BATNA (Best Alternative To Negotiated Agreement): describe the fallback"
   ]
 }}"""
+
+        system_prompt += "\n\n"
+        if output_lang and output_lang.lower() != "english":
+            system_prompt += f"9. CRITICAL: All textual values in the output JSON (such as executive summary, objectives, action plan steps/titles, recommendations, CSF, plan B) MUST be written in {output_lang}. The JSON keys themselves MUST remain strictly in English as specified."
+        else:
+            system_prompt += "9. CRITICAL: All textual values in the output JSON MUST be written in English. The JSON keys themselves MUST remain strictly in English as specified."
 
         messages = [{"role": "system", "content": system_prompt}]
         content  = call_ai_with_retry(messages, max_tokens=8192, response_format=GENERATE_PLAN_RESPONSE_FORMAT)
@@ -737,11 +784,12 @@ def detect_and_translate(text: str) -> dict:
 
 
 @app.post("/ask")
-def ask_post(request: QuestionRequest):
-    return process_question(request.question, request.history)
+def ask_post(request: QuestionRequest, accept_language: str | None = Header(default=None)):
+    target_lang = request.lang or accept_language
+    return process_question(request.question, request.history, target_lang)
 
 
-def process_question(query: str, history: list = []):
+def process_question(query: str, history: list = [], target_lang: str | None = None):
     start_time = time.time()
     try:
         # 0. Language Detection & Translation
@@ -749,7 +797,27 @@ def process_question(query: str, history: list = []):
         translation_info = detect_and_translate(query)
         detected_lang = translation_info.get("detected_language", "English")
         search_query = translation_info.get("translated_text", query)
-        print(f"[INFO] Detected language: {detected_lang}, Search query: {search_query} (time: {time.time()-t0_lang:.3f}s)", flush=True)
+        
+        # Determine output language
+        output_lang = None
+        if target_lang:
+            target_lang_lower = target_lang.lower()
+            if target_lang_lower.startswith("fr"):
+                output_lang = "French"
+            elif target_lang_lower.startswith("en"):
+                output_lang = "English"
+            else:
+                if "french" in target_lang_lower:
+                    output_lang = "French"
+                elif "english" in target_lang_lower:
+                    output_lang = "English"
+                else:
+                    output_lang = target_lang
+
+        if not output_lang:
+            output_lang = detected_lang
+            
+        print(f"[INFO] Detected language: {detected_lang}, Output language: {output_lang}, Search query: {search_query} (time: {time.time()-t0_lang:.3f}s)", flush=True)
 
         # 1. Embedding
         t0 = time.time()
@@ -768,7 +836,7 @@ def process_question(query: str, history: list = []):
         print(f"[PERF] /ask - Qdrant Search: {time.time()-t0:.3f}s", flush=True)
 
         if not search_result:
-            if detected_lang.lower() == "french":
+            if output_lang.lower() == "french":
                 return {"answer": "Aucune information pertinente trouvée.", "images": [], "reference_pages": []}
             return {"answer": "No relevant information found.", "images": [], "reference_pages": []}
 
@@ -816,8 +884,11 @@ Context:
 {context}
 """
 
-        if detected_lang.lower() != "english":
-            system_content += f"\n[LANGUAGE] The user's query is in {detected_lang}. You MUST respond to the user and write the Suggestions in {detected_lang}. If the answer is not in the context, translate 'I cannot find the answer to that in the document.' to {detected_lang}."
+        if output_lang.lower() != "english":
+            system_content += f"\n[LANGUAGE] You MUST respond to the user and write the Suggestions in {output_lang}. If the answer is not in the context, translate 'I cannot find the answer to that in the document.' to {output_lang}."
+        else:
+            if detected_lang.lower() != "english":
+                system_content += f"\n[LANGUAGE] Although the user asked in {detected_lang}, you MUST respond to the user and write the Suggestions in English. If the answer is not in the context, respond with 'I cannot find the answer to that in the document.' in English."
 
         messages = [{"role": "system", "content": system_content}]
         if history:
