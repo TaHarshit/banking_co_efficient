@@ -416,7 +416,13 @@ def analyze_case(request: CaseAnalysisRequest, accept_language: str | None = Hea
 
         # 4. Generate Analysis
         t0 = time.time()
-        system_prompt = f"""You are a World-Class Negotiation Expert and Strategic Advisor with 25+ years of experience.
+        print(f"[INFO] /analyze-case - target_lang: {target_lang}, resolved output_lang: {output_lang}", flush=True)
+        
+        lang_warning = ""
+        if output_lang and output_lang.lower() != "english":
+            lang_warning = f"[CRITICAL LANGUAGE INSTRUCTION]\nYou MUST write ALL values, recommendations, challenges, style tips, reading reasons, and titles in {output_lang}. Do NOT write any values in English. Only the JSON keys themselves must remain strictly in English.\n[CRITICAL] Répondez uniquement en {output_lang} pour toutes les valeurs textuelles du JSON.\n\n"
+
+        system_prompt = lang_warning + f"""You are a World-Class Negotiation Expert and Strategic Advisor with 25+ years of experience.
 Your task: perform a deep, actionable analysis of the client case below.
 
 [USER BEHAVIORAL PROFILE]
@@ -468,6 +474,7 @@ Required JSON structure:
         system_prompt += "\n\n"
         if output_lang and output_lang.lower() != "english":
             system_prompt += f"7. CRITICAL: All textual values in the output JSON (such as recommendations, challenges, style tips, reading reasons/titles) MUST be written in {output_lang}. The JSON keys themselves MUST remain strictly in English as specified."
+            system_prompt += f"\n8. LANGUAGE COMPLIANCE: Remember, the user's selected language is {output_lang}. You MUST translate all your recommendations, challenges, tips, and readings into {output_lang}. Do not write them in English."
         else:
             system_prompt += "7. CRITICAL: All textual values in the output JSON MUST be written in English. The JSON keys themselves MUST remain strictly in English as specified."
 
@@ -575,7 +582,13 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
 
         # 3. AI Generation
         t0 = time.time()
-        system_prompt = f"""You are a World-Class Negotiation Coach creating a personalized, detailed Negotiation Action Plan.
+        print(f"[INFO] /generate-plan - target_lang: {target_lang}, resolved output_lang: {output_lang}", flush=True)
+
+        lang_warning = ""
+        if output_lang and output_lang.lower() != "english":
+            lang_warning = f"[CRITICAL LANGUAGE INSTRUCTION]\nYou MUST write ALL values, summaries, meeting objectives, action plan steps, readings, and strategic recommendations in {output_lang}. Do NOT write any values in English. Only the JSON keys themselves must remain strictly in English.\n[CRITICAL] Répondez uniquement en {output_lang} pour toutes les valeurs textuelles du JSON.\n\n"
+
+        system_prompt = lang_warning + f"""You are a World-Class Negotiation Coach creating a personalized, detailed Negotiation Action Plan.
 
 [USER BEHAVIORAL PROFILE]
 {request.user_profile if request.user_profile else "No profile provided — create a general best-practice plan."}
@@ -656,6 +669,7 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
         system_prompt += "\n\n"
         if output_lang and output_lang.lower() != "english":
             system_prompt += f"9. CRITICAL: All textual values in the output JSON (such as executive summary, objectives, action plan steps/titles, recommendations, CSF, plan B) MUST be written in {output_lang}. The JSON keys themselves MUST remain strictly in English as specified."
+            system_prompt += f"\n10. LANGUAGE COMPLIANCE: Remember, the user's selected language is {output_lang}. You MUST translate all your summaries, objectives, action plan steps/readings, recommendations, CSFs, and Plan B elements into {output_lang}. Do not write them in English."
         else:
             system_prompt += "9. CRITICAL: All textual values in the output JSON MUST be written in English. The JSON keys themselves MUST remain strictly in English as specified."
 
