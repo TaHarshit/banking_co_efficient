@@ -130,6 +130,26 @@ class ClientCaseCls
         }
     }
 
+    public function DeleteCase($id)
+    {
+        try {
+            $case = $this->clientCaseRepository->GetCaseDetails($id, Auth::id());
+
+            if (! $case) {
+                return General::setResponse('VALIDATION_ERROR', 'Case not found or you do not have permission to delete it.');
+            }
+
+            DB::beginTransaction();
+            $case->delete();
+            DB::commit();
+
+            return General::setResponse('SUCCESS', 'Case deleted successfully.');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return General::setResponse('OTHER_ERROR', $e->getMessage());
+        }
+    }
+
     public function GetCaseStudySections($locale = 'en')
     {
         try {
@@ -355,6 +375,43 @@ class ClientCaseCls
 
             $response         = General::setResponse('SUCCESS', 'Case plan retrieved successfully.');
             $response['data'] = $case;
+
+            return $response;
+        } catch (Exception $e) {
+            return General::setResponse('OTHER_ERROR', $e->getMessage());
+        }
+    }
+
+    /**
+     * Rate the AI generated action plan.
+     */
+    public function RatePlan($postData)
+    {
+        try {
+            $validator = Validate::required($postData, ['case_id', 'rating']);
+            if ($validator->fails()) {
+                return General::setResponse('VALIDATION_ERROR', $validator->errors()->first());
+            }
+
+            $rating = (int)$postData['rating'];
+            if ($rating < 1 || $rating > 5) {
+                return General::setResponse('VALIDATION_ERROR', 'Rating must be between 1 and 5.');
+            }
+
+            $user = Auth::user();
+            $clientCase = $this->clientCaseRepository->GetCaseDetails($postData['case_id'], $user->id);
+            
+            if (! $clientCase) {
+                return General::setResponse('VALIDATION_ERROR', 'Case not found.');
+            }
+
+            if (! $clientCase->action_plan) {
+                return General::setResponse('VALIDATION_ERROR', 'No action plan generated for this case yet.');
+            }
+
+            $clientCase->update(['plan_rating' => $rating]);
+
+            $response = General::setResponse('SUCCESS', 'Action plan rated successfully.');
 
             return $response;
         } catch (Exception $e) {

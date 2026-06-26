@@ -127,6 +127,7 @@ Route::middleware(['basicFilter'])->group(function () {
             Route::post('client-cases', 'store');
             Route::get('client-cases', 'index');
             Route::get('client-cases/{id}', 'show');
+            Route::post('delete-client-cases/{id}', 'destroy');
             Route::get('client-cases/{id}/export-plan', 'exportPlan');
             Route::get('case-study-sections', 'caseStudySections');
         });
@@ -137,6 +138,7 @@ Route::middleware(['basicFilter'])->group(function () {
             Route::post('ai/analyze-case', 'analyzeCase');
             Route::post('ai/generate-plan', 'generatePlan');
             Route::get('ai/job-status/{job_id}', 'getAiJobStatus');
+            Route::post('ai/rate-plan', 'ratePlan');
         });
     });
 });

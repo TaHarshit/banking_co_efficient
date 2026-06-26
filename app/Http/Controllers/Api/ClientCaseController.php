@@ -37,6 +37,12 @@ class ClientCaseController extends Controller
         return get_response($request, $data);
     }
 
+    public function destroy($id, Request $request)
+    {
+        $data = $this->clientCaseCls->DeleteCase($id);
+        return get_response($request, $data);
+    }
+
     public function caseStudySections(Request $request)
     {
         $locale = $request->query('lang', $request->header('Accept-Language', 'en'));
@@ -125,5 +131,15 @@ class ClientCaseController extends Controller
         ];
 
         return get_response($request, $apiResponse);
+    }
+
+    /**
+     * Rate the generated AI plan.
+     */
+    public function ratePlan(Request $request)
+    {
+        $postData = General::stripRequest($request->all());
+        $data = $this->clientCaseCls->RatePlan($postData);
+        return get_response($request, $data);
     }
 }

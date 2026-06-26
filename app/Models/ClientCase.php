@@ -17,6 +17,7 @@ class ClientCase extends Model
         'case_details',
         'ai_analysis',
         'action_plan',
+        'plan_rating',
     ];
 
     protected $casts = [
