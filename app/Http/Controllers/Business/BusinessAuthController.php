@@ -90,7 +90,7 @@ class BusinessAuthController extends Controller
             'setup_link' => route('business.password.setup', ['token' => $token]),
         ];
 
-        Mail::to($business->email)->send(new DailyMail('Reset your password - ' . config('app.name'), 'emails.business-invitation', $data));
+        Mail::to($business->email)->send(new DailyMail('Reset your password - ' . config('app.name'), 'emails.forgot_password', $data));
 
         Session::flash('message', 'Password reset link sent to your email');
         Session::flash('icon', 'success');
