@@ -48,7 +48,7 @@
                                 style="margin: 30px 0;">
                                 <tr>
                                     <td align="center">
-                                        <a href="{{ url(route('password.reset', ['token' => $token, 'email' => $user->email])) }}"
+                                        <a href="{{ $reset_link ?? url(route('password.reset', ['token' => $token, 'email' => $user->email])) }}"
                                             style="display: inline-block; background-color: #3756a2; color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 30px; border-radius: 6px; box-shadow: 0 4px 6px rgba(55, 86, 162, 0.15); transition: background-color 0.2s ease;">
                                             Reset Password
                                         </a>
@@ -68,7 +68,7 @@
                                 browser:
                                 <br>
                                 <span style="word-break: break-all; color: #3756a2;">
-                                    {{ url(route('password.reset', ['token' => $token, 'email' => $user->email])) }}
+                                    {{ $reset_link ?? url(route('password.reset', ['token' => $token, 'email' => $user->email])) }}
                                 </span>
                             </p>
 

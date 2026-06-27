@@ -14,14 +14,16 @@ class UserForgotPasswordMail extends Mailable
 
     public $user;
     public $token;
+    public $reset_link;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($user, $token)
+    public function __construct($user, $token, $reset_link = null)
     {
         $this->user = $user;
         $this->token = $token;
+        $this->reset_link = $reset_link;
     }
 
     /**
