@@ -69,6 +69,112 @@
                 }
             }
         };
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const passwordInput = document.getElementById('password');
+            const confirmInput = document.getElementById('password_confirmation');
+            const form = document.getElementById('resetPasswordForm');
+            const confirmFeedback = document.getElementById('confirmFeedback');
+
+            const rules = {
+                length: (val) => val.length >= 8,
+                lowercase: (val) => /[a-z]/.test(val),
+                uppercase: (val) => /[A-Z]/.test(val),
+                number: (val) => /[0-9]/.test(val),
+                special: (val) => /[#?!@$%^&*-]/.test(val)
+            };
+
+            function updateUIElement(element, isValid) {
+                if (!element) return;
+                const icon = element.querySelector('i');
+                if (isValid) {
+                    element.classList.remove('text-danger');
+                    element.classList.add('text-success', 'valid');
+                    if (icon) {
+                        icon.classList.remove('bi-x-circle-fill', 'text-danger');
+                        icon.classList.add('bi-check-circle-fill', 'text-success');
+                    }
+                } else {
+                    element.classList.remove('text-success', 'valid');
+                    element.classList.add('text-danger');
+                    if (icon) {
+                        icon.classList.remove('bi-check-circle-fill', 'text-success');
+                        icon.classList.add('bi-x-circle-fill', 'text-danger');
+                    }
+                }
+            }
+
+            function validatePassword() {
+                if(!passwordInput) return false;
+                const val = passwordInput.value;
+                let allValid = true;
+                Object.keys(rules).forEach(key => {
+                    const isValid = rules[key](val);
+                    const element = document.getElementById('rule-' + key);
+                    updateUIElement(element, isValid);
+                    if (!isValid) allValid = false;
+                });
+                return allValid;
+            }
+
+            function checkConfirmPassword() {
+                if(!passwordInput || !confirmInput) return false;
+                const p = passwordInput.value;
+                const cp = confirmInput.value;
+                if (cp.length === 0) {
+                    confirmInput.classList.remove('is-valid', 'is-invalid');
+                    return false;
+                }
+                if (p === cp) {
+                    confirmInput.classList.remove('is-invalid');
+                    confirmInput.classList.add('is-valid');
+                    if(confirmFeedback) confirmFeedback.innerText = '';
+                    return true;
+                } else {
+                    confirmInput.classList.remove('is-valid');
+                    confirmInput.classList.add('is-invalid');
+                    if(confirmFeedback) confirmFeedback.innerText = 'Passwords do not match.';
+                    return false;
+                }
+            }
+
+            if (passwordInput) {
+                ['input', 'keyup', 'change'].forEach(evt => {
+                    passwordInput.addEventListener(evt, function() {
+                        validatePassword();
+                        checkConfirmPassword();
+                    });
+                });
+            }
+
+            if (confirmInput) {
+                confirmInput.addEventListener('input', checkConfirmPassword);
+            }
+
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const isPasswordValid = validatePassword();
+                    const isConfirmValid = checkConfirmPassword();
+
+                    if (!isPasswordValid || !isConfirmValid) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        if (!isPasswordValid) {
+                            passwordInput.classList.add('is-invalid');
+                        }
+                        if (!isConfirmValid) {
+                            confirmInput.classList.add('is-invalid');
+                        }
+                        return false;
+                    }
+
+                    form.classList.add('was-validated');
+                });
+            }
+
+            validatePassword();
+        });
     </script>
     <main>
         <div class="container">
@@ -195,96 +301,4 @@
             </section>
         </div>
     </main>
-@endsection
-
-@section('customjs')
-    <script>
-        $(document).ready(function() {
-            const passwordInput = $('#password');
-            const confirmInput = $('#password_confirmation');
-            const form = $('#resetPasswordForm');
-            const togglePassword = $('#togglePassword');
-            const togglePasswordIcon = $('#togglePasswordIcon');
-
-            // Rules Definitions
-            const rules = {
-                length: (val) => val.length >= 8,
-                lowercase: (val) => /[a-z]/.test(val),
-                uppercase: (val) => /[A-Z]/.test(val),
-                number: (val) => /[0-9]/.test(val),
-                special: (val) => /[#?!@$%^&*-]/.test(val)
-            };
-
-            function updateUIElement(element, isValid) {
-                const icon = element.find('i');
-                if (isValid) {
-                    element.removeClass('text-danger').addClass('text-success valid');
-                    icon.removeClass('bi-x-circle-fill text-danger').addClass('bi-check-circle-fill text-success');
-                } else {
-                    element.removeClass('text-success valid').addClass('text-danger');
-                    icon.removeClass('bi-check-circle-fill text-success').addClass('bi-x-circle-fill text-danger');
-                }
-            }
-
-            function validatePassword() {
-                const val = passwordInput.val();
-                let allValid = true;
-                Object.keys(rules).forEach(key => {
-                    const isValid = rules[key](val);
-                    updateUIElement($(`#rule-${key}`), isValid);
-                    if (!isValid) allValid = false;
-                });
-                return allValid;
-            }
-
-            passwordInput.on('input keyup change', function() {
-                validatePassword();
-                checkConfirmPassword();
-            });
-            
-            // Run validation once on page load in case of browser autofill
-            validatePassword();
-
-            function checkConfirmPassword() {
-                const p = passwordInput.val();
-                const cp = confirmInput.val();
-                if (cp.length === 0) {
-                    confirmInput.removeClass('is-valid is-invalid');
-                    return false;
-                }
-                if (p === cp) {
-                    confirmInput.addClass('is-valid').removeClass('is-invalid');
-                    $('#confirmFeedback').text('');
-                    return true;
-                } else {
-                    confirmInput.addClass('is-invalid').removeClass('is-valid');
-                    $('#confirmFeedback').text('Passwords do not match.');
-                    return false;
-                }
-            }
-
-            confirmInput.on('input', checkConfirmPassword);
-
-            // Form Submit Check
-            form.on('submit', function(e) {
-                const isPasswordValid = validatePassword();
-                const isConfirmValid = checkConfirmPassword();
-
-                if (!isPasswordValid || !isConfirmValid) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    if (!isPasswordValid) {
-                        passwordInput.addClass('is-invalid');
-                    }
-                    if (!isConfirmValid) {
-                        confirmInput.addClass('is-invalid');
-                    }
-                    return false;
-                }
-
-                form.addClass('was-validated');
-            });
-        });
-    </script>
 @endsection
