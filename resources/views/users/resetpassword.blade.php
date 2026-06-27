@@ -12,7 +12,7 @@
         }
 
         .validation-checklist li {
-            color: #dc3545;
+            color: #6c757d;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -84,21 +84,32 @@
                 special: (val) => /[#?!@$%^&*-]/.test(val)
             };
 
-            function updateUIElement(element, isValid) {
+            function updateUIElement(element, isValid, isEmpty) {
                 if (!element) return;
                 const icon = element.querySelector('i');
+                
+                if (isEmpty) {
+                    element.classList.remove('text-danger', 'text-success', 'valid');
+                    element.classList.add('text-muted');
+                    if (icon) {
+                        icon.classList.remove('bi-check-circle-fill', 'bi-x-circle-fill', 'text-danger', 'text-success');
+                        icon.classList.add('bi-circle', 'text-muted');
+                    }
+                    return;
+                }
+
                 if (isValid) {
-                    element.classList.remove('text-danger');
+                    element.classList.remove('text-danger', 'text-muted');
                     element.classList.add('text-success', 'valid');
                     if (icon) {
-                        icon.classList.remove('bi-x-circle-fill', 'text-danger');
+                        icon.classList.remove('bi-x-circle-fill', 'bi-circle', 'text-danger', 'text-muted');
                         icon.classList.add('bi-check-circle-fill', 'text-success');
                     }
                 } else {
-                    element.classList.remove('text-success', 'valid');
+                    element.classList.remove('text-success', 'valid', 'text-muted');
                     element.classList.add('text-danger');
                     if (icon) {
-                        icon.classList.remove('bi-check-circle-fill', 'text-success');
+                        icon.classList.remove('bi-check-circle-fill', 'bi-circle', 'text-success', 'text-muted');
                         icon.classList.add('bi-x-circle-fill', 'text-danger');
                     }
                 }
@@ -107,14 +118,15 @@
             function validatePassword() {
                 if(!passwordInput) return false;
                 const val = passwordInput.value;
+                const isEmpty = val.length === 0;
                 let allValid = true;
                 Object.keys(rules).forEach(key => {
                     const isValid = rules[key](val);
                     const element = document.getElementById('rule-' + key);
-                    updateUIElement(element, isValid);
+                    updateUIElement(element, isValid, isEmpty);
                     if (!isValid) allValid = false;
                 });
-                return allValid;
+                return isEmpty ? false : allValid;
             }
 
             function checkConfirmPassword() {
@@ -249,15 +261,15 @@
 
                                             <!-- Visual Password Criteria Indicators -->
                                             <ul class="validation-checklist" id="checklist">
-                                                <li id="rule-length"><i class="bi bi-x-circle-fill"></i> At least 8
+                                                <li id="rule-length" class="text-muted"><i class="bi bi-circle text-muted"></i> At least 8
                                                     characters</li>
-                                                <li id="rule-lowercase"><i class="bi bi-x-circle-fill"></i> Lowercase letter
+                                                <li id="rule-lowercase" class="text-muted"><i class="bi bi-circle text-muted"></i> Lowercase letter
                                                     (a-z)</li>
-                                                <li id="rule-uppercase"><i class="bi bi-x-circle-fill"></i> Uppercase letter
+                                                <li id="rule-uppercase" class="text-muted"><i class="bi bi-circle text-muted"></i> Uppercase letter
                                                     (A-Z)</li>
-                                                <li id="rule-number"><i class="bi bi-x-circle-fill"></i> At least one number
+                                                <li id="rule-number" class="text-muted"><i class="bi bi-circle text-muted"></i> At least one number
                                                     (0-9)</li>
-                                                <li id="rule-special"><i class="bi bi-x-circle-fill"></i> At least one
+                                                <li id="rule-special" class="text-muted"><i class="bi bi-circle text-muted"></i> At least one
                                                     special symbol (#?!@$%^&*-)</li>
                                             </ul>
                                         </div>
