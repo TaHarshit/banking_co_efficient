@@ -218,11 +218,11 @@
             function updateUIElement(element, isValid) {
                 const icon = element.find('i');
                 if (isValid) {
-                    element.addClass('valid');
-                    icon.removeClass('bi-x-circle-fill').addClass('bi-check-circle-fill');
+                    element.removeClass('text-danger').addClass('text-success valid');
+                    icon.removeClass('bi-x-circle-fill text-danger').addClass('bi-check-circle-fill text-success');
                 } else {
-                    element.removeClass('valid');
-                    icon.removeClass('bi-check-circle-fill').addClass('bi-x-circle-fill');
+                    element.removeClass('text-success valid').addClass('text-danger');
+                    icon.removeClass('bi-check-circle-fill text-success').addClass('bi-x-circle-fill text-danger');
                 }
             }
 
@@ -237,10 +237,13 @@
                 return allValid;
             }
 
-            passwordInput.on('input', function() {
+            passwordInput.on('input keyup change', function() {
                 validatePassword();
                 checkConfirmPassword();
             });
+            
+            // Run validation once on page load in case of browser autofill
+            validatePassword();
 
             function checkConfirmPassword() {
                 const p = passwordInput.val();
