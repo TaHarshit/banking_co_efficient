@@ -4,11 +4,45 @@
     <meta charset="UTF-8">
     <title>Action Plan - {{ $case->client_alias }}</title>
     <style>
+        @page {
+            margin: 80px 40px 60px 40px; /* Top, Right, Bottom, Left */
+        }
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             color: #333;
             line-height: 1.6;
-            margin: 20px;
+            margin: 0;
+        }
+        header {
+            position: fixed;
+            top: -50px;
+            left: 0px;
+            right: 0px;
+            height: 50px;
+            text-align: center;
+        }
+        header img {
+            max-height: 40px;
+        }
+        footer {
+            position: fixed; 
+            bottom: -40px; 
+            left: 0px; 
+            right: 0px;
+            height: 30px; 
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 5px;
+        }
+        .footer-left {
+            float: left;
+        }
+        .footer-right {
+            float: right;
+        }
+        .page-number:before {
+            content: "Page " counter(page) " of " counter(pages);
         }
         h1, h2, h3 {
             color: #0056b3;
@@ -56,6 +90,30 @@
 </head>
 <body>
 
+    @php
+        $logoPath = public_path('assets/logo.png');
+        $logoBase64 = '';
+        if(file_exists($logoPath)){
+            $type = pathinfo($logoPath, PATHINFO_EXTENSION);
+            $data = file_get_contents($logoPath);
+            $logoBase64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+        }
+    @endphp
+
+    <header>
+        @if($logoBase64)
+            <img src="{{ $logoBase64 }}" alt="Logo">
+        @endif
+    </header>
+
+    <footer>
+        <div class="footer-left">
+            Date: {{ date('F j, Y') }}
+        </div>
+        <div class="footer-right page-number"></div>
+        <div style="clear: both;"></div>
+    </footer>
+
     <h1>Negotiation Action Plan</h1>
     
     <div class="metadata">
@@ -64,7 +122,6 @@
             <p><span class="bold">Case Reference:</span> {{ $case->case_reference }}</p>
         @endif
         <p><span class="bold">Created on:</span> {{ $case->created_at ? $case->created_at->format('F j, Y') : 'N/A' }}</p>
-        <p><span class="bold">PDF Generated on:</span> {{ date('F j, Y') }}</p>
     </div>
 
     @if($case->context_overview || !empty($case->case_details))
