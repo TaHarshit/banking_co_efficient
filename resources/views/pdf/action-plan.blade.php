@@ -19,10 +19,18 @@
             left: 0px;
             right: 0px;
             height: 50px;
-            text-align: center;
         }
         header img {
             max-height: 40px;
+        }
+        .header-left {
+            float: left;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+        .header-right {
+            float: right;
         }
         footer {
             position: fixed; 
@@ -42,7 +50,7 @@
             float: right;
         }
         .page-number:before {
-            content: "Page " counter(page) " of " counter(pages);
+            content: "Page " counter(page);
         }
         h1, h2, h3 {
             color: #0056b3;
@@ -91,7 +99,7 @@
 <body>
 
     @php
-        $logoPath = public_path('assets/logo.png');
+        $logoPath = public_path('assets/img/logo.png');
         $logoBase64 = '';
         if(file_exists($logoPath)){
             $type = pathinfo($logoPath, PATHINFO_EXTENSION);
@@ -101,9 +109,13 @@
     @endphp
 
     <header>
-        @if($logoBase64)
-            <img src="{{ $logoBase64 }}" alt="Logo">
-        @endif
+        <div class="header-left page-number"></div>
+        <div class="header-right">
+            @if($logoBase64)
+                <img src="{{ $logoBase64 }}" alt="Logo">
+            @endif
+        </div>
+        <div style="clear: both;"></div>
     </header>
 
     <footer>
