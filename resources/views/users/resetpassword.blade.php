@@ -228,10 +228,11 @@
 
             function validatePassword() {
                 const val = passwordInput.val();
-                const allValid = Object.keys(rules).every(key => {
+                let allValid = true;
+                Object.keys(rules).forEach(key => {
                     const isValid = rules[key](val);
                     updateUIElement($(`#rule-${key}`), isValid);
-                    return isValid;
+                    if (!isValid) allValid = false;
                 });
                 return allValid;
             }
