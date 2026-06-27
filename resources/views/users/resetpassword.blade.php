@@ -35,14 +35,10 @@
         window.togglePasswordVisibility = function(e) {
             if (e) e.preventDefault();
             var passwordInput = document.getElementById('password');
-            var confirmInput = document.getElementById('password_confirmation');
             var togglePasswordIcon = document.getElementById('togglePasswordIcon');
             if (passwordInput) {
                 var type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
                 passwordInput.setAttribute('type', type);
-                if (confirmInput) {
-                    confirmInput.setAttribute('type', type);
-                }
                 if (togglePasswordIcon) {
                     if (togglePasswordIcon.classList.contains('bi-eye')) {
                         togglePasswordIcon.classList.remove('bi-eye');
@@ -50,6 +46,25 @@
                     } else {
                         togglePasswordIcon.classList.remove('bi-eye-slash');
                         togglePasswordIcon.classList.add('bi-eye');
+                    }
+                }
+            }
+        };
+
+        window.toggleConfirmPasswordVisibility = function(e) {
+            if (e) e.preventDefault();
+            var confirmInput = document.getElementById('password_confirmation');
+            var toggleConfirmIcon = document.getElementById('toggleConfirmPasswordIcon');
+            if (confirmInput) {
+                var type = confirmInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                confirmInput.setAttribute('type', type);
+                if (toggleConfirmIcon) {
+                    if (toggleConfirmIcon.classList.contains('bi-eye')) {
+                        toggleConfirmIcon.classList.remove('bi-eye');
+                        toggleConfirmIcon.classList.add('bi-eye-slash');
+                    } else {
+                        toggleConfirmIcon.classList.remove('bi-eye-slash');
+                        toggleConfirmIcon.classList.add('bi-eye');
                     }
                 }
             }
@@ -148,6 +163,11 @@
                                                 <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
                                                 <input type="password" name="password_confirmation" class="form-control"
                                                     id="password_confirmation" placeholder="••••••••" required>
+                                                <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword"
+                                                    style="position: relative; z-index: 5;"
+                                                    onclick="toggleConfirmPasswordVisibility(event)">
+                                                    <i class="bi bi-eye" id="toggleConfirmPasswordIcon"></i>
+                                                </button>
                                                 <div class="invalid-feedback" id="confirmFeedback">Please confirm your
                                                     password.</div>
                                             </div>
@@ -166,7 +186,7 @@
 
                             <!-- Copyright info -->
                             <div class="text-center small text-muted mt-2">
-                                &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
+                                &copy; {{ date('Y') }} NegoMaster. All rights reserved.
                             </div>
 
                         </div>

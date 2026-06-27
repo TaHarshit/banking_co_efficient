@@ -85,13 +85,13 @@
                         <td align="center"
                             style="padding: 20px 40px 30px 40px; background-color: #edf2f7; border-top: 1px solid #e2e8f0; font-size: 12px; color: #718096; line-height: 1.5;">
                             <p style="margin: 0 0 8px 0; font-weight: 600; color: #4a5568;">
-                                Co-Efficient³ Training & Consulting
+                                NegoMaster Training & Consulting
                             </p>
                             <p style="margin: 0 0 12px 0;">
-                                Geneva, Switzerland &bull; support@co-efficient.ch
+                                Geneva, Switzerland &bull; support@negomaster.ch
                             </p>
                             <p style="margin: 0;">
-                                &copy; {{ date('Y') }} Banking Co-Efficient. All rights reserved.
+                                &copy; {{ date('Y') }} NegoMaster. All rights reserved.
                             </p>
                         </td>
                     </tr>
