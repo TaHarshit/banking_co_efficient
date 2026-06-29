@@ -1,10 +1,19 @@
 import fitz
 import os
+import sys
 
+# Default path if none provided
 PDF_PATH = "data/input_pdf.pdf"
+if len(sys.argv) > 1:
+    PDF_PATH = sys.argv[1]
+
 OUTPUT_DIR = "data/images"
 
 def extract_images():
+    if not os.path.exists(PDF_PATH):
+        print(f"Error: Could not find the PDF file at '{PDF_PATH}'. Please check the path.")
+        return
+
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     doc = fitz.open(PDF_PATH)
 
@@ -17,6 +26,13 @@ def extract_images():
         for idx, img in enumerate(images):
             xref = img[0]
             pix = fitz.Pixmap(doc, xref)
+
+            # Filter out small decorative images, icons, or lines
+            MIN_WIDTH = 150
+            MIN_HEIGHT = 150
+
+            if pix.width < MIN_WIDTH or pix.height < MIN_HEIGHT:
+                continue  # Skip this image as it's likely decorative
 
             img_name = f"page_{page_num+1}_img_{idx+1}.png"
             img_path = os.path.join(OUTPUT_DIR, img_name)

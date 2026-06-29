@@ -415,9 +415,18 @@ def analyze_case(request: CaseAnalysisRequest, accept_language: str | None = Hea
             collection_name=COLLECTION_NAME,
             query=query_vector,
             query_filter=source_filter,
-            limit=5
+            limit=5,
+            with_payload=True
         ).points
-        context     = "\n\n".join([res.payload["text"] for res in book_result])
+        
+        context_parts = []
+        for res in book_result:
+            text = res.payload.get("text", "")
+            page = res.payload.get("page", "Unknown")
+            images = res.payload.get("images", [])
+            imgs_str = ", ".join([f"{AI_IMAGE_BASE_URL}/images/{img}" for img in images]) if images else "None"
+            context_parts.append(f"[Source Page: {page} | Images: {imgs_str}]\n{text}")
+        context = "\n\n".join(context_parts)
         print(f"[PERF] /analyze-case - Book Search ({source_file}): {time.time()-t0:.3f}s", flush=True)
 
         # 4. Generate Analysis
@@ -448,7 +457,7 @@ Details: {json.dumps(details, indent=2)}
 [INSTRUCTIONS]
 1. Think step-by-step before writing your final answer.
 2. Personalize every recommendation to match the user's behavioral profile weaknesses and strengths.
-3. Reference specific book techniques by name where applicable.
+3. Reference specific book techniques by name where applicable, AND cite the [Source Page] and [Images] URL if available.
 4. Each recommendation must be concrete and immediately actionable (not generic advice).
 5. Suggest at least 4 recommendations and 4 challenges.
 6. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside the JSON.
@@ -462,7 +471,7 @@ Required JSON structure:
     "Concrete actionable recommendation 4 ..."
   ],
   "suggested_readings": [
-    {{"chapter": "Chapter number", "title": "Chapter title", "time": "Estimated reading time", "reason": "Why this chapter applies"}},
+    {{"chapter": "Chapter/Page Reference", "title": "Chapter title", "time": "Estimated reading time", "reason": "Why this chapter applies"}},
     {{"chapter": "...", "title": "...", "time": "...", "reason": "..."}}
   ],
   "ai_challenges": [
@@ -585,7 +594,15 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
             limit=4,
             with_payload=True
         ).points
-        context = "\n\n".join([res.payload["text"] for res in book_result])
+        
+        context_parts = []
+        for res in book_result:
+            text = res.payload.get("text", "")
+            page = res.payload.get("page", "Unknown")
+            images = res.payload.get("images", [])
+            imgs_str = ", ".join([f"{AI_IMAGE_BASE_URL}/images/{img}" for img in images]) if images else "None"
+            context_parts.append(f"[Source Page: {page} | Images: {imgs_str}]\n{text}")
+        context = "\n\n".join(context_parts)
         print(f"[PERF] /generate-plan - PDF Search ({source_file}): {time.time()-t0:.3f}s", flush=True)
 
         # 3. AI Generation
@@ -613,7 +630,7 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
 [INSTRUCTIONS]
 1. Think carefully about each phase before writing.
 2. Tailor every step to address the user's behavioral strengths and weaknesses.
-3. Include specific negotiation techniques from the book by name.
+3. Include specific negotiation techniques from the book by name, AND cite the [Source Page] and [Images] URL if available.
 4. Each phase must have at least 3 detailed, actionable steps (not vague advice).
 5. Phases should flow logically: Before meeting → During meeting → After meeting.
 6. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside JSON.
@@ -636,7 +653,7 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
         "Detailed step 2 — what to do and why",
         "Detailed step 3 — what to do and why"
       ],
-      "readings": ["Chapter X: Title — read to master technique Y"]
+      "readings": ["Chapter X / Page Y: Title — read to master technique Z (Image ref if any)"]
     }},
     "phase_2_during": {{
       "title": "In-Meeting Execution",
