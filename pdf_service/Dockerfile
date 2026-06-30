@@ -20,11 +20,11 @@ RUN pip install --no-cache-dir fastapi uvicorn numpy openai python-multipart pyt
 # Copy the service code
 COPY . /app
 
-# Ensure entrypoint is executable
+# Ensure entrypoint is executable (useful for non-mounted environments)
 RUN chmod +x /app/entrypoint.sh
 
 # Expose the port FastAPI runs on
 EXPOSE 8000
 
 # Command to run the service
-CMD ["/app/entrypoint.sh"]
+CMD ["/bin/bash", "/app/entrypoint.sh"]
