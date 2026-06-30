@@ -2,9 +2,6 @@
 set -e
 
 # Run data pipeline if Qdrant chunks haven't been generated yet
-# We check if chunks.json exists as a proxy to know if extraction has run.
-# If they want to force a rebuild, they can just delete data/chunks.json.
-
 if [ ! -f "/app/data/chunks.json" ]; then
     echo "========================================================"
     echo "First time setup detected: Running PDF data pipeline..."
@@ -26,10 +23,9 @@ if [ ! -f "/app/data/chunks.json" ]; then
     echo "========================================================"
     echo "Pipeline complete. Starting server..."
     echo "========================================================"
-    cd /app
 else
-    echo "PDF data pipeline already run (chunks.json found). Skipping..."
+    echo "PDF data pipeline already run (chunks.json found). Skipping extraction to save time!"
 fi
 
-# Start the FastAPI server
+echo "Starting FastAPI server..."
 exec uvicorn api.server:app --host 0.0.0.0 --port 8000
