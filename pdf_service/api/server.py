@@ -41,8 +41,8 @@ if images_dir.exists():
     app.mount("/images", StaticFiles(directory=str(images_dir)), name="images")
 
 # --- Initialize AI Models (Local & Free) ---
-print("Loading Embedding Model (all-MiniLM-L6-v2)...", flush=True)
-embed_model = SentenceTransformer('all-MiniLM-L6-v2')
+print("Loading Embedding Model (paraphrase-multilingual-MiniLM-L12-v2)...", flush=True)
+embed_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
 print("Loading Re-ranker Model (ms-marco-MiniLM-L-6-v2)...", flush=True)
 rerank_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')

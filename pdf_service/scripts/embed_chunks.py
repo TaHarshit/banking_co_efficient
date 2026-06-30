@@ -6,8 +6,8 @@ from qdrant_client.models import Distance, VectorParams, PointStruct
 from pathlib import Path
 
 # Load models (Free & Local)
-print("Loading embedding model (all-MiniLM-L6-v2)...")
-model = SentenceTransformer('all-MiniLM-L6-v2')
+print("Loading embedding model (paraphrase-multilingual-MiniLM-L12-v2)...")
+model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
 # Qdrant Configuration
 # When running inside docker, host should be "qdrant". 

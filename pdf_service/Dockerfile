@@ -7,13 +7,15 @@ WORKDIR /app
 # Install system dependencies (needed for FAISS and other libs)
 RUN apt-get update && apt-get install -y \
     libgomp1 \
+    tesseract-ocr \
+    tesseract-ocr-fra \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 # Install Python dependencies (CPU-only to save space)
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir sentence-transformers qdrant-client==1.17.1
-RUN pip install --no-cache-dir fastapi uvicorn numpy openai python-multipart python-dotenv pymupdf
+RUN pip install --no-cache-dir fastapi uvicorn numpy openai python-multipart python-dotenv pymupdf pytesseract
 
 # Copy the service code
 COPY . /app

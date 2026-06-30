@@ -3,6 +3,9 @@ import json
 import base64
 import os
 from pathlib import Path
+import pytesseract
+from PIL import Image
+import io
 
 DATA_DIR = Path("data")
 OUTPUT_JSON = DATA_DIR / "extracted.json"
@@ -45,8 +48,19 @@ def extract_pdfs():
         print(f"Extracting: {pdf_path.name}...")
         doc = fitz.open(pdf_path)
         
+        # Determine language hint for OCR based on filename
+        lang_hint = 'fra' if 'fr' in pdf_path.name.lower() else 'eng'
+        
         for page_num, page in enumerate(doc):
-            text = page.get_text("text")
+            text = page.get_text("text").strip()
+            
+            # If no text found (e.g. scanned image), use OCR
+            if not text:
+                print(f"No text on page {page_num + 1} of {pdf_path.name}, running OCR...")
+                pix = page.get_pixmap(dpi=300)
+                img = Image.open(io.BytesIO(pix.tobytes("png")))
+                text = pytesseract.image_to_string(img, lang=lang_hint).strip()
+                
             diagram = render_vector_blocks(page)
 
             all_extracted.append({
