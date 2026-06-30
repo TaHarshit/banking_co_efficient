@@ -99,10 +99,10 @@ class ClientCaseCls
         }
     }
 
-    public function GetCases($search = null)
+    public function GetCases($search = null, $rating = null)
     {
         try {
-            $cases            = $this->clientCaseRepository->GetUserCases(Auth::id(), $search);
+            $cases            = $this->clientCaseRepository->GetUserCases(Auth::id(), $search, $rating);
             $response         = General::setResponse('SUCCESS', 'Cases retrieved successfully.');
             $response['data'] = $cases;
 

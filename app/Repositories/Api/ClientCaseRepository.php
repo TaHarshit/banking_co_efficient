@@ -18,7 +18,7 @@ class ClientCaseRepository extends BaseRepository
         return $this->model->create($data);
     }
 
-    public function GetUserCases($userId, $search = null)
+    public function GetUserCases($userId, $search = null, $rating = null)
     {
         $query = $this->model->where('user_id', $userId);
 
@@ -28,6 +28,10 @@ class ClientCaseRepository extends BaseRepository
                     ->orWhere('client_alias', 'LIKE', "%{$search}%")
                     ->orWhere('context_overview', 'LIKE', "%{$search}%");
             });
+        }
+
+        if ($rating !== null && $rating !== '') {
+            $query->where('plan_rating', $rating);
         }
 
         return $query->orderBy('created_at', 'desc')->paginate(10);
