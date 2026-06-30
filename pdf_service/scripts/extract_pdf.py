@@ -3,9 +3,7 @@ import json
 import base64
 import os
 from pathlib import Path
-import pytesseract
-from PIL import Image
-import io
+
 import pymupdf4llm
 
 from dotenv import load_dotenv
