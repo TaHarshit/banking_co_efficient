@@ -43,12 +43,9 @@ def extract_pdfs():
                 print(f"Markdown extraction failed on page {page_num + 1}, falling back to fitz... Error: {e}")
                 text = page.get_text("text").strip()
             
-            # If no text found (e.g. scanned image), use OCR
+            # If no text found, we simply skip the OCR process
             if not text:
-                print(f"No text on page {page_num + 1} of {pdf_path.name}, running OCR...")
-                pix = page.get_pixmap(dpi=300)
-                img = Image.open(io.BytesIO(pix.tobytes("png")))
-                text = pytesseract.image_to_string(img, lang=lang_hint).strip()
+                print(f"No text on page {page_num + 1} of {pdf_path.name}, skipping OCR...")
                 
 
             
