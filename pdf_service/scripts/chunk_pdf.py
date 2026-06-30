@@ -34,11 +34,14 @@ def chunk_text(text):
         if chunk:
             chunks.append(chunk)
             
-        start = break_point - OVERLAP
+        new_start = break_point - OVERLAP
         
-        # Failsafe to prevent infinite loops if overlap is bigger than progress
-        if start <= break_point - CHUNK_SIZE:
+        # Failsafe: we MUST always advance forward. 
+        # If the overlap pulls us backward or keeps us in the same spot, ignore overlap.
+        if new_start <= start:
             start = break_point
+        else:
+            start = new_start
             
     return chunks
 
