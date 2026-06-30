@@ -11,22 +11,46 @@ OVERLAP = 200
 def chunk_text(text):
     chunks = []
     start = 0
-    while start < len(text):
+    text_len = len(text)
+    
+    if text_len == 0:
+        return []
+        
+    while start < text_len:
         end = start + CHUNK_SIZE
-        chunk = text[start:end]
-        chunks.append(chunk)
-        start += CHUNK_SIZE - OVERLAP
+        if end >= text_len:
+            chunks.append(text[start:text_len].strip())
+            break
+        
+        # Find a clean breaking point to avoid splitting words/sentences
+        break_point = end
+        for separator in ['\n\n', '\n', '. ', ' ']:
+            pos = text.rfind(separator, start, end)
+            if pos != -1:
+                break_point = pos + len(separator)
+                break
+                
+        chunk = text[start:break_point].strip()
+        if chunk:
+            chunks.append(chunk)
+            
+        start = break_point - OVERLAP
+        
+        # Failsafe to prevent infinite loops if overlap is bigger than progress
+        if start <= break_point - CHUNK_SIZE:
+            start = break_point
+            
     return chunks
 
 
 def chunk_pdf():
     # Load extracted text
-    with open(INPUT, "r") as f:
+    with open(INPUT, "r", encoding="utf-8") as f:
         pages = json.load(f)
 
     # Load image map (page → images)
     try:
-        with open(IMAGE_MAP, "r") as f:
+        with open(IMAGE_MAP, "r", encoding="utf-8") as f:
             image_map = json.load(f)
     except:
         image_map = []
@@ -48,7 +72,7 @@ def chunk_pdf():
         # Get images for this page/source
         images_for_page = page_to_images.get((source, page_num), [])
 
-        # Chunk text
+        # Chunk text intelligently
         chunks = chunk_text(page_text)
 
         # Add metadata
@@ -63,8 +87,8 @@ def chunk_pdf():
             chunk_id += 1
 
     # Save output
-    with open(OUTPUT, "w") as f:
-        json.dump(all_chunks, f, indent=2)
+    with open(OUTPUT, "w", encoding="utf-8") as f:
+        json.dump(all_chunks, f, indent=2, ensure_ascii=False)
 
     print(f"Chunking complete. Total chunks created: {len(all_chunks)} → {OUTPUT}")
 

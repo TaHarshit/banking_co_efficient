@@ -924,11 +924,14 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
 
         for res in top_chunks:
             chunk   = res.payload
-            context += chunk["text"] + "\n\n"
-            for img in (chunk.get("images") or []):
+            page = chunk.get("page", "Unknown")
+            images = chunk.get("images", [])
+            imgs_str = ", ".join([f"{AI_IMAGE_BASE_URL}/images/{img}" for img in images]) if images else "None"
+            context += f"[Source Page: {page} | Images: {imgs_str}]\n{chunk['text']}\n\n"
+            for img in images:
                 base_url = (AI_IMAGE_BASE_URL or "http://127.0.0.1:8000").rstrip("/")
                 collected_images.append(f"{base_url}/images/{img}")
-            reference_pages.add(chunk["page"])
+            reference_pages.add(page)
 
         # 5. AI Completion
         t0 = time.time()

@@ -6,36 +6,20 @@ from pathlib import Path
 import pytesseract
 from PIL import Image
 import io
+import pymupdf4llm
+
+from dotenv import load_dotenv
+
+# Load .env
+env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(env_path)
 
 DATA_DIR = Path("data")
 OUTPUT_JSON = DATA_DIR / "extracted.json"
 
-def render_vector_blocks(page):
-    raw = page.get_text("rawdict")
-    vector_rects = []
 
-    for block in raw["blocks"]:
-        if "bbox" in block:
-            x0, y0, x1, y1 = block["bbox"]
-            vector_rects.append(fitz.Rect(x0, y0, x1, y1))
 
-    if not vector_rects:
-        return None
 
-    # Merge all vector areas into one bounding box
-    area = vector_rects[0]
-    for r in vector_rects[1:]:
-        area |= r
-
-    # Render the vector region into PNG
-    pix = page.get_pixmap(clip=area, dpi=300)
-    img_bytes = pix.tobytes("png")
-    base64_img = base64.b64encode(img_bytes).decode("utf-8")
-
-    return {
-        "mime": "image/png",
-        "data": base64_img
-    }
 
 def extract_pdfs():
     all_extracted = []
@@ -52,7 +36,12 @@ def extract_pdfs():
         lang_hint = 'fra' if 'fr' in pdf_path.name.lower() else 'eng'
         
         for page_num, page in enumerate(doc):
-            text = page.get_text("text").strip()
+            # Using pymupdf4llm for markdown extraction (preserves tables!)
+            try:
+                text = pymupdf4llm.to_markdown(doc, pages=[page_num]).strip()
+            except Exception as e:
+                print(f"Markdown extraction failed on page {page_num + 1}, falling back to fitz... Error: {e}")
+                text = page.get_text("text").strip()
             
             # If no text found (e.g. scanned image), use OCR
             if not text:
@@ -61,17 +50,18 @@ def extract_pdfs():
                 img = Image.open(io.BytesIO(pix.tobytes("png")))
                 text = pytesseract.image_to_string(img, lang=lang_hint).strip()
                 
-            diagram = render_vector_blocks(page)
+
+            
+
 
             all_extracted.append({
                 "source": pdf_path.name,
                 "page": page_num + 1,
-                "text": text,
-                "diagram": diagram  # may be None
+                "text": text
             })
 
-    with open(OUTPUT_JSON, "w") as f:
-        json.dump(all_extracted, f, indent=2)
+    with open(OUTPUT_JSON, "w", encoding="utf-8") as f:
+        json.dump(all_extracted, f, indent=2, ensure_ascii=False)
 
     print(f"Extraction complete. Saved {len(all_extracted)} total pages to {OUTPUT_JSON}")
 

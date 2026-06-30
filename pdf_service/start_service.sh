@@ -21,7 +21,7 @@ source venv/bin/activate
 # Install dependencies if needed
 if [ ! -f "venv/.dependencies_installed" ]; then
     echo "Installing dependencies..."
-    pip install fastapi uvicorn faiss-cpu numpy openai python-multipart
+    pip install fastapi uvicorn faiss-cpu numpy openai python-multipart pymupdf4llm pytesseract pymupdf
     touch venv/.dependencies_installed
 fi
 

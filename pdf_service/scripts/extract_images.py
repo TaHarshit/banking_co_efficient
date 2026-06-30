@@ -7,6 +7,9 @@ DATA_DIR = "data"
 OUTPUT_DIR = "data/images"
 
 def extract_images():
+    if os.path.exists(OUTPUT_DIR):
+        import shutil
+        shutil.rmtree(OUTPUT_DIR)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
     # Find all PDFs in the data directory
