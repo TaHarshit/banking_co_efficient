@@ -44,8 +44,8 @@ app.mount("/images", StaticFiles(directory=str(images_dir)), name="images")
 print("Loading Embedding Model (paraphrase-multilingual-MiniLM-L12-v2)...", flush=True)
 embed_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
 
-print("Loading Re-ranker Model (ms-marco-MiniLM-L-6-v2)...", flush=True)
-rerank_model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+print("Loading Re-ranker Model (mmarco-mMiniLMv2-L12-H384-v1)...", flush=True)
+rerank_model = CrossEncoder('cross-encoder/mmarco-mMiniLMv2-L12-H384-v1')
 
 # --- Initialize Qdrant Client ---
 def get_qdrant_client():
@@ -902,6 +902,7 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
             return {"answer": "No relevant information found.", "images": [], "reference_pages": []}
 
         # 3. Re-ranking
+        # Using a multilingual reranker (mmarco) to properly score French and English queries.
         t0 = time.time()
         print(f"[INFO] Re-ranking {len(search_result)} candidates...", flush=True)
 
@@ -912,7 +913,8 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
             search_result[i].score = score
 
         search_result.sort(key=lambda x: x.score, reverse=True)
-        top_chunks = search_result[:5]
+        # Keep top 8 to provide enough context for structural questions while removing irrelevant chunks
+        top_chunks = search_result[:8]
         print(f"[PERF] /ask - Re-ranking: {time.time()-t0:.3f}s", flush=True)
 
         # 4. Context Building
@@ -932,8 +934,12 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
         t0 = time.time()
         system_content = f"""You are a helpful AI assistant answering questions about the provided document.
 For greetings or conversational interactions (e.g., "Hi", "Hello", "How are you?"), respond politely and warmly.
-For factual questions about the document, answer using ONLY the context provided below.
-If the answer is not in the context, say "I cannot find the answer to that in the document."
+
+[INSTRUCTIONS FOR ANSWERING]
+1. Answer the user's question using the Context provided below.
+2. Be flexible with wording. If the user searches for a chapter using only a few words or partial names, match it to the closest chapter in the Context.
+3. For structural questions (e.g., "What are the subsections of Chapter X?"), infer the structure from the headings visible in the Context.
+4. If the requested information is genuinely missing from the Context, say "I cannot find the answer to that in the document."
 
 [IMPORTANT]
 At the end of your response, provide exactly 3 short and sweet follow-up suggestions for the user.
