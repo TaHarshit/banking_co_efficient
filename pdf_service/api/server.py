@@ -37,8 +37,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Serve images
 images_dir = BASE_DIR / "data" / "images"
-if images_dir.exists():
-    app.mount("/images", StaticFiles(directory=str(images_dir)), name="images")
+os.makedirs(images_dir, exist_ok=True)
+app.mount("/images", StaticFiles(directory=str(images_dir)), name="images")
 
 # --- Initialize AI Models (Local & Free) ---
 print("Loading Embedding Model (paraphrase-multilingual-MiniLM-L12-v2)...", flush=True)
