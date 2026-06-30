@@ -10,18 +10,18 @@ if [ ! -f "/app/data/chunks.json" ]; then
     echo "First time setup detected: Running PDF data pipeline..."
     echo "========================================================"
     
-    cd /app/scripts
+    cd /app
     echo "Step 1: Extracting PDFs..."
-    python3 extract_pdf.py
+    python3 scripts/extract_pdf.py
     
     echo "Step 1.5: Extracting Images..."
-    python3 extract_images.py
+    python3 scripts/extract_images.py
     
     echo "Step 2: Chunking Text..."
-    python3 chunk_pdf.py
+    python3 scripts/chunk_pdf.py
     
     echo "Step 3: Embedding and Uploading to Qdrant..."
-    python3 embed_chunks.py
+    python3 scripts/embed_chunks.py
     
     echo "========================================================"
     echo "Pipeline complete. Starting server..."
