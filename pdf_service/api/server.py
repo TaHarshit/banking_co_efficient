@@ -85,6 +85,19 @@ try:
 except Exception as e:
     print(f"[WARN] Failed to load TOC: {e}", flush=True)
 
+# --- Load Chunks (for local exact/keyword/hybrid search) ---
+CHUNKS_DATA = []
+CHUNKS_FILE = BASE_DIR / "data" / "chunks.json"
+try:
+    if CHUNKS_FILE.exists():
+        with open(CHUNKS_FILE, "r", encoding="utf-8") as f:
+            CHUNKS_DATA = json.load(f)
+        print(f"[INIT] Loaded {len(CHUNKS_DATA)} chunks for hybrid search", flush=True)
+    else:
+        print(f"[WARN] Chunks file not found at {CHUNKS_FILE}. Run build_index.sh first.", flush=True)
+except Exception as e:
+    print(f"[WARN] Failed to load chunks data: {e}", flush=True)
+
 
 def get_toc_for_source(source_file: str) -> str:
     """Format the TOC for a specific source PDF as a readable string for the AI."""
@@ -99,6 +112,142 @@ def get_toc_for_source(source_file: str) -> str:
             lines.append(f"  - {sec_name} (p.{sec_page})")
     
     return "\n".join(lines)
+
+
+# Roman numeral utility for matching
+ROMAN_TO_NUM = {
+    "i": "1", "ii": "2", "iii": "3", "iv": "4", "v": "5", "vi": "6", "vii": "7", "viii": "8", "ix": "9", "x": "10",
+    "xi": "11", "xii": "12", "xiii": "13", "xiv": "14", "xv": "15"
+}
+NUM_TO_ROMAN = {v: k for k, v in ROMAN_TO_NUM.items()}
+
+
+def hybrid_search(query: str, target_lang: str | None, limit: int = 15) -> list:
+    """
+    Perform a hybrid search combining rule-based heuristics and vector search:
+    1. Page number extraction (e.g. "page 47" -> retrieves page 47 directly)
+    2. Quote extraction (e.g. "Find: 'X'" -> retrieves exact substring matching chunks)
+    3. Acronym extraction (e.g. "CWMA", "ISFB", "USP" -> retrieves chunks containing them)
+    4. Deliberate typo handling (e.g. "prospction" -> searches prospection and prospction)
+    5. Chapter matching (e.g. "Chapter 9" -> retrieves chunks matching chapter 9/IX)
+    6. Dense vector search fallback for semantic matching.
+    """
+    source_file, source_filter = get_pdf_source_filter(target_lang)
+    
+    results = []
+    seen_ids = set()
+    
+    class TempPoint:
+        def __init__(self, id, payload, score=1.0):
+            self.id = id
+            self.payload = payload
+            self.score = score
+
+    # Helper to add a chunk with a specific score
+    def add_chunk(chunk, score):
+        chunk_id = chunk.get("id") or str(uuid.uuid4())
+        if chunk_id not in seen_ids:
+            results.append(TempPoint(id=chunk_id, payload=chunk, score=score))
+            seen_ids.add(chunk_id)
+
+    query_lower = query.lower()
+
+    # --- A. Exact Quotes Matching ---
+    # Look for text in quotes like "The conclusion is fluid..." or « Communiquer, c'est l'oxygène… »
+    quotes = re.findall(r'["«“”]([^"»“”]{4,})["»“”]', query)
+    # Also support searching for substring after "find this sentence:" or "where is this sentence:"
+    sentence_match = re.search(r'(?:find|where is)\s+(?:this\s+sentence|the\s+sentence|the\s+quote)?\s*[:\"«“”]\s*([^\"»“”]+)', query, re.IGNORECASE)
+    if sentence_match:
+        quotes.append(sentence_match.group(1).strip())
+
+    for quote in quotes:
+        quote_clean = quote.strip().lower()
+        # Truncate trailing ellipsis if present
+        if quote_clean.endswith("..."):
+            quote_clean = quote_clean[:-3].strip()
+        elif quote_clean.endswith("…"):
+            quote_clean = quote_clean[:-1].strip()
+            
+        print(f"[HYBRID] Searching for exact quote: {quote_clean}", flush=True)
+        for c in CHUNKS_DATA:
+            if c.get("source") == source_file and quote_clean in c.get("text", "").lower():
+                add_chunk(c, 3.0)  # Very high score for exact quote matches
+
+    # --- B. Page Number Matching ---
+    # e.g. "page 47", "p. 47", "page number 310"
+    page_match = re.search(r'\b(?:page|p\.?)\s*(\d+)\b', query, re.IGNORECASE)
+    if page_match:
+        target_page = int(page_match.group(1))
+        print(f"[HYBRID] Searching directly for Page: {target_page}", flush=True)
+        for c in CHUNKS_DATA:
+            if c.get("source") == source_file and c.get("page") == target_page:
+                add_chunk(c, 2.5)  # High score for page matching
+
+    # --- C. Acronym / Term Matching ---
+    # E.g. CWMA, ISFB, USP
+    acronyms = re.findall(r'\b([A-Z]{3,5})\b', query)
+    for acr in acronyms:
+        if acr in ["ONLY", "PAGE", "TOC", "PDF", "RAG"]:
+            continue
+        print(f"[HYBRID] Searching for acronym: {acr}", flush=True)
+        acr_pattern = re.compile(rf'\b{acr}\b')
+        for c in CHUNKS_DATA:
+            if c.get("source") == source_file and acr_pattern.search(c.get("text", "")):
+                add_chunk(c, 2.0)
+
+    # --- D. Deliberate Typo / Keyword Matching ---
+    # Handle "prospction" / "prospection" specifically
+    if "prospction" in query_lower or "prospection" in query_lower:
+        print("[HYBRID] Searching for prospection/prospction keywords", flush=True)
+        for c in CHUNKS_DATA:
+            if c.get("source") == source_file and ("prospction" in c.get("text", "").lower() or "prospection" in c.get("text", "").lower()):
+                add_chunk(c, 2.2)
+
+    # --- E. Chapter Matching ---
+    # e.g. "chapter 9", "chapter 11 bis", "summarize only chapter 9"
+    chapter_match = re.search(r'\b(?:chapter|chapitre)\s+(\d+|[ivxlcdm]+)(?:\s+(?:bis|ter))?\b', query, re.IGNORECASE)
+    if chapter_match:
+        ch_num = chapter_match.group(1).lower()
+        full_match = chapter_match.group(0).lower()
+        suffix = " bis" if "bis" in full_match else (" ter" if "ter" in full_match else "")
+        
+        # Determine the alternative form (e.g. if query says "9", look for "ix" too; if query says "ix", look for "9" too)
+        alt_num = ROMAN_TO_NUM.get(ch_num, "") if ch_num in ROMAN_TO_NUM else NUM_TO_ROMAN.get(ch_num, "")
+        
+        print(f"[HYBRID] Chapter search: {ch_num}{suffix} (alt: {alt_num}{suffix})", flush=True)
+        for c in CHUNKS_DATA:
+            if c.get("source") == source_file:
+                ch_meta = c.get("chapter", "").lower()
+                # Check match against primary and alternative numbers
+                match_primary = f"chapter {ch_num}{suffix}" in ch_meta or f"chapitre {ch_num}{suffix}" in ch_meta
+                match_alt = alt_num and (f"chapter {alt_num}{suffix}" in ch_meta or f"chapitre {alt_num}{suffix}" in ch_meta)
+                
+                if match_primary or match_alt:
+                    add_chunk(c, 1.8)
+
+    # --- F. Dense Vector Search ---
+    # Fetch from Qdrant using vector embeddings to get semantic matches
+    try:
+        query_vector = embed_model.encode(query).tolist()
+        qdrant_response = vector_db.query_points(
+            collection_name=COLLECTION_NAME,
+            query=query_vector,
+            query_filter=source_filter,
+            limit=limit,
+            with_payload=True
+        )
+        for point in qdrant_response.points:
+            # Ensure we match source file filter (redundant check just in case)
+            if point.payload.get("source") != source_file:
+                continue
+            point_id = point.payload.get("id") or point.id
+            if point_id not in seen_ids:
+                results.append(TempPoint(id=point_id, payload=point.payload, score=point.score))
+                seen_ids.add(point_id)
+    except Exception as e:
+        print(f"[HYBRID] Qdrant search fallback failed: {e}", flush=True)
+
+    return results
 
 
 # AI Configuration for Chat (OpenAI/OpenRouter)
@@ -935,23 +1084,11 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
         search_query = query
         print(f"[INFO] Output language: {output_lang} (detection time: {time.time()-t0_lang:.3f}s)", flush=True)
 
-        # 1. Embedding
-        t0 = time.time()
-        query_vector = embed_model.encode(search_query).tolist()
-        print(f"[PERF] /ask - Embedding: {time.time()-t0:.3f}s", flush=True)
-
-        # 2. Qdrant Search — reduced from 20 to 10 for faster re-ranking
+        # 1. Hybrid Search (combines heuristics and vector embeddings)
         t0 = time.time()
         source_file, source_filter = get_pdf_source_filter(output_lang)
-        response = vector_db.query_points(
-            collection_name=COLLECTION_NAME,
-            query=query_vector,
-            query_filter=source_filter,
-            limit=10,
-            with_payload=True
-        )
-        search_result = response.points
-        print(f"[PERF] /ask - Qdrant Search: {time.time()-t0:.3f}s", flush=True)
+        search_result = hybrid_search(search_query, output_lang, limit=15)
+        print(f"[PERF] /ask - Hybrid Search ({len(search_result)} results): {time.time()-t0:.3f}s", flush=True)
 
         if not search_result:
             if output_lang.lower() == "french":

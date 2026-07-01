@@ -19,19 +19,20 @@ MD_HEADING = re.compile(r'^(#{1,4})\s+(.+)$', re.MULTILINE)
 BOLD_HEADING = re.compile(r'^\*\*(.+?)\*\*\s*$', re.MULTILINE)
 
 # Pattern 3: Explicit "Chapter X" or "Chapitre X" patterns (English + French)
+# Supports digits (e.g. Chapter 9), Roman numerals (e.g. Chapter IX), and suffixes (e.g. Chapter 11 bis)
 CHAPTER_PATTERN = re.compile(
-    r'^(?:#{0,4}\s*)?(?:\*\*)?'                    # Optional # or ** prefix
-    r'(?:Chapter|Chapitre|CHAPTER|CHAPITRE)\s+'    # Chapter keyword
-    r'(\d+)\s*[:\-–—.]?\s*'                        # Chapter number
-    r'(.+?)?'                                       # Optional title
-    r'(?:\*\*)?\s*$',                              # Optional ** suffix
+    r'^(?:#{0,4}\s*)?(?:\*\*)?'                                        # Optional # or ** prefix
+    r'(?:Chapter|Chapitre|CHAPTER|CHAPITRE)\s+'                        # Chapter keyword
+    r'(\d+|[ivxlcdmIVXLCDM]+)(?:\s+(?:bis|ter|BIS|TER))?\s*'            # Chapter number (digits or Roman numerals, optional bis/ter)
+    r'[:\-–—.]?\s*(.+?)?'                                              # Optional title separator and title
+    r'(?:\*\*)?\s*$',                                                  # Optional ** suffix
     re.MULTILINE | re.IGNORECASE
 )
 
-# Pattern 4: ALL CAPS lines with min 4 words (common PDF heading style)
-ALLCAPS_HEADING = re.compile(r'^([A-ZÀ-Ü][A-ZÀ-Ü\s\-,]{15,})$', re.MULTILINE)
+# Pattern 4: ALL CAPS lines (common PDF heading style for chapters/major sections)
+ALLCAPS_HEADING = re.compile(r'^([A-ZÀ-ÜŒÆ\s\-,.\'\":()&!]{10,})$', re.MULTILINE)
 
-# Pattern 5: "Contents table chapter X" or numbered section patterns like "1.1", "2.3"
+# Pattern 5: Numbered section patterns like "1.1", "2.3"
 NUMBERED_SECTION = re.compile(r'^(?:#{0,4}\s*)?(?:\*\*)?(\d+\.\d+(?:\.\d+)?)\s+(.+?)(?:\*\*)?\s*$', re.MULTILINE)
 
 
@@ -56,8 +57,16 @@ def extract_headings_from_text(text):
     # Strategy 2: Explicit Chapter/Chapitre patterns
     for match in CHAPTER_PATTERN.finditer(text):
         chapter_num = match.group(1)
+        # Capture the whole suffix if present in the full match
+        full_match = match.group(0)
+        suffix = ""
+        if "bis" in full_match.lower():
+            suffix = " bis"
+        elif "ter" in full_match.lower():
+            suffix = " ter"
+            
         chapter_title = match.group(2).strip().strip('*') if match.group(2) else ""
-        title = f"Chapter {chapter_num}"
+        title = f"Chapter {chapter_num}{suffix}"
         if chapter_title:
             title += f": {chapter_title}"
         pos = match.start()
@@ -70,10 +79,9 @@ def extract_headings_from_text(text):
         title = match.group(1).strip()
         pos = match.start()
         # Skip if it's just a short bold phrase (likely emphasis, not a heading)
-        # Also skip if we already have a heading near this position
         if len(title) < 5 or len(title) > 150:
             continue
-        # Check if there's already a heading within 10 chars of this position
+        # Check if there's already a heading near this position
         if any(abs(pos - sp) < 10 for sp in seen_positions):
             continue
         # Treat bold headings as level 2 (section-level)
@@ -90,6 +98,23 @@ def extract_headings_from_text(text):
             level = min(depth + 1, 4)  # Cap at level 4
             headings.append((level, f"{num} {title}", pos))
             seen_positions.add(pos)
+            
+    # Strategy 5: ALL CAPS headings (often used for major sections or chapters in PDFs)
+    for match in ALLCAPS_HEADING.finditer(text):
+        title = match.group(1).strip()
+        pos = match.start()
+        # Clean title and filter out short lines, numbers, or pages
+        if len(title) < 10 or len(title) > 80:
+            continue
+        # Skip if it's just a sequence of digits or common header/footer junk
+        if title.isdigit() or "PAGE" in title or "INDEX" in title:
+            continue
+        # Check if there's already a heading near this position
+        if any(abs(pos - sp) < 15 for sp in seen_positions):
+            continue
+        # Treat ALL CAPS as level 2 (section-level), convert to title case for cleaner look
+        headings.append((2, title.title(), pos))
+        seen_positions.add(pos)
     
     # Sort by position in document
     headings.sort(key=lambda x: x[2])
