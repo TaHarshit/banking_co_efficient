@@ -8,21 +8,91 @@ OUTPUT = "data/chunks.json"
 CHUNK_SIZE = 1500
 OVERLAP = 200
 
-# Regex to detect markdown headings: # Chapter, ## Section, ### Subsection
-HEADING_PATTERN = re.compile(r'^(#{1,4})\s+(.+)$', re.MULTILINE)
+# --- Heading Detection Patterns ---
+# pymupdf4llm doesn't always generate # headings for all chapters.
+# We use multiple strategies to catch chapter/section headings.
+
+# Pattern 1: Standard markdown headings — # Chapter, ## Section, ### Subsection
+MD_HEADING = re.compile(r'^(#{1,4})\s+(.+)$', re.MULTILINE)
+
+# Pattern 2: Bold markdown headings — **Chapter Title** on its own line (pymupdf4llm sometimes does this)
+BOLD_HEADING = re.compile(r'^\*\*(.+?)\*\*\s*$', re.MULTILINE)
+
+# Pattern 3: Explicit "Chapter X" or "Chapitre X" patterns (English + French)
+CHAPTER_PATTERN = re.compile(
+    r'^(?:#{0,4}\s*)?(?:\*\*)?'                    # Optional # or ** prefix
+    r'(?:Chapter|Chapitre|CHAPTER|CHAPITRE)\s+'    # Chapter keyword
+    r'(\d+)\s*[:\-–—.]?\s*'                        # Chapter number
+    r'(.+?)?'                                       # Optional title
+    r'(?:\*\*)?\s*$',                              # Optional ** suffix
+    re.MULTILINE | re.IGNORECASE
+)
+
+# Pattern 4: ALL CAPS lines with min 4 words (common PDF heading style)
+ALLCAPS_HEADING = re.compile(r'^([A-ZÀ-Ü][A-ZÀ-Ü\s\-,]{15,})$', re.MULTILINE)
+
+# Pattern 5: "Contents table chapter X" or numbered section patterns like "1.1", "2.3"
+NUMBERED_SECTION = re.compile(r'^(?:#{0,4}\s*)?(?:\*\*)?(\d+\.\d+(?:\.\d+)?)\s+(.+?)(?:\*\*)?\s*$', re.MULTILINE)
 
 
 def extract_headings_from_text(text):
     """
-    Parse markdown headings from text and return a list of (level, title, position).
-    Level 1 = #, Level 2 = ##, etc.
+    Parse headings from text using multiple detection strategies.
+    Returns a list of (level, title, position).
+    Level 1 = chapter-level, Level 2 = section-level, Level 3 = subsection-level.
     """
     headings = []
-    for match in HEADING_PATTERN.finditer(text):
-        level = len(match.group(1))  # Number of # signs
-        title = match.group(2).strip()
-        position = match.start()
-        headings.append((level, title, position))
+    seen_positions = set()  # Avoid duplicate headings at same position
+    
+    # Strategy 1: Markdown headings (most reliable when present)
+    for match in MD_HEADING.finditer(text):
+        level = len(match.group(1))
+        title = match.group(2).strip().strip('*')  # Remove any stray bold markers
+        pos = match.start()
+        if pos not in seen_positions:
+            headings.append((level, title, pos))
+            seen_positions.add(pos)
+    
+    # Strategy 2: Explicit Chapter/Chapitre patterns
+    for match in CHAPTER_PATTERN.finditer(text):
+        chapter_num = match.group(1)
+        chapter_title = match.group(2).strip().strip('*') if match.group(2) else ""
+        title = f"Chapter {chapter_num}"
+        if chapter_title:
+            title += f": {chapter_title}"
+        pos = match.start()
+        if pos not in seen_positions:
+            headings.append((1, title, pos))  # Always level 1 for chapters
+            seen_positions.add(pos)
+    
+    # Strategy 3: Bold headings (only if they look like titles, not just bold text)
+    for match in BOLD_HEADING.finditer(text):
+        title = match.group(1).strip()
+        pos = match.start()
+        # Skip if it's just a short bold phrase (likely emphasis, not a heading)
+        # Also skip if we already have a heading near this position
+        if len(title) < 5 or len(title) > 150:
+            continue
+        # Check if there's already a heading within 10 chars of this position
+        if any(abs(pos - sp) < 10 for sp in seen_positions):
+            continue
+        # Treat bold headings as level 2 (section-level)
+        headings.append((2, title, pos))
+        seen_positions.add(pos)
+    
+    # Strategy 4: Numbered sections like "1.1 Title", "2.3 Subtitle"
+    for match in NUMBERED_SECTION.finditer(text):
+        num = match.group(1)
+        title = match.group(2).strip().strip('*')
+        pos = match.start()
+        if pos not in seen_positions:
+            depth = num.count('.') + 1  # "1.1" = level 2, "1.1.1" = level 3
+            level = min(depth + 1, 4)  # Cap at level 4
+            headings.append((level, f"{num} {title}", pos))
+            seen_positions.add(pos)
+    
+    # Sort by position in document
+    headings.sort(key=lambda x: x[2])
     return headings
 
 
