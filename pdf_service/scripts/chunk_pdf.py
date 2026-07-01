@@ -203,10 +203,45 @@ def chunk_pdf():
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(all_chunks, f, indent=2, ensure_ascii=False)
 
+    # --- Generate Table of Contents (TOC) per source PDF ---
+    # This gives the AI full structural awareness of the book regardless of vector search results
+    toc = {}
+    for chunk in all_chunks:
+        source = chunk["source"]
+        chapter = chunk.get("chapter", "")
+        section = chunk.get("section", "")
+        page = chunk["page"]
+        
+        if source not in toc:
+            toc[source] = {"chapters": {}}
+        
+        if chapter and chapter not in toc[source]["chapters"]:
+            toc[source]["chapters"][chapter] = {
+                "start_page": page,
+                "sections": {}
+            }
+        
+        if chapter and section and section not in toc[source]["chapters"].get(chapter, {}).get("sections", {}):
+            if chapter in toc[source]["chapters"]:
+                toc[source]["chapters"][chapter]["sections"][section] = page
+    
+    toc_path = "data/toc.json"
+    with open(toc_path, "w", encoding="utf-8") as f:
+        json.dump(toc, f, indent=2, ensure_ascii=False)
+    
+    # Print TOC summary
+    for source, data in toc.items():
+        print(f"\nTOC for {source}:")
+        for ch_name, ch_data in data["chapters"].items():
+            print(f"  📖 {ch_name} (p.{ch_data['start_page']})")
+            for sec_name, sec_page in ch_data["sections"].items():
+                print(f"      📄 {sec_name} (p.{sec_page})")
+
     # Stats
     chapters_found = len(set(c["chapter"] for c in all_chunks if c["chapter"]))
     sections_found = len(set(c["section"] for c in all_chunks if c["section"]))
-    print(f"Chunking complete. Total chunks: {len(all_chunks)} | Chapters: {chapters_found} | Sections: {sections_found} → {OUTPUT}")
+    print(f"\nChunking complete. Total chunks: {len(all_chunks)} | Chapters: {chapters_found} | Sections: {sections_found} → {OUTPUT}")
+    print(f"TOC saved → {toc_path}")
 
 
 if __name__ == "__main__":

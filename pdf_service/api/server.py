@@ -71,6 +71,36 @@ def get_qdrant_client():
 vector_db = get_qdrant_client()
 COLLECTION_NAME = "pdf_chunks"
 
+# --- Load Table of Contents (generated during chunking) ---
+# This gives the AI complete structural awareness of the book
+TOC_DATA = {}
+TOC_FILE = BASE_DIR / "data" / "toc.json"
+try:
+    if TOC_FILE.exists():
+        with open(TOC_FILE, "r", encoding="utf-8") as f:
+            TOC_DATA = json.load(f)
+        print(f"[INIT] Loaded TOC with {sum(len(v['chapters']) for v in TOC_DATA.values())} chapters from {len(TOC_DATA)} source(s)", flush=True)
+    else:
+        print(f"[WARN] TOC file not found at {TOC_FILE}. Run build_index.sh to generate it.", flush=True)
+except Exception as e:
+    print(f"[WARN] Failed to load TOC: {e}", flush=True)
+
+
+def get_toc_for_source(source_file: str) -> str:
+    """Format the TOC for a specific source PDF as a readable string for the AI."""
+    if source_file not in TOC_DATA:
+        return ""
+    
+    toc = TOC_DATA[source_file]
+    lines = []
+    for ch_name, ch_data in toc.get("chapters", {}).items():
+        lines.append(f"- {ch_name} (starts p.{ch_data['start_page']})")
+        for sec_name, sec_page in ch_data.get("sections", {}).items():
+            lines.append(f"  - {sec_name} (p.{sec_page})")
+    
+    return "\n".join(lines)
+
+
 # AI Configuration for Chat (OpenAI/OpenRouter)
 AI_API_BASE_URL = os.getenv("AI_API_BASE_URL", None)
 AI_CHAT_MODEL   = os.getenv("AI_CHAT_MODEL", "gpt-4o-mini")
@@ -972,14 +1002,21 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
 
         # 5. AI Completion
         t0 = time.time()
+        
+        # Get the TOC for this source to give AI full book structure awareness
+        toc_text = get_toc_for_source(source_file)
+        toc_section = ""
+        if toc_text:
+            toc_section = f"\n[BOOK TABLE OF CONTENTS — Use this for structural questions about chapters, sections, and page numbers]\n{toc_text}\n"
+        
         system_content = f"""You are a helpful AI assistant answering questions about the provided document.
 For greetings or conversational interactions (e.g., "Hi", "Hello", "How are you?"), respond politely and warmly.
-
+{toc_section}
 [INSTRUCTIONS FOR ANSWERING]
-1. Answer the user's question using the Context provided below.
-2. Be flexible with wording. If the user searches for a chapter using only a few words or partial names, match it to the closest chapter in the Context.
-3. For structural questions (e.g., "What are the subsections of Chapter X?", "What is the name of Chapter 2?"), use the [Chapter] and [Section] metadata tags in the Context to identify the correct information.
-4. If the requested information is genuinely missing from the Context, say "I cannot find the answer to that in the document."
+1. Answer the user's question using the Context and Table of Contents provided below.
+2. Be flexible with wording. If the user searches for a chapter using only a few words or partial names, match it to the closest chapter in the Context or Table of Contents.
+3. For structural questions (e.g., "What are the subsections of Chapter X?", "What is the name of Chapter 2?", "What chapters are there?"), use the [BOOK TABLE OF CONTENTS] above AND the [Chapter] and [Section] metadata tags in the Context to give a complete answer.
+4. If the requested information is genuinely missing from BOTH the Context and the Table of Contents, say "I cannot find the answer to that in the document."
 5. INLINE CITATIONS: When referencing specific information from the document, include inline citations in the format (Chapter Name, p.XX) or (p.XX) where XX is the page number from the [Page: XX] tag in the Context. This helps the user locate the information in the book.
 
 [IMPORTANT]
