@@ -1,14 +1,56 @@
 import json
+import re
 
 INPUT = "data/extracted.json"
 IMAGE_MAP = "data/image_map.json"
 OUTPUT = "data/chunks.json"
 
-CHUNK_SIZE = 1200
+CHUNK_SIZE = 1500
 OVERLAP = 200
 
+# Regex to detect markdown headings: # Chapter, ## Section, ### Subsection
+HEADING_PATTERN = re.compile(r'^(#{1,4})\s+(.+)$', re.MULTILINE)
 
-def chunk_text(text):
+
+def extract_headings_from_text(text):
+    """
+    Parse markdown headings from text and return a list of (level, title, position).
+    Level 1 = #, Level 2 = ##, etc.
+    """
+    headings = []
+    for match in HEADING_PATTERN.finditer(text):
+        level = len(match.group(1))  # Number of # signs
+        title = match.group(2).strip()
+        position = match.start()
+        headings.append((level, title, position))
+    return headings
+
+
+def get_heading_at_position(headings, position):
+    """
+    Given a list of headings and a character position, return the current
+    chapter (level 1-2) and section (level 3-4) at that position.
+    """
+    current_chapter = ""
+    current_section = ""
+    
+    for level, title, head_pos in headings:
+        if head_pos > position:
+            break
+        if level <= 2:
+            current_chapter = title
+            current_section = ""  # Reset section when chapter changes
+        elif level <= 4:
+            current_section = title
+    
+    return current_chapter, current_section
+
+
+def chunk_text_with_metadata(text, headings):
+    """
+    Chunk text and attach chapter/section metadata to each chunk
+    based on which heading region the chunk falls in.
+    """
     chunks = []
     start = 0
     text_len = len(text)
@@ -19,7 +61,14 @@ def chunk_text(text):
     while start < text_len:
         end = start + CHUNK_SIZE
         if end >= text_len:
-            chunks.append(text[start:text_len].strip())
+            chunk_text = text[start:text_len].strip()
+            if chunk_text:
+                chapter, section = get_heading_at_position(headings, start)
+                chunks.append({
+                    "text": chunk_text,
+                    "chapter": chapter,
+                    "section": section
+                })
             break
         
         # Find a clean breaking point to avoid splitting words/sentences
@@ -30,9 +79,14 @@ def chunk_text(text):
                 break_point = pos + len(separator)
                 break
                 
-        chunk = text[start:break_point].strip()
-        if chunk:
-            chunks.append(chunk)
+        chunk_text = text[start:break_point].strip()
+        if chunk_text:
+            chapter, section = get_heading_at_position(headings, start)
+            chunks.append({
+                "text": chunk_text,
+                "chapter": chapter,
+                "section": section
+            })
             
         new_start = break_point - OVERLAP
         
@@ -67,6 +121,41 @@ def chunk_pdf():
     all_chunks = []
     chunk_id = 1
 
+    # First pass: build a heading index per source across all pages
+    # This helps track chapters that span multiple pages
+    source_texts = {}
+    source_page_offsets = {}
+    
+    for p in pages:
+        source = p.get("source", "unknown")
+        page_num = p["page"]
+        page_text = p["text"]
+        
+        if source not in source_texts:
+            source_texts[source] = ""
+            source_page_offsets[source] = []
+        
+        # Track where each page starts in the concatenated text
+        source_page_offsets[source].append({
+            "page": page_num,
+            "offset": len(source_texts[source])
+        })
+        source_texts[source] += page_text + "\n\n"
+    
+    # Extract headings from the full text of each source
+    source_headings = {}
+    for source, full_text in source_texts.items():
+        source_headings[source] = extract_headings_from_text(full_text)
+        heading_count = len(source_headings[source])
+        if heading_count > 0:
+            print(f"Found {heading_count} headings in {source}")
+            # Print first few headings for debugging
+            for level, title, _ in source_headings[source][:5]:
+                print(f"  {'#' * level} {title}")
+            if heading_count > 5:
+                print(f"  ... and {heading_count - 5} more")
+
+    # Second pass: chunk each page with heading context from the full source
     for p in pages:
         source = p.get("source", "unknown")
         page_num = p["page"]
@@ -75,17 +164,38 @@ def chunk_pdf():
         # Get images for this page/source
         images_for_page = page_to_images.get((source, page_num), [])
 
-        # Chunk text intelligently
-        chunks = chunk_text(page_text)
+        # Find the offset of this page in the concatenated source text
+        page_offset = 0
+        for po in source_page_offsets.get(source, []):
+            if po["page"] == page_num:
+                page_offset = po["offset"]
+                break
+
+        # Extract headings for just this page's text
+        page_headings = extract_headings_from_text(page_text)
+        
+        # Also get the inherited chapter/section from previous pages
+        inherited_chapter, inherited_section = get_heading_at_position(
+            source_headings[source], page_offset
+        )
+
+        # Chunk text with heading awareness
+        chunks = chunk_text_with_metadata(page_text, page_headings)
 
         # Add metadata
         for c in chunks:
+            # Use page-level heading if found, otherwise inherit from previous pages
+            chapter = c["chapter"] if c["chapter"] else inherited_chapter
+            section = c["section"] if c["section"] else inherited_section
+            
             all_chunks.append({
                 "id": f"chunk_{chunk_id}",
                 "source": source,
                 "page": page_num,
+                "chapter": chapter,
+                "section": section,
                 "images": images_for_page,
-                "text": c
+                "text": c["text"]
             })
             chunk_id += 1
 
@@ -93,7 +203,10 @@ def chunk_pdf():
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(all_chunks, f, indent=2, ensure_ascii=False)
 
-    print(f"Chunking complete. Total chunks created: {len(all_chunks)} → {OUTPUT}")
+    # Stats
+    chapters_found = len(set(c["chapter"] for c in all_chunks if c["chapter"]))
+    sections_found = len(set(c["section"] for c in all_chunks if c["section"]))
+    print(f"Chunking complete. Total chunks: {len(all_chunks)} | Chapters: {chapters_found} | Sections: {sections_found} → {OUTPUT}")
 
 
 if __name__ == "__main__":

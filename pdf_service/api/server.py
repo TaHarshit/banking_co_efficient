@@ -17,6 +17,14 @@ from contextlib import asynccontextmanager
 import re
 from dotenv import load_dotenv
 
+# Free local language detection — no AI credits needed
+try:
+    from langdetect import detect as langdetect_detect
+    HAS_LANGDETECT = True
+except ImportError:
+    HAS_LANGDETECT = False
+    print("[WARN] langdetect not installed, language detection will fall back to AI call", flush=True)
+
 # Load .env
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(env_path)
@@ -423,9 +431,17 @@ def analyze_case(request: CaseAnalysisRequest, accept_language: str | None = Hea
         for res in book_result:
             text = res.payload.get("text", "")
             page = res.payload.get("page", "Unknown")
+            chapter = res.payload.get("chapter", "")
+            section = res.payload.get("section", "")
             images = res.payload.get("images", [])
             imgs_str = ", ".join([f"{AI_IMAGE_BASE_URL}/images/{img}" for img in images]) if images else "None"
-            context_parts.append(f"[Source Page: {page} | Images: {imgs_str}]\n{text}")
+            source_header = f"[Page: {page}"
+            if chapter:
+                source_header += f" | Chapter: {chapter}"
+            if section:
+                source_header += f" | Section: {section}"
+            source_header += f" | Images: {imgs_str}]"
+            context_parts.append(f"{source_header}\n{text}")
         context = "\n\n".join(context_parts)
         print(f"[PERF] /analyze-case - Book Search ({source_file}): {time.time()-t0:.3f}s", flush=True)
 
@@ -599,9 +615,17 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
         for res in book_result:
             text = res.payload.get("text", "")
             page = res.payload.get("page", "Unknown")
+            chapter = res.payload.get("chapter", "")
+            section = res.payload.get("section", "")
             images = res.payload.get("images", [])
             imgs_str = ", ".join([f"{AI_IMAGE_BASE_URL}/images/{img}" for img in images]) if images else "None"
-            context_parts.append(f"[Source Page: {page} | Images: {imgs_str}]\n{text}")
+            source_header = f"[Page: {page}"
+            if chapter:
+                source_header += f" | Chapter: {chapter}"
+            if section:
+                source_header += f" | Section: {section}"
+            source_header += f" | Images: {imgs_str}]"
+            context_parts.append(f"{source_header}\n{text}")
         context = "\n\n".join(context_parts)
         print(f"[PERF] /generate-plan - PDF Search ({source_file}): {time.time()-t0:.3f}s", flush=True)
 
@@ -814,30 +838,31 @@ TRANSLATION_RESPONSE_FORMAT = {
 }
 
 
+def detect_language_local(text: str) -> str:
+    """
+    Detect language using free local langdetect library.
+    Returns 'French', 'English', or the detected language name.
+    No AI credits used.
+    """
+    if HAS_LANGDETECT:
+        try:
+            lang_code = langdetect_detect(text)
+            LANG_MAP = {
+                'fr': 'French', 'en': 'English', 'de': 'German',
+                'es': 'Spanish', 'it': 'Italian', 'pt': 'Portuguese',
+                'nl': 'Dutch', 'ar': 'Arabic', 'zh-cn': 'Chinese',
+                'ja': 'Japanese', 'ko': 'Korean', 'ru': 'Russian',
+            }
+            return LANG_MAP.get(lang_code, lang_code)
+        except Exception as e:
+            print(f"[WARN] langdetect failed: {e}", flush=True)
+    return "English"
+
+
 def detect_and_translate(text: str) -> dict:
-    try:
-        system_prompt = (
-            "You are a translation helper. Analyze the user's query.\n"
-            "1. Detect the language of the query.\n"
-            "2. If it is NOT English, translate it to English.\n"
-            "3. Return a JSON object with 'detected_language' (e.g., 'French', 'English', etc.) and 'translated_text' (the English translation, or original text if already English)."
-        )
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": text}
-        ]
-        result = get_ai_client().chat.completions.create(
-            model=AI_CHAT_MODEL,
-            messages=messages,
-            temperature=0.0,
-            response_format=TRANSLATION_RESPONSE_FORMAT
-        )
-        content = result.choices[0].message.content
-        if content:
-            return json.loads(content)
-    except Exception as e:
-        print(f"[WARN] detect_and_translate failed: {e}", flush=True)
-    return {"detected_language": "English", "translated_text": text}
+    """Legacy function kept for compatibility. Uses free local detection."""
+    detected = detect_language_local(text)
+    return {"detected_language": detected, "translated_text": text}
 
 
 @app.post("/ask")
@@ -865,32 +890,34 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
                 else:
                     output_lang = target_lang
 
-        # 0. Language Detection & Translation
+        # 0. Language Detection — FREE local detection, NO AI credit used
         t0_lang = time.time()
-        translation_info = detect_and_translate(query)
-        detected_lang = translation_info.get("detected_language", "English")
-        
-        if not output_lang:
+        if output_lang:
+            # App already told us the language — skip detection entirely
+            detected_lang = output_lang
+            print(f"[INFO] Language from app: {output_lang} (skipped detection, saved AI credit)", flush=True)
+        else:
+            # Fallback: use free local language detection
+            detected_lang = detect_language_local(query)
             output_lang = detected_lang
+            print(f"[INFO] Detected language locally: {detected_lang} (free, no AI credit)", flush=True)
 
-        # Use the original query for embedding — Qdrant filter selects the correct language book
         search_query = query
-            
-        print(f"[INFO] Detected language: {detected_lang}, Output language: {output_lang} (time: {time.time()-t0_lang:.3f}s)", flush=True)
+        print(f"[INFO] Output language: {output_lang} (detection time: {time.time()-t0_lang:.3f}s)", flush=True)
 
         # 1. Embedding
         t0 = time.time()
         query_vector = embed_model.encode(search_query).tolist()
         print(f"[PERF] /ask - Embedding: {time.time()-t0:.3f}s", flush=True)
 
-        # 2. Qdrant Search
+        # 2. Qdrant Search — reduced from 20 to 10 for faster re-ranking
         t0 = time.time()
         source_file, source_filter = get_pdf_source_filter(output_lang)
         response = vector_db.query_points(
             collection_name=COLLECTION_NAME,
             query=query_vector,
             query_filter=source_filter,
-            limit=20,
+            limit=10,
             with_payload=True
         )
         search_result = response.points
@@ -901,8 +928,7 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
                 return {"answer": "Aucune information pertinente trouvée.", "images": [], "reference_pages": []}
             return {"answer": "No relevant information found.", "images": [], "reference_pages": []}
 
-        # 3. Re-ranking
-        # Using a multilingual reranker (mmarco) to properly score French and English queries.
+        # 3. Re-ranking — now re-ranking 10 instead of 20 (~50% faster)
         t0 = time.time()
         print(f"[INFO] Re-ranking {len(search_result)} candidates...", flush=True)
 
@@ -913,21 +939,32 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
             search_result[i].score = score
 
         search_result.sort(key=lambda x: x.score, reverse=True)
-        # Keep top 8 to provide enough context for structural questions while removing irrelevant chunks
-        top_chunks = search_result[:8]
+        # Keep top 5 — focused context gives better AI answers than diluted top 8
+        top_chunks = search_result[:5]
         print(f"[PERF] /ask - Re-ranking: {time.time()-t0:.3f}s", flush=True)
 
-        # 4. Context Building
+        # 4. Context Building — now includes chapter/section metadata
         context          = ""
         collected_images = []
         reference_pages  = set()
 
         for res in top_chunks:
             chunk   = res.payload
-            page = chunk.get("page", "Unknown")
-            images = chunk.get("images", [])
+            page    = chunk.get("page", "Unknown")
+            chapter = chunk.get("chapter", "")
+            section = chunk.get("section", "")
+            images  = chunk.get("images", [])
             imgs_str = ", ".join([f"{AI_IMAGE_BASE_URL}/images/{img}" for img in images]) if images else "None"
-            context += f"[Source Page: {page} | Images: {imgs_str}]\n{chunk['text']}\n\n"
+            
+            # Build rich source header with chapter/section info
+            source_header = f"[Page: {page}"
+            if chapter:
+                source_header += f" | Chapter: {chapter}"
+            if section:
+                source_header += f" | Section: {section}"
+            source_header += f" | Images: {imgs_str}]"
+            
+            context += f"{source_header}\n{chunk['text']}\n\n"
             for img in images:
                 base_url = (AI_IMAGE_BASE_URL or "http://127.0.0.1:8000").rstrip("/")
                 collected_images.append(f"{base_url}/images/{img}")
@@ -941,8 +978,9 @@ For greetings or conversational interactions (e.g., "Hi", "Hello", "How are you?
 [INSTRUCTIONS FOR ANSWERING]
 1. Answer the user's question using the Context provided below.
 2. Be flexible with wording. If the user searches for a chapter using only a few words or partial names, match it to the closest chapter in the Context.
-3. For structural questions (e.g., "What are the subsections of Chapter X?"), infer the structure from the headings visible in the Context.
+3. For structural questions (e.g., "What are the subsections of Chapter X?", "What is the name of Chapter 2?"), use the [Chapter] and [Section] metadata tags in the Context to identify the correct information.
 4. If the requested information is genuinely missing from the Context, say "I cannot find the answer to that in the document."
+5. INLINE CITATIONS: When referencing specific information from the document, include inline citations in the format (Chapter Name, p.XX) or (p.XX) where XX is the page number from the [Page: XX] tag in the Context. This helps the user locate the information in the book.
 
 [IMPORTANT]
 At the end of your response, provide exactly 3 short and sweet follow-up suggestions for the user.
@@ -968,7 +1006,7 @@ Context:
         result = get_ai_client().chat.completions.create(
             model=AI_CHAT_MODEL,
             messages=messages,
-            temperature=0.5,
+            temperature=0.3,
         )
         print(f"[PERF] /ask - AI Generation: {time.time()-t0:.3f}s", flush=True)
 

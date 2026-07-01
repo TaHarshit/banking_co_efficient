@@ -9,11 +9,16 @@ RUN apt-get update && apt-get install -y \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
 # Install Python dependencies (CPU-only to save space)
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir sentence-transformers qdrant-client==1.17.1
 RUN pip install --no-cache-dir fastapi uvicorn numpy openai python-multipart python-dotenv pymupdf pymupdf4llm
+RUN pip install --no-cache-dir langdetect
+
+# Pre-download ML models during build so they don't download on every restart
+# This is the main reason the service takes long to start — downloading ~500MB of models
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
+RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('cross-encoder/mmarco-mMiniLMv2-L12-H384-v1')"
 
 # Copy the service code
 COPY . /app
