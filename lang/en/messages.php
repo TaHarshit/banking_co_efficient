@@ -62,6 +62,7 @@ return [
     'user_ios_version' => 'User iOS App Version',
     'android_build_number' => 'Android Build Number',
     'ios_build_number' => 'iOS Build Number',
+    'feedback_form_link'=> 'Feedback Form Link (Google Form)',
     'privacy_policy' => 'Privacy Policy',
     'terms_and_conditions' => 'Terms and Conditions',
 

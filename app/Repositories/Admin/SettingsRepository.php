@@ -14,7 +14,7 @@ class SettingsRepository extends BaseRepository {
         return $this->model->find($id);
     }
 
-    public function StoreSetting($user_android_version, $user_ios_version, $android_build_number, $ios_build_number, $privacy_policy, $terms_and_conditions, $id){
+    public function StoreSetting($user_android_version, $user_ios_version, $android_build_number, $ios_build_number, $privacy_policy, $terms_and_conditions, $feedback_form_link, $id){
         
         $data = [];
         $data['user_android_version']   = $user_android_version;
@@ -23,6 +23,7 @@ class SettingsRepository extends BaseRepository {
         $data['ios_build_number']       = $ios_build_number;
         $data['privacy_policy']         = $privacy_policy;
         $data['terms_and_conditions']   = $terms_and_conditions;
+        $data['feedback_form_link']     = $feedback_form_link;
 
         if($id>0){
             $oldSetting = $this->GetSetting($id);

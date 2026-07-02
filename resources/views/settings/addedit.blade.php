@@ -37,6 +37,18 @@
                                 method="POST"enctype="multipart/form-data" novalidate>
                                 @csrf
                                 <div class="col-12 position-relative">
+                                    <label for="feedback_form_link"
+                                        class="form-label">{{ __('messages.feedback_form_link') }}
+                                    </label>
+                                    <input type="text" name="feedback_form_link"
+                                        class="form-control {{ $errors->has('feedback_form_link') ? 'is-invalid' : '' }}"
+                                        id="feedback_form_link"
+                                        value="{{ isset($data) ? $data->feedback_form_link : old('feedback_form_link') }}">
+                                    @if ($errors->has('feedback_form_link'))
+                                        <div class="invalid-feedback">{{ $errors->first('feedback_form_link') }}</div>
+                                    @endif
+                                </div>
+                                <div class="col-12 position-relative">
                                     <label for="user_android_version"
                                         class="form-label">{{ __('messages.user_android_version') }}</label>
                                     <input type="text" name="user_android_version"

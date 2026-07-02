@@ -15,7 +15,8 @@ class Settings extends Model
         'user_ios_version',
         'ios_build_number',
         'privacy_policy',
-        'terms_and_conditions'
+        'terms_and_conditions',
+        'feedback_form_link',
     ];
 
     protected $hidden = [
