@@ -63,8 +63,10 @@ return [
     'android_build_number' => 'Android Build Number',
     'ios_build_number' => 'iOS Build Number',
     'feedback_form_link'=> 'Feedback Form Link (Google Form)',
-    'privacy_policy' => 'Privacy Policy',
-    'terms_and_conditions' => 'Terms and Conditions',
+    'privacy_policy' => 'Privacy Policy (English)',
+    'terms_and_conditions' => 'Terms and Conditions (English)',
+    'privacy_policy_fr' => 'Privacy Policy French',
+    'terms_and_conditions_fr' => 'Terms and Conditions French',
 
     // ===========================================
     // Common Actions

@@ -63,8 +63,10 @@ return [
     'android_build_number' => 'Numéro de build Android',
     'ios_build_number' => 'Numéro de build iOS',
     'feedback_form_link'=> 'Lien du formulaire de commentaires (Google Form)',
-    'privacy_policy' => 'Politique de confidentialité',
-    'terms_and_conditions' => 'Conditions générales',
+    'privacy_policy' => 'Politique de confidentialité (English)',
+    'terms_and_conditions' => 'Conditions générales (English)',
+    'privacy_policy_fr' => 'Politique de confidentialité French',
+    'terms_and_conditions_fr' => 'Conditions générales French',
 
     // ===========================================
     // Actions courantes
