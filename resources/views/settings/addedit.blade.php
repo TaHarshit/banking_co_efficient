@@ -100,6 +100,16 @@
                                         <div class="invalid-feedback">{{ $errors->first('privacy_policy') }}</div>
                                     @endif
                                 </div>
+
+                                <div class="col-12 position-relative">
+                                    <label for="privacy_policy_fr"
+                                        class="form-label">{{ __('messages.privacy_policy_fr') }}</label>
+                                    <textarea name="privacy_policy_fr" id="privacy_policy_fr" rows="5" class="tinymce-editor">{!! $data->privacy_policy_fr !!}</textarea>
+                                    @if ($errors->has('privacy_policy_fr'))
+                                        <div class="invalid-feedback">{{ $errors->first('privacy_policy_fr') }}</div>
+                                    @endif
+                                </div>
+
                                 <div class="col-12 position-relative">
                                     <label for="terms_and_conditions"
                                         class="form-label">{{ __('messages.terms_and_conditions') }}</label>
@@ -108,6 +118,16 @@
                                         <div class="invalid-feedback">{{ $errors->first('terms_and_conditions') }}</div>
                                     @endif
                                 </div>
+                                
+                                <div class="col-12 position-relative">
+                                    <label for="terms_and_conditions"
+                                        class="form-label">{{ __('messages.terms_and_conditions_fr') }}</label>
+                                    <textarea name="terms_and_conditions_fr" id="terms_and_conditions_fr" rows="5" class="tinymce-editor">{!! $data->terms_and_conditions_fr !!}</textarea>
+                                    @if ($errors->has('terms_and_conditions_fr'))
+                                        <div class="invalid-feedback">{{ $errors->first('terms_and_conditions_fr') }}</div>
+                                    @endif
+                                </div>
+
                                 <div class="col-sm-10">
                                     <button type="submit" class="btn btn-primary">{{ __('messages.save') }}</button>
                                 </div>

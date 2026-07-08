@@ -15,7 +15,9 @@ class Settings extends Model
         'user_ios_version',
         'ios_build_number',
         'privacy_policy',
+        'privacy_policy_fr',
         'terms_and_conditions',
+        'terms_and_conditions_fr',
         'feedback_form_link',
     ];
 

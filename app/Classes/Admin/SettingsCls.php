@@ -28,7 +28,7 @@ class SettingsCls {
         }
     }
 
-    public function StoreSetting($user_android_version, $user_ios_version, $android_build_number, $ios_build_number, $privacy_policy, $terms_and_conditions, $feedback_form_link, $id){
+    public function StoreSetting($user_android_version, $user_ios_version, $android_build_number, $ios_build_number, $privacy_policy, $terms_and_conditions, $feedback_form_link, $privacy_policy_fr, $terms_and_conditions_fr, $id){
         try {
             $BannerImage  = "";
             if(!empty($banner)){
@@ -48,7 +48,7 @@ class SettingsCls {
                 }
             }
 
-            $response = $this->SettingsRep->StoreSetting($user_android_version, $user_ios_version, $android_build_number, $ios_build_number, $privacy_policy, $terms_and_conditions, $feedback_form_link, $id);
+            $response = $this->SettingsRep->StoreSetting($user_android_version, $user_ios_version, $android_build_number, $ios_build_number, $privacy_policy, $terms_and_conditions, $feedback_form_link, $privacy_policy_fr, $terms_and_conditions_fr, $id);
 
             $message = ($id>0) ? 'Setting updated successfully' : 'Setting added successfully';
             Session::flash('message', $message); 
