@@ -140,5 +140,12 @@ Route::middleware(['basicFilter'])->group(function () {
             Route::get('ai/job-status/{job_id}', 'getAiJobStatus');
             Route::post('ai/rate-plan', 'ratePlan');
         });
+
+        Route::controller(UserSubscriptionsController::class)->group(function () {
+            Route::POST('transactions/init-payment', 'InitPayment'); 
+            Route::POST('transactions/complete-payment', 'CompletePayment'); 
+            Route::POST('transactions/get_user_current_plan', 'GetUserCurrentPlan'); 
+        });
+
     });
 });
