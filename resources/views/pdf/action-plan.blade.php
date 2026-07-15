@@ -33,11 +33,11 @@
             float: right;
         }
         footer {
-            position: fixed; 
-            bottom: -40px; 
-            left: 0px; 
+            position: fixed;
+            bottom: -40px;
+            left: 0px;
             right: 0px;
-            height: 30px; 
+            height: 30px;
             font-size: 12px;
             color: #666;
             border-top: 1px solid #ddd;
@@ -94,6 +94,27 @@
         .bold {
             font-weight: bold;
         }
+        .case-image-grid {
+            display: block;
+        }
+        .case-image-card {
+            margin: 0 0 18px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            page-break-inside: avoid;
+        }
+        .case-image-card img {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+        }
+        .case-image-caption {
+            margin: 0 0 8px 0;
+            color: #444;
+            font-size: 0.95em;
+        }
     </style>
 </head>
 <body>
@@ -144,18 +165,37 @@
         @endif
         @if(!empty($case->case_details))
             @foreach($case->case_details as $key => $value)
-                @if(!empty($value))
+                @if(!empty($value) && !is_array($value))
                     <p>
                         <span class="bold">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span>
-                        @if(is_array($value))
-                            {{ implode(', ', $value) }}
-                        @else
-                            {{ $value }}
-                        @endif
+                        {{ $value }}
                     </p>
+                @elseif(!empty($value) && is_array($value))
+                    <p><span class="bold">{{ ucfirst(str_replace('_', ' ', $key)) }}:</span></p>
+                    <ul>
+                        @foreach($value as $item)
+                            @if(!is_array($item) && !empty($item))
+                                <li>{{ $item }}</li>
+                            @endif
+                        @endforeach
+                    </ul>
                 @endif
             @endforeach
         @endif
+    </div>
+    @endif
+
+    @if(!empty($caseImages))
+    <div class="section">
+        <h2>Case Images</h2>
+        <div class="case-image-grid">
+            @foreach($caseImages as $image)
+                <div class="case-image-card">
+                    <p class="case-image-caption"><span class="bold">{{ $image['label'] }}</span></p>
+                    <img src="{{ $image['src'] }}" alt="{{ $image['label'] }}">
+                </div>
+            @endforeach
+        </div>
     </div>
     @endif
 
@@ -192,7 +232,7 @@
                         @foreach($action as $subKey => $subAction)
                             <li>
                                 @if(!is_numeric($subKey))
-                                    <span class="bold">{{ ucfirst(str_replace('_', ' ', $subKey)) }}:</span> 
+                                    <span class="bold">{{ ucfirst(str_replace('_', ' ', $subKey)) }}:</span>
                                 @endif
                                 {{ is_array($subAction) ? implode(', ', $subAction) : $subAction }}
                             </li>

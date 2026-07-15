@@ -85,16 +85,17 @@ class ClientCaseController extends Controller
      * GET ai/job-status/{job_id}
      *
      * Response statuses:
-     *   pending    → job is queued, not started yet
-     *   processing → job is currently running
-     *   completed  → result is available in `data`
-     *   failed     → error message in `error`
+     *   pending    -> job is queued, not started yet
+     *   processing -> job is currently running
+     *   completed  -> result is available in `data`
+     *   failed     -> error message in `error`
      */
     public function getAiJobStatus($jobId, Request $request)
     {
         $data = $this->clientCaseCls->GetAiJobStatus($jobId);
         return get_response($request, $data);
     }
+
     /**
      * Export the generated AI plan as a PDF document.
      */
@@ -113,10 +114,23 @@ class ClientCaseController extends Controller
             $plan = json_decode($plan, true);
         }
 
+        $caseDetails = $case->case_details;
+        if (is_string($caseDetails)) {
+            $decodedCaseDetails = json_decode($caseDetails, true);
+            $caseDetails = is_array($decodedCaseDetails) ? $decodedCaseDetails : [];
+        }
+
+        if (!is_array($caseDetails)) {
+            $caseDetails = [];
+        }
+
+        $caseImages = $this->extractCaseImages($caseDetails);
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.action-plan', [
             'case' => $case,
             'plan' => $plan,
-        ]);
+            'caseImages' => $caseImages,
+        ])->setOption('isRemoteEnabled', true);
 
         // Generate the PDF content in memory
         $pdfContent = $pdf->output();
@@ -132,6 +146,110 @@ class ClientCaseController extends Controller
         ];
 
         return get_response($request, $apiResponse);
+    }
+
+    /**
+     * Recursively extract image URLs from the case details payload.
+     */
+    private function extractCaseImages(mixed $value, string $fieldName = '', bool $forceImageGroup = false): array
+    {
+        $images = [];
+        $seen = [];
+
+        $walk = function (mixed $node, string $label, bool $imageGroup) use (&$walk, &$images, &$seen): void {
+            if (is_string($node)) {
+                if (! $this->isImageSource($node, $imageGroup)) {
+                    return;
+                }
+
+                $src = $this->normalizeImageSource($node);
+                if (! $src || isset($seen[$src])) {
+                    return;
+                }
+
+                $seen[$src] = true;
+                $images[] = [
+                    'label' => $label !== '' ? $label : 'Image',
+                    'src' => $src,
+                ];
+
+                return;
+            }
+
+            if (!is_array($node)) {
+                return;
+            }
+
+            $isList = array_is_list($node);
+            foreach ($node as $key => $child) {
+                $childLabel = $label;
+                if ($isList) {
+                    $childLabel = trim($label . ' ' . ((int) $key + 1));
+                } else {
+                    $prettyKey = $this->humanizeFieldName((string) $key);
+                    $childLabel = $label !== '' ? ($label . ' - ' . $prettyKey) : $prettyKey;
+                }
+
+                $childImageGroup = $imageGroup || $this->isImageFieldName((string) $key);
+                $walk($child, $childLabel, $childImageGroup);
+            }
+        };
+
+        $initialLabel = $this->humanizeFieldName($fieldName);
+        $walk($value, $initialLabel, $forceImageGroup || $this->isImageFieldName($fieldName));
+
+        return $images;
+    }
+
+    private function isImageFieldName(string $fieldName): bool
+    {
+        return (bool) preg_match('/(?:image|images|img|photo|photos|picture|pictures|screenshot|screenshots|attachment|attachments|url|urls)/i', $fieldName);
+    }
+
+    private function isImageSource(string $value, bool $forceImageGroup = false): bool
+    {
+        if (preg_match('/^data:image\//i', $value)) {
+            return true;
+        }
+
+        if ($forceImageGroup) {
+            return true;
+        }
+
+        if (! preg_match('/^(https?:\/\/|\/|storage\/|[A-Za-z]:\\\\)/i', $value)) {
+            return false;
+        }
+
+        return (bool) preg_match('/\.(?:png|jpe?g|gif|webp|bmp|svg)(?:\?.*)?$/i', $value);
+    }
+
+    private function normalizeImageSource(string $value): string
+    {
+        if (preg_match('/^data:image\//i', $value)) {
+            return $value;
+        }
+
+        if (preg_match('/^https?:\/\//i', $value)) {
+            return $value;
+        }
+
+        if (str_starts_with($value, '/')) {
+            return url($value);
+        }
+
+        return url($value);
+    }
+
+    private function humanizeFieldName(string $value): string
+    {
+        $value = trim($value);
+
+        if ($value === '') {
+            return '';
+        }
+
+        $value = str_replace(['_', '-'], ' ', $value);
+        return ucwords($value);
     }
 
     /**
