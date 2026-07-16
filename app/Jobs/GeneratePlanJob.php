@@ -18,19 +18,10 @@ class GeneratePlanJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * Maximum number of AI-level retry attempts (not queue retries).
-     */
     public const MAX_AI_RETRIES = 3;
 
-    /**
-     * Laravel queue: do NOT auto-retry at the queue level — we handle retries ourselves.
-     */
     public int $tries = 1;
 
-    /**
-     * Timeout in seconds for the whole job.
-     */
     public int $timeout = 960;
 
     public function __construct(
@@ -60,7 +51,7 @@ class GeneratePlanJob implements ShouldQueue
 
         \App\General\General::sendNotificationV1(
             $this->userId,
-            '🔄 Action Plan Generation Started',
+            'Action Plan Generation Started',
             "Your negotiation action plan for case \"{$clientCase->client_alias}\" has started.",
             ['case_id' => $this->caseId]
         );
@@ -111,7 +102,6 @@ class GeneratePlanJob implements ShouldQueue
 
                 $planData = $response->json();
 
-                // Detect blank or error responses from Python
                 if (empty($planData) || isset($planData['error'])) {
                     $lastError = $planData['error'] ?? 'AI returned empty/invalid response.';
                     Log::warning("[GeneratePlanJob] Attempt {$attempt} AI error", ['error' => $lastError]);
@@ -119,7 +109,6 @@ class GeneratePlanJob implements ShouldQueue
                     continue;
                 }
 
-                // Validate required fields
                 $requiredFields = ['executive_summary', 'meeting_objectives', 'action_plan', 'strategic_recommendations', 'critical_success_factors', 'plan_b'];
                 $missingFields  = array_filter($requiredFields, fn($f) => ! isset($planData[$f]));
 
@@ -130,7 +119,9 @@ class GeneratePlanJob implements ShouldQueue
                     continue;
                 }
 
-                // Success — save result
+                $savedImages = $this->collectImageUrls([$caseData, $analysisData, $planData]);
+                $planData['images'] = $savedImages;
+
                 $clientCase->action_plan = $planData;
                 $clientCase->save();
 
@@ -139,12 +130,9 @@ class GeneratePlanJob implements ShouldQueue
                     'result' => $planData,
                 ]);
 
-                // Notify user 
-                Log::info("user id is ".$this->userId);
-                
                 \App\General\General::sendNotificationV1(
                     $this->userId,
-                    '✅ Action Plan Ready',
+                    'Action Plan Ready',
                     "Your negotiation action plan for case \"{$clientCase->client_alias}\" has been generated.",
                     ['case_id' => $this->caseId]
                 );
@@ -159,8 +147,79 @@ class GeneratePlanJob implements ShouldQueue
             }
         }
 
-        // All retries exhausted
         $this->markFailed($aiJob, $notificationsRepo, $lastError, $clientCase->client_alias ?? '');
+    }
+
+    private function collectImageUrls(array $payloads): array
+    {
+        $images = [];
+        $seen = [];
+
+        $scan = function (mixed $node, bool $forceImageGroup = false) use (&$scan, &$images, &$seen): void {
+            if (is_string($node)) {
+                if (! $this->isImageSource($node, $forceImageGroup)) {
+                    return;
+                }
+
+                $src = $this->normalizeImageSource($node);
+                if (! $src || isset($seen[$src])) {
+                    return;
+                }
+
+                $seen[$src] = true;
+                $images[] = $src;
+                return;
+            }
+
+            if (! is_array($node)) {
+                return;
+            }
+
+            foreach ($node as $key => $child) {
+                $scan($child, $forceImageGroup || $this->isImageFieldName((string) $key));
+            }
+        };
+
+        foreach ($payloads as $payload) {
+            $scan($payload);
+        }
+
+        return array_values($images);
+    }
+
+    private function isImageFieldName(string $fieldName): bool
+    {
+        return (bool) preg_match('/(?:image|images|img|photo|photos|picture|pictures|screenshot|screenshots|attachment|attachments|url|urls)/i', $fieldName);
+    }
+
+    private function isImageSource(string $value, bool $forceImageGroup = false): bool
+    {
+        if (preg_match('/^data:image\//i', $value)) {
+            return true;
+        }
+
+        if ($forceImageGroup) {
+            return true;
+        }
+
+        if (! preg_match('/^(https?:\/\/|\/|storage\/|[A-Za-z]:\\\\)/i', $value)) {
+            return false;
+        }
+
+        return (bool) preg_match('/\.(?:png|jpe?g|gif|webp|bmp|svg)(?:\?.*)?$/i', $value);
+    }
+
+    private function normalizeImageSource(string $value): string
+    {
+        if (preg_match('/^data:image\//i', $value)) {
+            return $value;
+        }
+
+        if (preg_match('/^https?:\/\//i', $value)) {
+            return $value;
+        }
+
+        return url($value);
     }
 
     private function sleepBetweenRetries(int $attempt): void
@@ -180,7 +239,7 @@ class GeneratePlanJob implements ShouldQueue
         $caseLabel = $alias ? "for case \"{$alias}\"" : '';
         \App\General\General::sendNotificationV1(
             $this->userId,
-            '❌ Action Plan Failed',
+            'Action Plan Failed',
             "The action plan generation {$caseLabel} could not be completed. Error: {$error}",
             ['case_id' => $this->caseId]
         );

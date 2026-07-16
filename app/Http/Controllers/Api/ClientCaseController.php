@@ -58,10 +58,6 @@ class ClientCaseController extends Controller
         return get_response($request, $data);
     }
 
-    /**
-     * Dispatch async AI case analysis.
-     * Returns immediately with job_id. Frontend should poll ai/job-status/{job_id}.
-     */
     public function analyzeCase(Request $request)
     {
         $postData = General::stripRequest($request->all());
@@ -69,10 +65,6 @@ class ClientCaseController extends Controller
         return get_response($request, $data);
     }
 
-    /**
-     * Dispatch async AI plan generation.
-     * Returns immediately with job_id. Frontend should poll ai/job-status/{job_id}.
-     */
     public function generatePlan(Request $request)
     {
         $postData = General::stripRequest($request->all());
@@ -80,16 +72,6 @@ class ClientCaseController extends Controller
         return get_response($request, $data);
     }
 
-    /**
-     * Poll the status of an async AI job.
-     * GET ai/job-status/{job_id}
-     *
-     * Response statuses:
-     *   pending    -> job is queued, not started yet
-     *   processing -> job is currently running
-     *   completed  -> result is available in `data`
-     *   failed     -> error message in `error`
-     */
     public function getAiJobStatus($jobId, Request $request)
     {
         $data = $this->clientCaseCls->GetAiJobStatus($jobId);
@@ -114,6 +96,10 @@ class ClientCaseController extends Controller
             $plan = json_decode($plan, true);
         }
 
+        if (!is_array($plan)) {
+            $plan = [];
+        }
+
         $caseDetails = $case->case_details;
         if (is_string($caseDetails)) {
             $decodedCaseDetails = json_decode($caseDetails, true);
@@ -124,7 +110,11 @@ class ClientCaseController extends Controller
             $caseDetails = [];
         }
 
-        $caseImages = $this->extractCaseImages($caseDetails);
+        $caseImages = array_merge(
+            $this->extractCaseImages($caseDetails, 'Case Details'),
+            $this->extractCaseImages($plan, 'Action Plan')
+        );
+        $caseImages = $this->dedupeCaseImages($caseImages);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.action-plan', [
             'case' => $case,
@@ -132,13 +122,9 @@ class ClientCaseController extends Controller
             'caseImages' => $caseImages,
         ])->setOption('isRemoteEnabled', true);
 
-        // Generate the PDF content in memory
         $pdfContent = $pdf->output();
-
-        // Encode the PDF to a base64 string so it can be sent via JSON without saving to disk
         $base64Pdf = base64_encode($pdfContent);
 
-        // Return a standard JSON API response with the base64 string
         $apiResponse = \App\General\General::setResponse('SUCCESS', 'PDF generated successfully.');
         $apiResponse['data'] = [
             'pdf_base64' => $base64Pdf,
@@ -149,7 +135,7 @@ class ClientCaseController extends Controller
     }
 
     /**
-     * Recursively extract image URLs from the case details payload.
+     * Recursively extract image URLs from a payload.
      */
     private function extractCaseImages(mixed $value, string $fieldName = '', bool $forceImageGroup = false): array
     {
@@ -233,10 +219,6 @@ class ClientCaseController extends Controller
             return $value;
         }
 
-        if (str_starts_with($value, '/')) {
-            return url($value);
-        }
-
         return url($value);
     }
 
@@ -252,9 +234,24 @@ class ClientCaseController extends Controller
         return ucwords($value);
     }
 
-    /**
-     * Rate the generated AI plan.
-     */
+    private function dedupeCaseImages(array $images): array
+    {
+        $seen = [];
+        $result = [];
+
+        foreach ($images as $image) {
+            $src = $image['src'] ?? null;
+            if (! $src || isset($seen[$src])) {
+                continue;
+            }
+
+            $seen[$src] = true;
+            $result[] = $image;
+        }
+
+        return $result;
+    }
+
     public function ratePlan(Request $request)
     {
         $postData = General::stripRequest($request->all());
