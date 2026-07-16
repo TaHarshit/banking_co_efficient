@@ -119,7 +119,7 @@
         .case-image-caption {
             margin: 0 0 8px 0;
             color: #444;
-            font-size: 0.95em;
+            font-size: 0.6em;
         }
     </style>
 </head>
