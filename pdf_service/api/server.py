@@ -653,9 +653,10 @@ Details: {json.dumps(details, indent=2)}
 1. Think step-by-step before writing your final answer.
 2. Personalize every recommendation to match the user's behavioral profile weaknesses and strengths.
 3. Reference specific book techniques by name where applicable, AND cite the [Source Page] and [Images] URL if available.
-4. Each recommendation must be concrete and immediately actionable (not generic advice).
-5. Suggest at least 4 recommendations and 4 challenges.
-6. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside the JSON.
+4. CRITICAL: When citing the [Images] URL, you MUST use the EXACT image URL specified for the corresponding chunk/page in the [BOOK KNOWLEDGE] context. Do NOT use the book cover image (page_1_snapshot.png) for techniques that are on other pages (e.g. if the technique is on Page 295, you MUST cite the image ending in page_295_snapshot.png). Never use a repeating cover image or fallback cover image for other pages.
+5. Each recommendation must be concrete and immediately actionable (not generic advice).
+6. Suggest at least 4 recommendations and 4 challenges.
+7. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside the JSON.
 
 Required JSON structure:
 {{
@@ -683,10 +684,10 @@ Required JSON structure:
 
         system_prompt += "\n\n"
         if output_lang and output_lang.lower() != "english":
-            system_prompt += f"7. CRITICAL: All textual values in the output JSON (such as recommendations, challenges, style tips, reading reasons/titles) MUST be written in {output_lang}. The JSON keys themselves MUST remain strictly in English as specified."
-            system_prompt += f"\n8. LANGUAGE COMPLIANCE: Remember, the user's selected language is {output_lang}. You MUST translate all your recommendations, challenges, tips, and readings into {output_lang}. Do not write them in English."
+            system_prompt += f"8. CRITICAL: All textual values in the output JSON (such as recommendations, challenges, style tips, reading reasons/titles) MUST be written in {output_lang}. The JSON keys themselves MUST remain strictly in English as specified."
+            system_prompt += f"\n9. LANGUAGE COMPLIANCE: Remember, the user's selected language is {output_lang}. You MUST translate all your recommendations, challenges, tips, and readings into {output_lang}. Do not write them in English."
         else:
-            system_prompt += "7. CRITICAL: All textual values in the output JSON MUST be written in English. The JSON keys themselves MUST remain strictly in English as specified."
+            system_prompt += "8. CRITICAL: All textual values in the output JSON MUST be written in English. The JSON keys themselves MUST remain strictly in English as specified."
 
         messages = [{"role": "system", "content": system_prompt}]
         content  = call_ai_with_retry(messages, max_tokens=8192, response_format=ANALYZE_CASE_RESPONSE_FORMAT)
@@ -834,11 +835,12 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
 1. Think carefully about each phase before writing.
 2. Tailor every step to address the user's behavioral strengths and weaknesses.
 3. Include specific negotiation techniques from the book by name, AND cite the [Source Page] and [Images] URL if available.
-4. Each phase must have at least 3 detailed, actionable steps (not vague advice).
-5. Phases should flow logically: Before meeting → During meeting → After meeting.
-6. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside JSON.
-7. ALL 6 fields are required. Do not omit any field.
-8. CRITICAL: Do NOT return the structure or keys of a Case Analysis (do not use keys like "ai_recommendations", "suggested_readings", "ai_challenges", or "negotiation_style_tips"). You MUST return strictly the Action Plan structure below.
+4. CRITICAL: When citing the [Images] URL, you MUST use the EXACT image URL specified for the corresponding chunk/page in the [BOOK TECHNIQUES] context. Do NOT use the book cover image (page_1_snapshot.png) for techniques that are on other pages (e.g. if the technique is on Page 295, you MUST cite the image ending in page_295_snapshot.png). Never use a repeating cover image or fallback cover image for other pages.
+5. Each phase must have at least 3 detailed, actionable steps (not vague advice).
+6. Phases should flow logically: Before meeting → During meeting → After meeting.
+7. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside JSON.
+8. ALL 6 fields are required. Do not omit any field.
+9. CRITICAL: Do NOT return the structure or keys of a Case Analysis (do not use keys like "ai_recommendations", "suggested_readings", "ai_challenges", or "negotiation_style_tips"). You MUST return strictly the Action Plan structure below.
 
 Required JSON structure (return ALL fields, keep steps detailed but concise):
 {{
@@ -896,10 +898,10 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
 
         system_prompt += "\n\n"
         if output_lang and output_lang.lower() != "english":
-            system_prompt += f"9. CRITICAL: All textual values in the output JSON (such as executive summary, objectives, action plan steps/titles, recommendations, CSF, plan B) MUST be written in {output_lang}. The JSON keys themselves MUST remain strictly in English as specified."
-            system_prompt += f"\n10. LANGUAGE COMPLIANCE: Remember, the user's selected language is {output_lang}. You MUST translate all your summaries, objectives, action plan steps/readings, recommendations, CSFs, and Plan B elements into {output_lang}. Do not write them in English."
+            system_prompt += f"10. CRITICAL: All textual values in the output JSON (such as executive summary, objectives, action plan steps/titles, recommendations, CSF, plan B) MUST be written in {output_lang}. The JSON keys themselves MUST remain strictly in English as specified."
+            system_prompt += f"\n11. LANGUAGE COMPLIANCE: Remember, the user's selected language is {output_lang}. You MUST translate all your summaries, objectives, action plan steps/readings, recommendations, CSFs, and Plan B elements into {output_lang}. Do not write them in English."
         else:
-            system_prompt += "9. CRITICAL: All textual values in the output JSON MUST be written in English. The JSON keys themselves MUST remain strictly in English as specified."
+            system_prompt += "10. CRITICAL: All textual values in the output JSON MUST be written in English. The JSON keys themselves MUST remain strictly in English as specified."
 
         messages = [{"role": "system", "content": system_prompt}]
         content  = call_ai_with_retry(messages, max_tokens=8192, response_format=GENERATE_PLAN_RESPONSE_FORMAT)
