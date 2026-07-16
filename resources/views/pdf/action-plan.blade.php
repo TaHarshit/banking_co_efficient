@@ -95,19 +95,25 @@
             font-weight: bold;
         }
         .case-image-grid {
+            text-align: center;
             display: block;
         }
         .case-image-card {
-            margin: 0 0 18px 0;
-            padding: 10px;
+            display: inline-block;
+            vertical-align: top;
+            margin: 10px;
+            padding: 8px;
             border: 1px solid #ddd;
             border-radius: 6px;
+            width: 260px; /* Compact width to fit side-by-side and avoid giant page breaks */
+            background: #fafafa;
             page-break-inside: avoid;
+            text-align: left;
         }
         .case-image-card img {
             display: block;
             width: 100%;
-            max-width: 100%;
+            max-height: 350px; /* Limit height to prevent taking up too much vertical space */
             height: auto;
         }
         .case-image-caption {

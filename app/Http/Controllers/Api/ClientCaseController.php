@@ -285,6 +285,11 @@ class ClientCaseController extends Controller
                 ]);
                 $data = @file_get_contents($value, false, $ctx);
                 if ($data !== false) {
+                    $compressed = $this->compressImage($data);
+                    if ($compressed !== null) {
+                        return 'data:image/jpeg;base64,' . base64_encode($compressed);
+                    }
+                    
                     $type = 'png';
                     if (preg_match('/\.(jpe?g|gif|webp|bmp|svg)/i', $value, $matches)) {
                         $type = strtolower($matches[1]);
@@ -303,18 +308,72 @@ class ClientCaseController extends Controller
     private function base64EncodeImage(string $path): string
     {
         try {
-            $type = pathinfo($path, PATHINFO_EXTENSION);
-            if (strtolower($type) === 'jpg') {
-                $type = 'jpeg';
-            }
             $data = file_get_contents($path);
             if ($data !== false) {
+                $compressed = $this->compressImage($data);
+                if ($compressed !== null) {
+                    return 'data:image/jpeg;base64,' . base64_encode($compressed);
+                }
+                
+                $type = pathinfo($path, PATHINFO_EXTENSION);
+                if (strtolower($type) === 'jpg') {
+                    $type = 'jpeg';
+                }
                 return 'data:image/' . strtolower($type) . ';base64,' . base64_encode($data);
             }
         } catch (\Exception $e) {
             // Fallback
         }
         return url(str_replace(public_path(), '', $path));
+    }
+
+    /**
+     * Compress and downscale an image to reduce PDF file size and API payload size.
+     */
+    private function compressImage(string $imageData): ?string
+    {
+        try {
+            if (!extension_loaded('gd') && !function_exists('imagecreatefromstring')) {
+                return null;
+            }
+            
+            $image = @imagecreatefromstring($imageData);
+            if (!$image) {
+                return null;
+            }
+
+            $width = imagesx($image);
+            $height = imagesy($image);
+
+            // Maximum target width (perfect for the 260px wide display container in the PDF)
+            $maxWidth = 500;
+            if ($width > $maxWidth) {
+                $newWidth = $maxWidth;
+                $newHeight = (int)($height * ($maxWidth / $width));
+            } else {
+                $newWidth = $width;
+                $newHeight = $height;
+            }
+
+            $resizedImage = imagecreatetruecolor($newWidth, $newHeight);
+            
+            // Fill background with white (handles transparency conversion to JPEG beautifully)
+            $white = imagecolorallocate($resizedImage, 255, 255, 255);
+            imagefill($resizedImage, 0, 0, $white);
+            
+            imagecopyresampled($resizedImage, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+            
+            ob_start();
+            imagejpeg($resizedImage, null, 70); // Output as JPEG with 70% quality (excellent ratio)
+            $compressedData = ob_get_clean();
+            
+            imagedestroy($resizedImage);
+            imagedestroy($image);
+            
+            return $compressedData;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     private function humanizeFieldName(string $value): string
