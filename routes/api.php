@@ -63,6 +63,8 @@ Route::get('test-fcm-notification', function () {
     }
 });
 
+
+
 Route::middleware(['basicFilter'])->group(function () {
     Route::controller(UserController::class)->group(function () {
         Route::POST('user/signup', 'SignUp');

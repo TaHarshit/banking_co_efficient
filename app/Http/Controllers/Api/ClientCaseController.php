@@ -116,6 +116,14 @@ class ClientCaseController extends Controller
         );
         $caseImages = $this->dedupeCaseImages($caseImages);
 
+        // Clean up image URLs/references from the text of case details and action plan
+        $caseDetails = $this->cleanImageReferences($caseDetails);
+        $plan = $this->cleanImageReferences($plan);
+        $case->case_details = $caseDetails;
+        if ($case->context_overview) {
+            $case->context_overview = $this->cleanImageReferences($case->context_overview);
+        }
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.action-plan', [
             'case' => $case,
             'plan' => $plan,
@@ -144,21 +152,32 @@ class ClientCaseController extends Controller
 
         $walk = function (mixed $node, string $label, bool $imageGroup) use (&$walk, &$images, &$seen): void {
             if (is_string($node)) {
-                if (! $this->isImageSource($node, $imageGroup)) {
+                // If it is directly an image source
+                if ($this->isImageSource($node, $imageGroup)) {
+                    $src = $this->normalizeImageSource($node);
+                    if ($src && !isset($seen[$src])) {
+                        $seen[$src] = true;
+                        $images[] = [
+                            'label' => $label !== '' ? $label : 'Image',
+                            'src' => $src,
+                        ];
+                    }
                     return;
                 }
 
-                $src = $this->normalizeImageSource($node);
-                if (! $src || isset($seen[$src])) {
-                    return;
+                // If not, scan for embedded image URLs in the string (e.g. Image: http://... or Images: http://...)
+                if (preg_match_all('/(https?:\/\/[^\s\)\],"\';<]+?\.(?:png|jpe?g|gif|webp|bmp|svg)(?:\?.*)?)/i', $node, $matches)) {
+                    foreach ($matches[1] as $embeddedUrl) {
+                        $src = $this->normalizeImageSource($embeddedUrl);
+                        if ($src && !isset($seen[$src])) {
+                            $seen[$src] = true;
+                            $images[] = [
+                                'label' => $label !== '' ? $label : 'Image',
+                                'src' => $src,
+                            ];
+                        }
+                    }
                 }
-
-                $seen[$src] = true;
-                $images[] = [
-                    'label' => $label !== '' ? $label : 'Image',
-                    'src' => $src,
-                ];
-
                 return;
             }
 
@@ -215,11 +234,87 @@ class ClientCaseController extends Controller
             return $value;
         }
 
-        if (preg_match('/^https?:\/\//i', $value)) {
-            return $value;
+        // Try to see if it is a local file path or relative URL first.
+        // e.g. "storage/..." or "/storage/..." or public path
+        $cleanPath = ltrim(parse_url($value, PHP_URL_PATH) ?? $value, '/');
+        
+        // If it starts with storage/
+        if (str_starts_with($cleanPath, 'storage/')) {
+            $realPath = storage_path('app/public/' . substr($cleanPath, 8));
+            if (file_exists($realPath)) {
+                return $this->base64EncodeImage($realPath);
+            }
         }
 
-        return url($value);
+        // Try public path
+        $realPath = public_path($cleanPath);
+        if (file_exists($realPath)) {
+            return $this->base64EncodeImage($realPath);
+        }
+
+        // If it's a full HTTP/HTTPS URL
+        if (preg_match('/^https?:\/\//i', $value)) {
+            // Check if it matches our app URL or localhost, maybe we can resolve it locally
+            $appUrl = config('app.url');
+            if ($appUrl && str_starts_with($value, $appUrl)) {
+                $relativeUrl = substr($value, strlen($appUrl));
+                $cleanRelative = ltrim(parse_url($relativeUrl, PHP_URL_PATH) ?? $relativeUrl, '/');
+                if (str_starts_with($cleanRelative, 'storage/')) {
+                    $realPath = storage_path('app/public/' . substr($cleanRelative, 8));
+                    if (file_exists($realPath)) {
+                        return $this->base64EncodeImage($realPath);
+                    }
+                }
+                $realPath = public_path($cleanRelative);
+                if (file_exists($realPath)) {
+                    return $this->base64EncodeImage($realPath);
+                }
+            }
+
+            // Fetch and base64 encode remote image to bypass DOMPDF remote load issues
+            try {
+                $ctx = stream_context_create([
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
+                    ],
+                    'http' => [
+                        'timeout' => 5, // 5 seconds timeout
+                        'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n"
+                    ]
+                ]);
+                $data = @file_get_contents($value, false, $ctx);
+                if ($data !== false) {
+                    $type = 'png';
+                    if (preg_match('/\.(jpe?g|gif|webp|bmp|svg)/i', $value, $matches)) {
+                        $type = strtolower($matches[1]);
+                        if ($type === 'jpg') $type = 'jpeg';
+                    }
+                    return 'data:image/' . $type . ';base64,' . base64_encode($data);
+                }
+            } catch (\Exception $e) {
+                // Ignore exception and fallback
+            }
+        }
+
+        return $value;
+    }
+
+    private function base64EncodeImage(string $path): string
+    {
+        try {
+            $type = pathinfo($path, PATHINFO_EXTENSION);
+            if (strtolower($type) === 'jpg') {
+                $type = 'jpeg';
+            }
+            $data = file_get_contents($path);
+            if ($data !== false) {
+                return 'data:image/' . strtolower($type) . ';base64,' . base64_encode($data);
+            }
+        } catch (\Exception $e) {
+            // Fallback
+        }
+        return url(str_replace(public_path(), '', $path));
     }
 
     private function humanizeFieldName(string $value): string
@@ -250,6 +345,33 @@ class ClientCaseController extends Controller
         }
 
         return $result;
+    }
+
+    /**
+     * Recursively clean image URL references from case details or action plan text.
+     */
+    private function cleanImageReferences(mixed $value): mixed
+    {
+        if (is_string($value)) {
+            // Remove: (Image: http://...) or (Images: http://...)
+            $value = preg_replace('/\s*\(Images?:\s*https?:\/\/[^\s\)]+?\.(?:png|jpe?g|gif|webp|bmp|svg)(?:\?.*)?\)/i', '', $value);
+            
+            // Remove: [Images: http://...] or [Image: http://...]
+            $value = preg_replace('/\s*\[Images?:\s*https?:\/\/[^\s\]]+?\.(?:png|jpe?g|gif|webp|bmp|svg)(?:\?.*)?\]/i', '', $value);
+
+            // Clean up: | Images: http://... inside [Source Page: 1 | Images: http://...]
+            $value = preg_replace('/\s*\|\s*Images?:\s*https?:\/\/[^\s\]]+?\.(?:png|jpe?g|gif|webp|bmp|svg)(?:\?.*)?/i', '', $value);
+
+            return $value;
+        }
+
+        if (is_array($value)) {
+            foreach ($value as $key => $child) {
+                $value[$key] = $this->cleanImageReferences($child);
+            }
+        }
+
+        return $value;
     }
 
     public function ratePlan(Request $request)
