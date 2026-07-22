@@ -219,6 +219,7 @@ class SkillAssessmentCls
                 'percentage' => $freshExam->percentage,
                 'score_scale_5' => $freshExam->score_scale_5,
                 'average_score_5' => $freshExam->average_score_5,
+                'section_scores' => $freshExam->section_scores,
             ],
         ]);
     }
@@ -250,6 +251,7 @@ class SkillAssessmentCls
                 'percentage' => $exam->percentage,
                 'score_scale_5' => $exam->score_scale_5,
                 'average_score_5' => $exam->average_score_5,
+                'section_scores' => $exam->section_scores,
                 'status' => $exam->status,
             ],
         ]);

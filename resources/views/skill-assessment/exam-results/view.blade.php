@@ -143,6 +143,40 @@
                             </table>
                         </div>
                     </div>
+
+                    @if(!empty($exam->section_scores))
+                        <div class="card mt-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Section-Wise Scores</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>Section</th>
+                                                <th>Score</th>
+                                                <th>%</th>
+                                                <th>1-5 Scale</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($exam->section_scores as $sec)
+                                                <tr>
+                                                    <td><strong>{{ $sec['section_title'] }}</strong></td>
+                                                    <td>{{ $sec['total_score'] }} / {{ $sec['max_score'] }}</td>
+                                                    <td>
+                                                        <span class="badge {{ $sec['percentage'] >= 70 ? 'bg-success' : ($sec['percentage'] >= 40 ? 'bg-warning' : 'bg-danger') }}">
+                                                            {{ number_format($sec['percentage'], 1) }}%
+                                                        </span>
+                                                    </td>
+                                                    <td><span class="fw-bold">{{ number_format($sec['score_scale_5'], 2) }}</span> / 5.0</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
                 <div class="col-lg-8">
                     <div class="card">

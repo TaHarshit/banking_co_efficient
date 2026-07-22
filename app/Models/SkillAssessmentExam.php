@@ -26,6 +26,7 @@ class SkillAssessmentExam extends Model
     protected $appends = [
         'score_scale_5',
         'average_score_5',
+        'section_scores',
     ];
 
     protected function casts(): array
@@ -209,5 +210,74 @@ class SkillAssessmentExam extends Model
             return 0.00;
         }
         return round((((float) $this->percentage / 100) * 5), 2);
+    }
+
+    /**
+     * Calculate and return section-wise breakdown of scores for this exam
+     */
+    public function getSectionScores(): array
+    {
+        $sections = collect();
+        if ($this->skill_assessment_exam_template_id && $this->examTemplate) {
+            $targetBusinessId = $this->examTemplate->business_id;
+            $sections = SkillAssessmentSection::where('is_active', true)
+                ->where('skill_assessment_exam_template_id', $this->skill_assessment_exam_template_id)
+                ->where('business_id', $targetBusinessId)
+                ->orderBy('order')
+                ->get();
+        } elseif ($this->section) {
+            $sections = collect([$this->section]);
+        }
+
+        $answers = $this->answers()->with('question')->get();
+
+        $sectionScores = [];
+
+        foreach ($sections as $section) {
+            $sectionAnswers = $answers->filter(function ($ans) use ($section) {
+                return $ans->question && $ans->question->skill_assessment_section_id == $section->id;
+            });
+
+            $totalScore = (float) $sectionAnswers->sum('score');
+
+            $maxScore = (float) $section->questions()
+                ->where('is_active', true)
+                ->get()
+                ->sum(function ($question) {
+                    if ($question->isOpenText()) {
+                        return 0;
+                    }
+                    if ($question->isMultiSelect()) {
+                        return $question->activeOptions()->sum('weightage') ?? 0;
+                    }
+                    return $question->activeOptions()->max('weightage') ?? 0;
+                });
+
+            $percentage = $maxScore > 0 ? round(($totalScore / $maxScore) * 100, 2) : 0.00;
+            $scoreScale5 = $maxScore > 0 ? round(1 + (($percentage / 100) * 4), 2) : 1.00;
+            $averageScore5 = $maxScore > 0 ? round(($percentage / 100) * 5, 2) : 0.00;
+
+            $sectionScores[] = [
+                'section_id' => $section->id,
+                'section_title' => $section->title,
+                'total_score' => $totalScore,
+                'max_score' => $maxScore,
+                'percentage' => $percentage,
+                'score_scale_5' => $scoreScale5,
+                'average_score_5' => $averageScore5,
+                'total_questions' => $section->questions()->where('is_active', true)->count(),
+                'answered_questions' => $sectionAnswers->count(),
+            ];
+        }
+
+        return $sectionScores;
+    }
+
+    /**
+     * Accessor for section_scores attribute
+     */
+    public function getSectionScoresAttribute(): array
+    {
+        return $this->getSectionScores();
     }
 }
