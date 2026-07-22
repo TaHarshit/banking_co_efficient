@@ -51,6 +51,9 @@
                     document.getElementById('total_score').textContent = data.exam.total_score;
                     document.getElementById('percentage').textContent = parseFloat(data.exam.percentage).toFixed(
                         1) + '%';
+                    if (document.getElementById('score_scale_5') && data.exam.score_scale_5 !== undefined) {
+                        document.getElementById('score_scale_5').textContent = parseFloat(data.exam.score_scale_5).toFixed(2);
+                    }
                     document.getElementById('exam_status').textContent = data.exam.status.charAt(0).toUpperCase() +
                         data.exam.status.slice(1);
                 } else {
@@ -123,6 +126,14 @@
                                             class="badge {{ $exam->percentage >= 70 ? 'bg-success' : ($exam->percentage >= 40 ? 'bg-warning' : 'bg-danger') }}">
                                             {{ number_format($exam->percentage, 1) }}%
                                         </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Score (1-5 Scale)</th>
+                                    <td>
+                                        <span id="score_scale_5" class="fw-bold text-primary">
+                                            {{ number_format($exam->score_scale_5, 2) }}
+                                        </span> / 5.0
                                     </td>
                                 </tr>
                                 <tr>

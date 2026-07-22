@@ -93,6 +93,8 @@ class SkillAssessmentExamController extends Controller
                 'total_score' => $exam->total_score,
                 'max_score' => $exam->max_score,
                 'percentage' => $exam->percentage,
+                'score_scale_5' => $exam->score_scale_5,
+                'average_score_5' => $exam->average_score_5,
                 'status' => $exam->status,
             ],
         ]);

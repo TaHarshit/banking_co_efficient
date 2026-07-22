@@ -23,6 +23,11 @@ class SkillAssessmentExam extends Model
         'completed_at',
     ];
 
+    protected $appends = [
+        'score_scale_5',
+        'average_score_5',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -182,5 +187,27 @@ class SkillAssessmentExam extends Model
         // dd($query->get());
 
         return $stats;
+    }
+
+    /**
+     * Get score mapped on a 1 to 5 scale (1.0 to 5.0 scale where 0% = 1.0 and 100% = 5.0)
+     */
+    public function getScoreScale5Attribute(): float
+    {
+        if ((float) $this->max_score <= 0) {
+            return 1.00;
+        }
+        return round(1 + (((float) $this->percentage / 100) * 4), 2);
+    }
+
+    /**
+     * Get average score on a 0 to 5 scale (proportional score where 100% = 5.0)
+     */
+    public function getAverageScore5Attribute(): float
+    {
+        if ((float) $this->max_score <= 0) {
+            return 0.00;
+        }
+        return round((((float) $this->percentage / 100) * 5), 2);
     }
 }

@@ -207,15 +207,18 @@ class SkillAssessmentCls
 
         // Calculate total score
         $exam->calculateScore();
+        $freshExam = $exam->fresh();
 
         return response()->json([
             'status' => true,
             'message' => 'Exam submitted successfully',
             'data' => [
-                'exam' => $exam->fresh()->load('answers'),
-                'total_score' => $exam->total_score,
-                'max_score' => $exam->max_score,
-                'percentage' => $exam->percentage,
+                'exam' => $freshExam->load('answers'),
+                'total_score' => $freshExam->total_score,
+                'max_score' => $freshExam->max_score,
+                'percentage' => $freshExam->percentage,
+                'score_scale_5' => $freshExam->score_scale_5,
+                'average_score_5' => $freshExam->average_score_5,
             ],
         ]);
     }
@@ -245,6 +248,8 @@ class SkillAssessmentCls
                 'total_score' => $exam->total_score,
                 'max_score' => $exam->max_score,
                 'percentage' => $exam->percentage,
+                'score_scale_5' => $exam->score_scale_5,
+                'average_score_5' => $exam->average_score_5,
                 'status' => $exam->status,
             ],
         ]);
@@ -293,8 +298,12 @@ class SkillAssessmentCls
             });
 
             $averagePercentage = 0;
+            $averageScoreScale5 = 1.0;
+            $averageScore5 = 0;
             if ($completedExams->isNotEmpty()) {
                 $averagePercentage = round($completedExams->avg('percentage'), 2);
+                $averageScoreScale5 = round(1 + (($averagePercentage / 100) * 4), 2);
+                $averageScore5 = round(($averagePercentage / 100) * 5, 2);
             }
 
             // Prepare exam list (already ordered last to first from repository)
@@ -304,6 +313,8 @@ class SkillAssessmentCls
                     'total_score' => $exam->total_score,
                     'max_score' => $exam->max_score,
                     'percentage' => $exam->percentage,
+                    'score_scale_5' => $exam->score_scale_5,
+                    'average_score_5' => $exam->average_score_5,
                     'status' => $exam->status,
                     'started_at' => $exam->started_at,
                     'completed_at' => $exam->completed_at,
@@ -316,6 +327,8 @@ class SkillAssessmentCls
                 'template' => $template,
                 'total_questions' => $totalQuestions,
                 'average_percentage' => $averagePercentage,
+                'average_score_scale_5' => $averageScoreScale5,
+                'average_score_5' => $averageScore5,
                 'exams' => $examList,
                 'attempted' => $templateExams->isNotEmpty(),
             ];
