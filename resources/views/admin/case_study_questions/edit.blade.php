@@ -30,18 +30,12 @@
                             <input type="text" name="options[${optionIndex}][fr]" 
                                    class="form-control" required>
                         </div>
-                        <div class="col-md-2 d-flex align-items-end gap-2">
-                            <div class="form-check pb-2">
-                                <input class="form-check-input" type="radio" name="correct_option_index" id="correct_radio_${optionIndex}" value="${optionIndex}" required>
-                                <label class="form-check-label" for="correct_radio_${optionIndex}">Correct</label>
-                            </div>
+                        <div class="col-md-2 d-flex align-items-end">
                             <button type="button" class="btn btn-outline-danger" onclick="removeOption(${optionIndex})">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
                     </div>
-                    <!-- Hidden field to bind radio to options array -->
-                    <input type="hidden" name="options[${optionIndex}][is_correct]" class="is_correct_hidden" value="0">
                 </div>
             `;
             $('#options-container').append(html);
@@ -51,11 +45,6 @@
         function removeOption(index) {
             $('#option-row-' + index).remove();
         }
-
-        $(document).on('change', 'input[name="correct_option_index"]', function() {
-            $('.is_correct_hidden').val('0');
-            $(this).closest('.option-row').find('.is_correct_hidden').val('1');
-        });
     </script>
 @endsection
 
@@ -135,18 +124,12 @@
                                                                 <input type="text" name="options[{{ $index }}][fr]" 
                                                                     class="form-control" value="{{ $option->option_fr }}" required>
                                                             </div>
-                                                            <div class="col-md-2 d-flex align-items-end gap-2">
-                                                                <div class="form-check pb-2">
-                                                                    <input class="form-check-input" type="radio" name="correct_option_index" id="correct_radio_{{ $index }}" value="{{ $index }}" {{ $option->is_correct ? 'checked' : '' }} required>
-                                                                    <label class="form-check-label" for="correct_radio_{{ $index }}">Correct</label>
-                                                                </div>
+                                                            <div class="col-md-2 d-flex align-items-end">
                                                                 <button type="button" class="btn btn-outline-danger" onclick="removeOption({{ $index }})">
                                                                     <i class="bi bi-trash"></i>
                                                                 </button>
                                                             </div>
                                                         </div>
-                                                        <!-- Hidden field to bind radio to options array -->
-                                                        <input type="hidden" name="options[{{ $index }}][is_correct]" class="is_correct_hidden" value="{{ $option->is_correct ? '1' : '0' }}">
                                                     </div>
                                                 @endforeach
                                             </div>
