@@ -8,6 +8,20 @@
 @section('customjs')
     <script type="text/javascript">
         $('.dropify').dropify();
+
+        function togglePasswordVisibility(inputId, iconId) {
+            var input = document.getElementById(inputId);
+            var icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            }
+        }
     </script>
 @endsection
 @include('partials.headerfiles')
@@ -133,11 +147,16 @@
 
                                 <div class="col-md-6">
                                     <label for="password" class="form-label">{{ __('messages.password') }}</label>
-                                    <input type="password" name="password"
-                                        class="form-control @error('password') is-invalid @enderror" id="password">
+                                    <div class="input-group">
+                                        <input type="password" name="password"
+                                            class="form-control @error('password') is-invalid @enderror" id="password">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('password', 'profilePasswordToggleIcon')">
+                                            <i class="bi bi-eye-slash" id="profilePasswordToggleIcon"></i>
+                                        </button>
+                                    </div>
                                     <small class="text-muted">Leave blank to keep current password.</small>
                                     @error('password')
-                                        <div class="invalid-feedback">{{ $message }}</div>
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
                                 </div>
 
