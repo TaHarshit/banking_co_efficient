@@ -133,7 +133,7 @@ class UserCls
                     DB::commit();
 
                     $data = General::setResponse('SUCCESS', "You have successfully signed up!");
-                    $data['data'] = $user;
+                    $data['data'] = $this->formatUserData($user);
                     return $data;
                     // } else {
                     //     return General::setResponse('VALIDATION_ERROR', 'Your account is inactive please contact to admin.');
@@ -187,7 +187,7 @@ class UserCls
                 DB::commit();
 
                 $data = General::setResponse('SUCCESS', "You have successfully login!");
-                $data['data'] = $user;
+                $data['data'] = $this->formatUserData($user);
                 return $data;
                 // } elseif ($userStatus == 'pending') {
                 //     Auth::logout();
@@ -257,7 +257,7 @@ class UserCls
             DB::commit();
 
             $data = General::setResponse('SUCCESS', "You have successfully login!");
-            $data['data'] = $result;
+            $data['data'] = $this->formatUserData($result);
             return $data;
         } catch (Exception $e) {
             DB::rollback();
@@ -293,7 +293,7 @@ class UserCls
             if (!empty($user)) {
 
                 $data = General::setResponse('SUCCESS', "Profile get successfully.");
-                $data['data'] = $user;
+                $data['data'] = $this->formatUserData($user);
                 return $data;
             } else {
                 return General::setResponse('VALIDATION_ERROR', 'User not found!');
@@ -401,8 +401,10 @@ class UserCls
             $response = $this->UserRep->CompleteProfile($update_profile, Auth::user()->id);
             DB::commit();
 
+            $userObj = $this->UserRep->GetUser(Auth::user()->id);
+
             $data = General::setResponse('SUCCESS', "Data updated successfully.");
-            $data['data'] = $update_profile;
+            $data['data'] = $this->formatUserData($userObj);
             return $data;
         } catch (Exception $e) {
             return General::setResponse('OTHER_ERROR', $e->getMessage());
@@ -516,5 +518,62 @@ class UserCls
         } catch (Exception $e) {
             return General::setResponse('OTHER_ERROR', $e->getMessage());
         }
+    }
+
+    /**
+     * Format user data to include business details with logo or blank object {} for individual users
+     */
+    public function formatUserData($user)
+    {
+        if (empty($user)) {
+            return $user;
+        }
+
+        if (is_array($user)) {
+            $userData = $user;
+        } elseif ($user instanceof \Illuminate\Database\Eloquent\Model) {
+            $userData = $user->toArray();
+            if (isset($user->api_token) && !isset($userData['api_token'])) {
+                $userData['api_token'] = $user->api_token;
+            }
+            if (isset($user->device_token) && !isset($userData['device_token'])) {
+                $userData['device_token'] = $user->device_token;
+            }
+            if (isset($user->platform) && !isset($userData['platform'])) {
+                $userData['platform'] = $user->platform;
+            }
+        } else {
+            $userData = (array) $user;
+        }
+
+        $businessId = !empty($userData['business_id']) ? $userData['business_id'] : null;
+        $businessObj = null;
+
+        if (!empty($businessId)) {
+            $businessObj = \App\Models\Business::find($businessId);
+        }
+
+        if ($businessObj) {
+            $logoUrl = '';
+            if (!empty($businessObj->logo)) {
+                $logoUrl = asset('storage/business_logos/' . $businessObj->logo);
+            }
+
+            $userData['business'] = [
+                'id'            => $businessObj->id,
+                'name'          => $businessObj->name,
+                'email'         => $businessObj->email,
+                'logo'          => $logoUrl,
+                'address'       => $businessObj->address,
+                'status'        => $businessObj->status,
+                'business_code' => $businessObj->business_code,
+                'created_at'    => $businessObj->created_at ? $businessObj->created_at->toDateTimeString() : null,
+                'updated_at'    => $businessObj->updated_at ? $businessObj->updated_at->toDateTimeString() : null,
+            ];
+        } else {
+            $userData['business'] = new \stdClass();
+        }
+
+        return $userData;
     }
 }
