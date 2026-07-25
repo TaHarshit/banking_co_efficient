@@ -27,8 +27,8 @@ class BusinessDashboardController extends Controller
 
         // Get user statistics
         $totalUsers = $business->users()->count();
-        $activeUsers = $business->users()->where('status', 1)->count();
-        $pendingUsers = $business->users()->where('status', 2)->count();
+        $activeUsers = $business->users()->whereIn('status', [1, '1', 'active'])->count();
+        $pendingUsers = $business->users()->whereIn('status', [2, '2', 'pending'])->count();
         $recentUsers = $business->users()->latest()->take(5)->get();
 
         // Dummy seat values (to be configured after pricing model is decided)

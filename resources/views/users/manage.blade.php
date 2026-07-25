@@ -108,7 +108,7 @@
                                                             <div class="form-check form-switch">
                                                                 <input class="form-check-input"
                                                                     onchange="update_status(this)" type="checkbox"
-                                                                    {{ $val->status == 1 ? 'checked' : '' }}
+                                                                    {{ in_array($val->status, [1, '1', 'active'], false) ? 'checked' : '' }}
                                                                     value="{{ $val->id }}">
                                                             </div>
                                                         </td>

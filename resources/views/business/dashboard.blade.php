@@ -399,9 +399,9 @@
                                             <td>{{ $user->name }}</td>
                                             <td>{{ $user->email }}</td>
                                             <td>
-                                                @if ($user->status == 1)
+                                                @if (in_array($user->status, [1, '1', 'active'], false))
                                                     <span class="badge bg-success">{{ __('messages.active') }}</span>
-                                                @elseif($user->status == 2)
+                                                @elseif(in_array($user->status, [2, '2', 'pending'], false))
                                                     <span class="badge bg-warning">{{ __('messages.pending') }}</span>
                                                 @else
                                                     <span class="badge bg-danger">{{ __('messages.rejected') }}</span>

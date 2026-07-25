@@ -35,8 +35,8 @@ class UserCls
                 if (Auth::user()->user_type == 1) {
                     return redirect()->route('dashboard');
                 } elseif (Auth::user()->user_type == 2) {
-                    if (Auth::user()->status != 'active') {
-                        $msg = Auth::user()->status == 'pending' ? 'Your account is pending approval.' : 'Your account has been rejected.';
+                    if (!in_array(Auth::user()->status, [1, '1', 'active'], false)) {
+                        $msg = (Auth::user()->status == 2 || Auth::user()->status === 'pending') ? 'Your account is pending approval.' : 'Your account has been rejected.';
                         auth()->guard('web')->logout();
                         Session::flash('message', $msg);
                         Session::flash('icon', 'warning');

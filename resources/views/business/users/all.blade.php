@@ -60,9 +60,9 @@
                                         <td>{{ $user->email }}</td>
                                         <td>{{ $user->phone_no ?? '-' }}</td>
                                         <td>
-                                            @if ($user->status == 1)
+                                            @if (in_array($user->status, [1, '1', 'active'], false))
                                                 <span class="badge bg-success">{{ __('messages.active') }}</span>
-                                            @elseif($user->status == 2)
+                                            @elseif(in_array($user->status, [2, '2', 'pending'], false))
                                                 <span class="badge bg-warning">{{ __('messages.pending') }}</span>
                                             @else
                                                 <span class="badge bg-danger">{{ __('messages.rejected') }}</span>
@@ -70,7 +70,7 @@
                                         </td>
                                         <td>{{ $user->created_at->format('d M Y') }}</td>
                                         <td>
-                                            @if ($user->status == 'pending')
+                                            @if (in_array($user->status, [2, '2', 'pending'], false))
                                                 <a href="{{ route('business.users.approve', $user->id) }}"
                                                     class="btn btn-success btn-sm" title="{{ __('messages.approve') }}">
                                                     <i class="bi bi-check"></i>

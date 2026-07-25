@@ -133,10 +133,10 @@
                                 <div class="col-md-6">
                                     <label for="status" class="form-label">{{ __('messages.status') }}</label>
                                     <select name="status" id="status" class="form-select @error('status') is-invalid @enderror">
-                                        <option value="1" {{ (isset($data) && $data->status == 1) || old('status') == '1' ? 'selected' : '' }}>
-                                            {{ __('messages.active') }}</option>
-                                        <option value="0" {{ (isset($data) && $data->status == 0) || old('status') == '0' ? 'selected' : '' }}>
-                                            {{ __('messages.inactive') }}</option>
+                                         <option value="1" {{ (isset($data) && in_array($data->status, [1, '1', 'active'], false)) || old('status') === '1' || old('status') === 1 || (!isset($data) && old('status') === null) ? 'selected' : '' }}>
+                                             {{ __('messages.active') }}</option>
+                                         <option value="0" {{ (isset($data) && in_array($data->status, [0, '0', 'inactive', 'disabled', 'rejected'], false)) || old('status') === '0' || old('status') === 0 ? 'selected' : '' }}>
+                                             {{ __('messages.inactive') }}</option>
                                     </select>
                                     @error('status')
                                         <div class="invalid-feedback">{{ $message }}</div>
