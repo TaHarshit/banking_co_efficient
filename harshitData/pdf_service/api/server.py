@@ -94,13 +94,20 @@ def process_question(query: str):
                 collected_images.append(f"http://127.0.0.1:8000/images/{img}")
 
             # collect pages
-            reference_pages.add(chunk["page"])
+            pg = chunk.get("page")
+            if pg and str(pg).strip() not in ["1", "0", "Unknown", "None", ""]:
+                try:
+                    if int(pg) > 1:
+                        reference_pages.add(int(pg))
+                except (ValueError, TypeError):
+                    reference_pages.add(pg)
 
         # --- STEP 4: Build prompt ---
         print("[INFO] Step 4: Building prompt...")
         prompt = f"""
         Answer the user's question using ONLY this context.
         If answer is not found, reply "Not found in document".
+        INLINE CITATIONS: Only cite specific page numbers if greater than 1. Never cite page 1 or (p.1).
 
         Context:
         {context}
@@ -116,14 +123,34 @@ def process_question(query: str):
             timeout=60
         )
 
-        answer_text = result.choices[0].message.content
+        answer_text = result.choices[0].message.content or ""
         print("[INFO] Step 6: Returning response")
+
+        # Clean answer text from fake p.1 / page 1 references
+        import re
+        answer_text = re.sub(r'\s*\([^)]*?\b(?:p|page)\.?\s*1\b[^)]*?\)', '', answer_text, flags=re.IGNORECASE)
+        answer_text = re.sub(r'\s*\[[^\]]*?\b(?:p|page)\.?\s*1\b[^\]]*?\]', '', answer_text, flags=re.IGNORECASE)
+        answer_text = re.sub(r',?\s*\b(?:p|page)\.?\s*1\b', '', answer_text, flags=re.IGNORECASE)
+        answer_text = re.sub(r'\(\s*\)', '', answer_text)
+        answer_text = re.sub(r'\[\s*\]', '', answer_text)
+        answer_text = re.sub(r'  +', ' ', answer_text).strip()
+
+        filtered_ref_pages = []
+        for p in reference_pages:
+            if p is None or p == "" or str(p).strip() in ["1", "0", "Unknown", "None"]:
+                continue
+            try:
+                p_int = int(p)
+                if p_int > 1:
+                    filtered_ref_pages.append(p_int)
+            except (ValueError, TypeError):
+                filtered_ref_pages.append(p)
 
         # --- STEP 6: Return final API response ---
         return {
             "answer": answer_text,
             "images": collected_images,
-            "reference_pages": sorted(list(reference_pages))
+            "reference_pages": sorted(list(set(filtered_ref_pages)), key=lambda x: (isinstance(x, str), x))
         }
     
     except Exception as e:

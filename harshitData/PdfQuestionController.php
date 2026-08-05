@@ -40,11 +40,34 @@ class PdfQuestionController extends Controller
             if ($response->successful()) {
                 $data = $response->json();
                 
+                $answer = $data['answer'] ?? 'No answer found';
+                // Remove fake page 1 references
+                $answer = preg_replace('/\s*\([^)]*?\b(?:p|page)\.?\s*1\b[^)]*?\)/i', '', $answer);
+                $answer = preg_replace('/\s*\[[^\]]*?\b(?:p|page)\.?\s*1\b[^\]]*?\]/i', '', $answer);
+                $answer = preg_replace('/,?\s*\b(?:p|page)\.?\s*1\b/i', '', $answer);
+                $answer = trim(preg_replace('/  +/', ' ', $answer));
+
+                $raw_pages = $data['reference_pages'] ?? [];
+                $reference_pages = [];
+                foreach ($raw_pages as $p) {
+                    if ($p === null || $p === '' || $p === 'Unknown' || $p === 'None') {
+                        continue;
+                    }
+                    if (is_numeric($p)) {
+                        if (intval($p) > 1) {
+                            $reference_pages[] = intval($p);
+                        }
+                    } else if (!in_array(trim((string)$p), ['1', '0', 'Unknown', 'None', ''])) {
+                        $reference_pages[] = $p;
+                    }
+                }
+                $reference_pages = array_values(array_unique($reference_pages));
+
                 return response()->json([
                     'success' => true,
-                    'answer' => $data['answer'] ?? 'No answer found',
+                    'answer' => $answer,
                     'images' => $data['images'] ?? [],
-                    'reference_pages' => $data['reference_pages'] ?? [],
+                    'reference_pages' => $reference_pages,
                     'message' => 'Answer retrieved successfully'
                 ], 200);
             } else {

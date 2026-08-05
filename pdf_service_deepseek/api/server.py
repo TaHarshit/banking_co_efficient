@@ -199,7 +199,13 @@ def process_question(query: str, history: list = None, target_lang: str | None =
             for img in chunk.get("images", []):
                 collected_images.append(f"http://127.0.0.1:8000/images/{img}")
 
-            reference_pages.add(chunk["page"])
+            pg = chunk.get("page")
+            if pg and str(pg).strip() not in ["1", "0", "Unknown", "None", ""]:
+                try:
+                    if int(pg) > 1:
+                        reference_pages.add(int(pg))
+                except (ValueError, TypeError):
+                    reference_pages.add(pg)
 
         # --- STEP 4: Build prompt ---
         print("[INFO] Step 4: Building prompt...")
@@ -208,6 +214,7 @@ def process_question(query: str, history: list = None, target_lang: str | None =
         For greetings or conversational interactions (e.g., "Hi", "Hello", "How are you?"), respond politely and warmly as an AI assistant.
         For factual questions about the document, answer using ONLY the context provided below.
         If a user asks a question that is clearly not a greeting and the answer is not found in the context, reply "I cannot find the answer to that in the document."
+        INLINE CITATIONS: Only cite specific page numbers if greater than 1. Never cite page 1 or (p.1).
 
         Context:
         {context}
@@ -238,14 +245,34 @@ def process_question(query: str, history: list = None, target_lang: str | None =
             messages=messages,
         )
 
-        answer_text = result.choices[0].message.content
+        answer_text = result.choices[0].message.content or ""
         print("[INFO] Step 6: Returning response")
+
+        # Clean answer text from fake p.1 / page 1 references
+        import re
+        answer_text = re.sub(r'\s*\([^)]*?\b(?:p|page)\.?\s*1\b[^)]*?\)', '', answer_text, flags=re.IGNORECASE)
+        answer_text = re.sub(r'\s*\[[^\]]*?\b(?:p|page)\.?\s*1\b[^\]]*?\]', '', answer_text, flags=re.IGNORECASE)
+        answer_text = re.sub(r',?\s*\b(?:p|page)\.?\s*1\b', '', answer_text, flags=re.IGNORECASE)
+        answer_text = re.sub(r'\(\s*\)', '', answer_text)
+        answer_text = re.sub(r'\[\s*\]', '', answer_text)
+        answer_text = re.sub(r'  +', ' ', answer_text).strip()
+
+        filtered_ref_pages = []
+        for p in reference_pages:
+            if p is None or p == "" or str(p).strip() in ["1", "0", "Unknown", "None"]:
+                continue
+            try:
+                p_int = int(p)
+                if p_int > 1:
+                    filtered_ref_pages.append(p_int)
+            except (ValueError, TypeError):
+                filtered_ref_pages.append(p)
 
         # --- STEP 6: Return final API response ---
         return {
             "answer": answer_text,
             "images": collected_images,
-            "reference_pages": sorted(list(reference_pages))
+            "reference_pages": sorted(list(set(filtered_ref_pages)), key=lambda x: (isinstance(x, str), x))
         }
 
     except Exception as e:

@@ -85,9 +85,10 @@ class PdfQuestionController extends Controller
                 $data = $response->json();
 
                 $answer = $data['answer'] ?? 'No answer found';
+                $answer = $this->cleanPageOneReferences($answer);
                 $suggestions = $data['suggestions'] ?? [];
                 $images = $data['images'] ?? [];
-                $reference_pages = $data['reference_pages'] ?? [];
+                $reference_pages = $this->filterValidReferencePages($data['reference_pages'] ?? []);
 
                 // Store in history
                 try {
@@ -365,5 +366,46 @@ class PdfQuestionController extends Controller
 
             return get_response($request, $apiResponse);
         }
+    }
+
+    /**
+     * Clean page 1 references from answer text
+     */
+    private function cleanPageOneReferences(?string $text): ?string
+    {
+        if (empty($text)) {
+            return $text;
+        }
+        // Remove parenthetical page 1 references like (p. 1), (p.1), (page 1), (Chapter 1, p. 1)
+        $text = preg_replace('/\s*\([^)]*?\b(?:p|page)\.?\s*1\b[^)]*?\)/i', '', $text);
+        $text = preg_replace('/\s*\[[^\]]*?\b(?:p|page)\.?\s*1\b[^\]]*?\]/i', '', $text);
+        // Remove standalone p. 1 or p.1
+        $text = preg_replace('/,?\s*\b(?:p|page)\.?\s*1\b/i', '', $text);
+        // Cleanup empty parens, brackets, and extra spaces
+        $text = preg_replace('/\(\s*\)/', '', $text);
+        $text = preg_replace('/\[\s*\]/', '', $text);
+        $text = preg_replace('/  +/', ' ', $text);
+        return trim($text);
+    }
+
+    /**
+     * Filter out page 1 / unknown / invalid page references
+     */
+    private function filterValidReferencePages(array $pages): array
+    {
+        $validPages = [];
+        foreach ($pages as $p) {
+            if ($p === null || $p === '' || $p === 'Unknown' || $p === 'None') {
+                continue;
+            }
+            if (is_numeric($p)) {
+                if (intval($p) > 1) {
+                    $validPages[] = intval($p);
+                }
+            } else if (!in_array(trim((string)$p), ['1', '0', 'Unknown', 'None', ''])) {
+                $validPages[] = $p;
+            }
+        }
+        return array_values(array_unique($validPages));
     }
 }

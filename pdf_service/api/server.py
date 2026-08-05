@@ -46,7 +46,41 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Serve images
 images_dir = BASE_DIR / "data" / "images"
 os.makedirs(images_dir, exist_ok=True)
-app.mount("/images", StaticFiles(directory=str(images_dir)), name="images")
+def clean_page_one_references(text: str) -> str:
+    if not text:
+        return text
+    # Remove parenthetical or bracketed page 1 references: e.g. (p. 1), (p.1), (page 1), (Page 1), (Chapter 1, p. 1), [p. 1]
+    text = re.sub(r'\s*\([^)]*?\b(?:p|page)\.?\s*1\b[^)]*?\)', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'\s*\[[^\]]*?\b(?:p|page)\.?\s*1\b[^\]]*?\]', '', text, flags=re.IGNORECASE)
+    # Remove standalone p. 1 or p.1 or page 1
+    text = re.sub(r',?\s*\b(?:p|page)\.?\s*1\b', '', text, flags=re.IGNORECASE)
+    # Clean up empty parens, brackets, and extra spaces
+    text = re.sub(r'\(\s*\)', '', text)
+    text = re.sub(r'\[\s*\]', '', text)
+    text = re.sub(r'  +', ' ', text)
+    return text.strip()
+
+
+def filter_valid_reference_pages(pages):
+    valid_pages = []
+    for p in pages:
+        if p is None or p == "" or str(p).strip() in ["1", "0", "Unknown", "None"]:
+            continue
+        try:
+            p_int = int(p)
+            if p_int > 1:
+                valid_pages.append(p_int)
+        except (ValueError, TypeError):
+            if str(p).strip() not in ["1", "0", "Unknown", "None", ""]:
+                valid_pages.append(p)
+    seen = set()
+    res = []
+    for p in valid_pages:
+        if p not in seen:
+            seen.add(p)
+            res.append(p)
+    return sorted(res, key=lambda x: (isinstance(x, str), x))
+
 
 # --- Initialize AI Models (Local & Free) ---
 print("Loading Embedding Model (paraphrase-multilingual-MiniLM-L12-v2)...", flush=True)
@@ -1137,7 +1171,12 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
             for img in images:
                 base_url = (AI_IMAGE_BASE_URL or "http://127.0.0.1:8000").rstrip("/")
                 collected_images.append(f"{base_url}/images/{img}")
-            reference_pages.add(page)
+            if page and str(page).strip() not in ["1", "0", "Unknown", "None", ""]:
+                try:
+                    if int(page) > 1:
+                        reference_pages.add(int(page))
+                except (ValueError, TypeError):
+                    reference_pages.add(page)
 
         # 5. AI Completion
         t0 = time.time()
@@ -1156,7 +1195,7 @@ For greetings or conversational interactions (e.g., "Hi", "Hello", "How are you?
 2. Be flexible with wording. If the user searches for a chapter using only a few words or partial names, match it to the closest chapter in the Context or Table of Contents.
 3. For structural questions (e.g., "What are the subsections of Chapter X?", "What is the name of Chapter 2?", "What chapters are there?"), use the [BOOK TABLE OF CONTENTS] above AND the [Chapter] and [Section] metadata tags in the Context to give a complete answer.
 4. If the requested information is genuinely missing from BOTH the Context and the Table of Contents, say "I cannot find the answer to that in the document."
-5. INLINE CITATIONS: When referencing specific information from the document, include inline citations in the format (Chapter Name, p.XX) or (p.XX) where XX is the page number from the [Page: XX] tag in the Context. This helps the user locate the information in the book.
+5. INLINE CITATIONS: When referencing specific information from the document, include inline citations in the format (Chapter Name, p.XX) or (p.XX) ONLY IF XX is a valid, specific page number greater than 1 (e.g., p.2, p.5). NEVER cite page 1, p.1, or (p.1). If the page number is 1, missing, or unknown, do NOT include any page citation in your answer.
 
 [IMPORTANT]
 At the end of your response, provide exactly 3 short and sweet follow-up suggestions for the user.
@@ -1204,11 +1243,15 @@ Context:
         total_time = time.time() - start_time
         print(f"[PERF] /ask - SUCCESS. Total: {total_time:.3f}s", flush=True)
 
+        # Clean answer text from fake p.1 / page 1 references
+        answer = clean_page_one_references(answer)
+        valid_ref_pages = filter_valid_reference_pages(reference_pages)
+
         return {
             "answer":          answer,
             "suggestions":     suggestions,
             "images":          list(set(collected_images)),
-            "reference_pages": sorted(list(reference_pages))
+            "reference_pages": valid_ref_pages
         }
 
     except Exception as e:
