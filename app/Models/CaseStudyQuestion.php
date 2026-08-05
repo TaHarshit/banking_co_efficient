@@ -11,6 +11,8 @@ class CaseStudyQuestion extends Model
 
     protected $fillable = [
         'section_name',
+        'section_name_en',
+        'section_name_fr',
         'question_en',
         'question_fr',
     ];
@@ -18,6 +20,18 @@ class CaseStudyQuestion extends Model
     public function options()
     {
         return $this->hasMany(CaseStudyQuestionOption::class);
+    }
+
+    /**
+     * Get localized section name based on app locale
+     */
+    public function getSectionNameAttribute($value)
+    {
+        $locale = app()->getLocale();
+        if ($locale === 'fr') {
+            return $this->section_name_fr ?: ($this->section_name_en ?: ($value ?: ''));
+        }
+        return $this->section_name_en ?: ($this->section_name_fr ?: ($value ?: ''));
     }
 
     /**

@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('case_study_questions', function (Blueprint $table) {
             $table->id();
-            $table->string('section_name');
+            $table->string('section_name')->nullable();
+            $table->string('section_name_en')->nullable();
+            $table->string('section_name_fr')->nullable();
             $table->text('question_en');
             $table->text('question_fr');
             $table->timestamps();

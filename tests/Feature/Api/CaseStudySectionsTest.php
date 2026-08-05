@@ -26,6 +26,8 @@ class CaseStudySectionsTest extends TestCase
         // Create mock data
         $question1 = CaseStudyQuestion::create([
             'section_name' => 'Section A',
+            'section_name_en' => 'Section A',
+            'section_name_fr' => 'Section A (FR)',
             'question_en' => 'English Question 1',
             'question_fr' => 'French Question 1',
         ]);
@@ -38,6 +40,8 @@ class CaseStudySectionsTest extends TestCase
 
         $question2 = CaseStudyQuestion::create([
             'section_name' => 'Section B',
+            'section_name_en' => 'Section B',
+            'section_name_fr' => 'Section B (FR)',
             'question_en' => 'English Question 2',
             'question_fr' => 'French Question 2',
         ]);
@@ -84,6 +88,8 @@ class CaseStudySectionsTest extends TestCase
     {
         $question = CaseStudyQuestion::create([
             'section_name' => 'Section A',
+            'section_name_en' => 'Section A',
+            'section_name_fr' => 'Section A French',
             'question_en' => 'English Question',
             'question_fr' => 'French Question',
         ]);
@@ -97,6 +103,7 @@ class CaseStudySectionsTest extends TestCase
 
         $response->assertStatus(200);
         $data = $response->json('data');
+        $this->assertEquals('Section A French', $data[0]['section_name']);
         $this->assertEquals('French Question', $data[0]['questions'][0]['question']);
     }
 }

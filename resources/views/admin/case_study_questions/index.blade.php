@@ -49,7 +49,8 @@
                                             <table class="table datatable">
                                                 <thead>
                                                     <tr>
-                                                        <th>{{ __('messages.section') }}</th>
+                                                        <th>{{ __('messages.section') }} (EN)</th>
+                                                        <th>{{ __('messages.section') }} (FR)</th>
                                                         <th>{{ __('messages.question') }} (EN)</th>
                                                         <th>{{ __('messages.question') }} (FR)</th>
                                                         <th>{{ __('messages.options') }}</th>
@@ -59,7 +60,8 @@
                                                 <tbody>
                                                     @foreach ($questions as $question)
                                                         <tr>
-                                                            <td>{{ $question->section_name }}</td>
+                                                            <td>{{ $question->section_name_en ?: $question->section_name }}</td>
+                                                            <td>{{ $question->section_name_fr ?: $question->section_name }}</td>
                                                             <td>{{ Str::limit($question->question_en, 50) }}</td>
                                                             <td>{{ Str::limit($question->question_fr, 50) }}</td>
                                                             <td>{{ $question->options->count() }}</td>

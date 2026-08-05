@@ -24,7 +24,8 @@ class CaseStudyQuestionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'section_name' => 'required|string|max:255',
+            'section_name_en' => 'required|string|max:255',
+            'section_name_fr' => 'required|string|max:255',
             'question_en' => 'required|string',
             'question_fr' => 'required|string',
             'options' => 'required|array',
@@ -34,7 +35,9 @@ class CaseStudyQuestionController extends Controller
         ]);
 
         $question = CaseStudyQuestion::create([
-            'section_name' => $request->section_name,
+            'section_name' => $request->section_name_en,
+            'section_name_en' => $request->section_name_en,
+            'section_name_fr' => $request->section_name_fr,
             'question_en' => $request->question_en,
             'question_fr' => $request->question_fr,
         ]);
@@ -47,7 +50,7 @@ class CaseStudyQuestionController extends Controller
             ]);
         }
 
-        logAdminActivity('Case Study', 'Add', $question->id, "Added new case study question in section: {$request->section_name}", $request->all());
+        logAdminActivity('Case Study', 'Add', $question->id, "Added new case study question in section: {$request->section_name_en}", $request->all());
 
         return redirect()->route('admin.case_study_questions.index')->with('success', 'Question created successfully.');
     }
@@ -61,7 +64,8 @@ class CaseStudyQuestionController extends Controller
     public function update(Request $request, CaseStudyQuestion $question)
     {
         $request->validate([
-            'section_name' => 'required|string|max:255',
+            'section_name_en' => 'required|string|max:255',
+            'section_name_fr' => 'required|string|max:255',
             'question_en' => 'required|string',
             'question_fr' => 'required|string',
             'options' => 'required|array',
@@ -71,7 +75,9 @@ class CaseStudyQuestionController extends Controller
         ]);
 
         $question->update([
-            'section_name' => $request->section_name,
+            'section_name' => $request->section_name_en,
+            'section_name_en' => $request->section_name_en,
+            'section_name_fr' => $request->section_name_fr,
             'question_en' => $request->question_en,
             'question_fr' => $request->question_fr,
         ]);
@@ -86,7 +92,7 @@ class CaseStudyQuestionController extends Controller
             ]);
         }
 
-        logAdminActivity('Case Study', 'Update', $question->id, "Updated case study question in section: {$request->section_name}", $request->all());
+        logAdminActivity('Case Study', 'Update', $question->id, "Updated case study question in section: {$request->section_name_en}", $request->all());
 
         return redirect()->route('admin.case_study_questions.index')->with('success', 'Question updated successfully.');
     }
@@ -94,7 +100,7 @@ class CaseStudyQuestionController extends Controller
     public function destroy(CaseStudyQuestion $question)
     {
         $id = $question->id;
-        $section = $question->section_name;
+        $section = $question->section_name_en ?: $question->section_name;
         $question->delete();
         logAdminActivity('Case Study', 'Delete', $id, "Deleted case study question from section: $section");
         return redirect()->route('admin.case_study_questions.index')->with('success', 'Question deleted successfully.');
@@ -121,6 +127,8 @@ class CaseStudyQuestionController extends Controller
 
                 $question = CaseStudyQuestion::create([
                     'section_name' => $row[0],
+                    'section_name_en' => $row[0],
+                    'section_name_fr' => $row[0],
                     'question_en' => $row[1] ?? '',
                     'question_fr' => $row[2] ?? '',
                 ]);

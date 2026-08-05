@@ -93,9 +93,13 @@
                             <form class="row g-3" action="{{ route('admin.case_study_questions.store') }}" method="POST">
                                 @csrf
                                 
-                                <div class="col-md-12">
-                                    <label class="form-label">Section Name <span class="text-danger">*</span></label>
-                                    <input type="text" name="section_name" class="form-control" value="{{ old('section_name') }}" required>
+                                <div class="col-md-6">
+                                    <label class="form-label">🇬🇧 Section Name (EN) <span class="text-danger">*</span></label>
+                                    <input type="text" name="section_name_en" class="form-control" value="{{ old('section_name_en') }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">🇫🇷 Section Name (FR) <span class="text-danger">*</span></label>
+                                    <input type="text" name="section_name_fr" class="form-control" value="{{ old('section_name_fr') }}" required>
                                 </div>
 
                                 <div class="col-md-6">
