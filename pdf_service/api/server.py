@@ -46,6 +46,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Serve images
 images_dir = BASE_DIR / "data" / "images"
 os.makedirs(images_dir, exist_ok=True)
+app.mount("/images", StaticFiles(directory=str(images_dir)), name="images")
+
 def clean_page_one_references(text: str) -> str:
     if not text:
         return text
