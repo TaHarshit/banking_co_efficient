@@ -34,6 +34,6 @@ class SettingsController extends Controller
     public function StoreSetting(Request $request){
         $banner = $request->file('banner');
         $show_banner = $request->has('show_banner') ? 1 : 0;
-        return $this->SettingsCls->StoreSetting($request->user_android_version, $request->user_ios_version, $request->android_build_number, $request->ios_build_number, $request->privacy_policy, $request->terms_and_conditions, $request->feedback_form_link, $request->privacy_policy_fr, $request->terms_and_conditions_fr, $request->id);   
+        return $this->SettingsCls->StoreSetting($request->user_android_version, $request->user_ios_version, $request->android_build_number, $request->ios_build_number, $request->privacy_policy, $request->terms_and_conditions, $request->feedback_form_link, $request->privacy_policy_fr, $request->terms_and_conditions_fr, $request->feedback_form_link_fr, $request->id);   
     }
 }

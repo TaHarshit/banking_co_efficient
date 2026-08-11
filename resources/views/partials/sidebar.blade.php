@@ -80,12 +80,12 @@
             </a>
         </li>
 
-        <li class="nav-item">
+        {{-- <li class="nav-item">
             <a class="nav-link {{ request()->routeIs('admin.pdf.manage') ? 'active' : 'collapsed' }}" href="{{ route('admin.pdf.manage') }}">
                 <i class="bi bi-file-earmark-pdf"></i>
                 <span>{{ __('messages.manage_pdf') }}</span>
             </a>
-        </li>
+        </li> --}}
         <!-- End Profile Page Nav -->
     </ul>
 </aside><!-- End Sidebar-->

@@ -19,6 +19,7 @@ class Settings extends Model
         'terms_and_conditions',
         'terms_and_conditions_fr',
         'feedback_form_link',
+        'feedback_form_link_fr',
     ];
 
     protected $hidden = [

@@ -49,6 +49,18 @@
                                     @endif
                                 </div>
                                 <div class="col-12 position-relative">
+                                    <label for="feedback_form_link_fr"
+                                        class="form-label">{{ __('messages.feedback_form_link_fr') }}
+                                    </label>
+                                    <input type="text" name="feedback_form_link_fr"
+                                        class="form-control {{ $errors->has('feedback_form_link_fr') ? 'is-invalid' : '' }}"
+                                        id="feedback_form_link_fr"
+                                        value="{{ isset($data) ? $data->feedback_form_link_fr : old('feedback_form_link_fr') }}">
+                                    @if ($errors->has('feedback_form_link_fr'))
+                                        <div class="invalid-feedback">{{ $errors->first('feedback_form_link_fr') }}</div>
+                                    @endif
+                                </div>
+                                <div class="col-12 position-relative">
                                     <label for="user_android_version"
                                         class="form-label">{{ __('messages.user_android_version') }}</label>
                                     <input type="text" name="user_android_version"
@@ -120,7 +132,7 @@
                                 </div>
                                 
                                 <div class="col-12 position-relative">
-                                    <label for="terms_and_conditions"
+                                    <label for="terms_and_conditions_fr"
                                         class="form-label">{{ __('messages.terms_and_conditions_fr') }}</label>
                                     <textarea name="terms_and_conditions_fr" id="terms_and_conditions_fr" rows="5" class="tinymce-editor">{!! $data->terms_and_conditions_fr !!}</textarea>
                                     @if ($errors->has('terms_and_conditions_fr'))
