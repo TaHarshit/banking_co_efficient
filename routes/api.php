@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\PersonalizedExperienceController;
 use App\Repositories\Api\ContactUsRepository;
 use App\Http\Controllers\Api\ClientCaseController;
 use App\Http\Controllers\Api\CaseStudyController;
+use App\Http\Controllers\Api\BookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -149,5 +150,14 @@ Route::middleware(['basicFilter'])->group(function () {
             Route::POST('transactions/get_user_current_plan', 'GetUserCurrentPlan'); 
         });
 
+        // Secure Book PDF Access & Watermark Metadata
+        Route::controller(BookController::class)->group(function () {
+            Route::POST('book/secure-access', 'getSecureAccess');
+            Route::GET('book/details', 'details');
+        });
+
     });
+
+    // Temporary Signed Streaming URL for Book PDF (Protected by URL signature & session token)
+    Route::GET('book/stream/{token}', [BookController::class, 'stream'])->name('api.book.stream');
 });

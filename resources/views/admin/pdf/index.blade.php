@@ -109,11 +109,15 @@
                                         </div>
                                         <hr>
                                         <div class="row">
-                                            <div class="col-6">
+                                            <div class="col-4">
+                                                <small class="text-muted d-block">Document ID</small>
+                                                <span class="badge bg-secondary font-monospace">{{ $documentId ?? 'N/A' }}</span>
+                                            </div>
+                                            <div class="col-4">
                                                 <small class="text-muted d-block">{{ __('messages.file_size') }}</small>
                                                 <strong>{{ $pdfSize }}</strong>
                                             </div>
-                                            <div class="col-6">
+                                            <div class="col-4">
                                                 <small class="text-muted d-block">{{ __('messages.last_updated') }}</small>
                                                 <strong>{{ $pdfModified }}</strong>
                                             </div>
