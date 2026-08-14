@@ -170,7 +170,7 @@ class ClientCaseController extends Controller
                 // If it is directly an image source
                 if ($this->isImageSource($node, $imageGroup)) {
                     $src = $this->normalizeImageSource($node);
-                    if ($src && !isset($seen[$src])) {
+                    if ($src && !isset($seen[$src]) && !$this->isCoverOrPageOneImage($src)) {
                         $seen[$src] = true;
                         $images[] = [
                             'label' => $label !== '' ? $label : 'Image',
@@ -184,7 +184,7 @@ class ClientCaseController extends Controller
                 if (preg_match_all('/(https?:\/\/[^\s\)\],"\';<]+?\.(?:png|jpe?g|gif|webp|bmp|svg)(?:\?.*)?)/i', $node, $matches)) {
                     foreach ($matches[1] as $embeddedUrl) {
                         $src = $this->normalizeImageSource($embeddedUrl);
-                        if ($src && !isset($seen[$src])) {
+                        if ($src && !isset($seen[$src]) && !$this->isCoverOrPageOneImage($src)) {
                             $seen[$src] = true;
                             $images[] = [
                                 'label' => $label !== '' ? $label : 'Image',
@@ -436,7 +436,16 @@ class ClientCaseController extends Controller
             // Clean up: | Images: http://... inside [Source Page: 1 | Images: http://...]
             $value = preg_replace('/\s*\|\s*Images?:\s*https?:\/\/[^\s\]]+?\.(?:png|jpe?g|gif|webp|bmp|svg)(?:\?.*)?/i', '', $value);
 
-            return $value;
+            // Clean up: (Image: None) or [Images: None] or | Images: None
+            $value = preg_replace('/\s*\(Images?:\s*None\)/i', '', $value);
+            $value = preg_replace('/\s*\[Images?:\s*None\]/i', '', $value);
+            $value = preg_replace('/\s*\|\s*Images?:\s*None/i', '', $value);
+
+            // Clean up fake cover/page 1 citations: e.g. [Page: 1] or (Page: 1) or [Source Page: 1]
+            $value = preg_replace('/\s*\[(?:Source\s+)?Page:\s*[12]\]/i', '', $value);
+            $value = preg_replace('/\s*\((?:Source\s+)?Page:\s*[12]\)/i', '', $value);
+
+            return trim($value);
         }
 
         if (is_array($value)) {
@@ -446,6 +455,17 @@ class ClientCaseController extends Controller
         }
 
         return $value;
+    }
+
+    private function isCoverOrPageOneImage(string $url): bool
+    {
+        $lower = strtolower($url);
+        return str_contains($lower, 'page_1_')
+            || str_contains($lower, 'page_2_')
+            || str_contains($lower, 'page_1.')
+            || str_contains($lower, 'page_2.')
+            || str_contains($lower, 'cover')
+            || str_contains($lower, 'snapshot');
     }
 
     public function ratePlan(Request $request)

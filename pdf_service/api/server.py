@@ -15,6 +15,7 @@ import time
 from contextlib import asynccontextmanager
 
 import re
+from typing import Any
 from dotenv import load_dotenv
 
 # Free local language detection — no AI credits needed
@@ -524,6 +525,83 @@ def sanitize_json_response(content: str) -> str:
     return content.strip()
 
 
+def is_cover_or_frontmatter_image(img: str, page: int | str | None = None) -> bool:
+    """Check if an image or page is a cover / front-matter / page 1-2 artifact."""
+    if page is not None:
+        try:
+            if int(page) <= 2:
+                return True
+        except (ValueError, TypeError):
+            pass
+
+    img_lower = str(img).lower().strip()
+    return (
+        "page_1_" in img_lower
+        or "page_2_" in img_lower
+        or "page_1." in img_lower
+        or "page_2." in img_lower
+        or "cover" in img_lower
+        or "snapshot" in img_lower
+        or img_lower.endswith("page_1_img_1.png")
+    )
+
+
+def filter_valid_technique_images(images: list, page: int | str | None = None) -> list[str]:
+    """Filter out cover pages, title pages (pages 1 and 2), snapshots, and cover images."""
+    try:
+        if page is not None and int(page) <= 2:
+            return []
+    except (ValueError, TypeError):
+        pass
+
+    return [img for img in images if not is_cover_or_frontmatter_image(img, page)]
+
+
+def sanitize_ai_output_content(data: Any) -> Any:
+    """
+    Recursively clean up any cover/front-matter image URLs, 'Images: None' artifacts,
+    or fake 'Page 1' / 'Page 2' references from AI-generated JSON.
+    """
+    if isinstance(data, str):
+        cleaned = data
+        # Remove any markdown or text containing page_1 / page_2 / cover image URLs
+        cleaned = re.sub(r'\(?https?://[^\s\)]+?/images/(?:page_[12]_[^\s\)]+|cover[^\s\)]+|[^\s\)]*snapshot[^\s\)]*)\)?', '', cleaned, flags=re.IGNORECASE)
+        # Remove text artifacts like [Image: ...], (Image: ...), | Images: None, Image: None
+        cleaned = re.sub(r'\s*\(Images?:\s*None\)', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'\s*\[Images?:\s*None\]', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'\s*\|\s*Images?:\s*None', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'\s*\(Images?:\s*\)', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'\s*\[Images?:\s*\]', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'\s*\|\s*Images?:\s*$', '', cleaned, flags=re.IGNORECASE)
+        # Clean up empty source citations e.g. "[Source Page: 1]" or "[Page: 1]"
+        cleaned = re.sub(r'\[(?:Source\s+)?Page:\s*[12]\]', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r'\((?:Source\s+)?Page:\s*[12]\)', '', cleaned, flags=re.IGNORECASE)
+        return cleaned.strip()
+
+    if isinstance(data, dict):
+        cleaned_dict = {}
+        for k, v in data.items():
+            if k == "chapter" and isinstance(v, str) and (v.strip().lower() in ["page 1", "page 2", "p. 1", "p. 2", "p.1", "p.2", "cover", "introduction"]):
+                # If suggested_readings has chapter: "Page 1", replace with the title or a clean reference
+                title_val = data.get("title", "")
+                cleaned_dict[k] = title_val if title_val else "Technique Reference"
+            else:
+                cleaned_dict[k] = sanitize_ai_output_content(v)
+        return cleaned_dict
+
+    if isinstance(data, list):
+        cleaned_list = []
+        for item in data:
+            cleaned_item = sanitize_ai_output_content(item)
+            # If item became empty string after removing image artifact, only keep if it was meaningful
+            if isinstance(cleaned_item, str) and not cleaned_item.strip():
+                continue
+            cleaned_list.append(cleaned_item)
+        return cleaned_list
+
+    return data
+
+
 def attempt_json_repair(content: str, required_keys: list, schema_template: str = "", response_format: dict | None = None) -> dict | None:
     """
     Try to repair truncated JSON by asking the AI to fix it.
@@ -654,7 +732,8 @@ def analyze_case(request: CaseAnalysisRequest, accept_language: str | None = Hea
             chapter = res.payload.get("chapter", "")
             section = res.payload.get("section", "")
             images = res.payload.get("images", [])
-            imgs_str = ", ".join([f"{AI_IMAGE_BASE_URL}/images/{img}" for img in images]) if images else "None"
+            valid_imgs = filter_valid_technique_images(images, page)
+            imgs_str = ", ".join([f"{AI_IMAGE_BASE_URL}/images/{img}" for img in valid_imgs]) if valid_imgs else "None"
             source_header = f"[Page: {page}"
             if chapter:
                 source_header += f" | Chapter: {chapter}"
@@ -711,11 +790,12 @@ Details: {json.dumps(details, indent=2)}
 1. Think step-by-step before writing your final answer.
 2. Personalize every recommendation to match the user's behavioral profile weaknesses and strengths.
 3. If previous client case history is provided, ensure strategic continuity and address evolving client dynamics.
-4. Reference specific book techniques by name where applicable, AND cite the [Source Page] and [Images] URL if available.
-5. CRITICAL: When citing the [Images] URL, you MUST use the EXACT image URL specified for the corresponding chunk/page in the [BOOK KNOWLEDGE] context. Do NOT use the book cover image (page_1_snapshot.png) for techniques that are on other pages (e.g. if the technique is on Page 295, you MUST cite the image ending in page_295_snapshot.png). Never use a repeating cover image or fallback cover image for other pages.
+4. Reference specific book techniques and chapters from the context. ONLY cite real content pages (> Page 2) and chapter names. NEVER cite "Page 1", "Page 2", or book cover/intro pages.
+5. CRITICAL IMAGE RULE: ONLY cite an image URL if the corresponding technique in the [BOOK KNOWLEDGE] context explicitly lists a real diagram URL (NOT None). If [Images] is None or if no diagram exists for the technique, DO NOT include any image URL or image citation. NEVER cite or invent Page 1/cover images. If no diagram applies, omit images completely.
 6. Each recommendation must be concrete and immediately actionable (not generic advice).
 7. Suggest at least 4 recommendations and 4 challenges.
-8. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside the JSON.
+8. In "suggested_readings", reference actual chapter names and topics from the book (e.g. "Chapter 4: Anchoring & Concessions"). NEVER cite "Page 1" or cover pages.
+9. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside the JSON.
 
 Required JSON structure:
 {{
@@ -726,7 +806,7 @@ Required JSON structure:
     "Concrete actionable recommendation 4 ..."
   ],
   "suggested_readings": [
-    {{"chapter": "Chapter/Page Reference", "title": "Chapter title", "time": "Estimated reading time", "reason": "Why this chapter applies"}},
+    {{"chapter": "Real Chapter Name / Page Ref (e.g. Chapter 4: Anchoring & Concessions)", "title": "Chapter title", "time": "Estimated reading time", "reason": "Why this chapter applies"}},
     {{"chapter": "...", "title": "...", "time": "...", "reason": "..."}}
   ],
   "ai_challenges": [
@@ -779,6 +859,9 @@ Required JSON structure:
                 analysis = repaired
             else:
                 return {"error": f"AI response missing required fields: {missing}", "raw_content": sanitized[:500]}
+
+        # Sanitize output of any cover images / fake page 1 references
+        analysis = sanitize_ai_output_content(analysis)
 
         # 5. Store in memory
         t0 = time.time()
@@ -858,7 +941,8 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
             chapter = res.payload.get("chapter", "")
             section = res.payload.get("section", "")
             images = res.payload.get("images", [])
-            imgs_str = ", ".join([f"{AI_IMAGE_BASE_URL}/images/{img}" for img in images]) if images else "None"
+            valid_imgs = filter_valid_technique_images(images, page)
+            imgs_str = ", ".join([f"{AI_IMAGE_BASE_URL}/images/{img}" for img in valid_imgs]) if valid_imgs else "None"
             source_header = f"[Page: {page}"
             if chapter:
                 source_header += f" | Chapter: {chapter}"
@@ -911,13 +995,14 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
 1. Think carefully about each phase before writing.
 2. Tailor every step to address the user's behavioral strengths and weaknesses.
 3. If previous client case history is provided, build on prior outcomes and ensure cohesive tactical progression.
-4. Include specific negotiation techniques from the book by name, AND cite the [Source Page] and [Images] URL if available.
-5. CRITICAL: When citing the [Images] URL, you MUST use the EXACT image URL specified for the corresponding chunk/page in the [BOOK TECHNIQUES] context. Do NOT use the book cover image (page_1_snapshot.png) for techniques that are on other pages (e.g. if the technique is on Page 295, you MUST cite the image ending in page_295_snapshot.png). Never use a repeating cover image or fallback cover image for other pages.
+4. Include specific negotiation techniques from the book by name, citing real content pages (> Page 2) and chapter names. NEVER cite "Page 1" or book cover pages.
+5. CRITICAL IMAGE RULE: ONLY cite an image URL if an exact technique diagram (> Page 2) is explicitly provided in the [BOOK TECHNIQUES] context. If [Images] is None or no specific diagram exists, DO NOT include any image URL or placeholder. If no diagram applies, omit images completely.
 6. Each phase must have at least 3 detailed, actionable steps (not vague advice).
 7. Phases should flow logically: Before meeting → During meeting → After meeting.
-8. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside JSON.
-9. ALL 6 fields are required. Do not omit any field.
-10. CRITICAL: Do NOT return the structure or keys of a Case Analysis (do not use keys like "ai_recommendations", "suggested_readings", "ai_challenges", or "negotiation_style_tips"). You MUST return strictly the Action Plan structure below.
+8. In action_plan.*.readings, reference actual technique chapters and topics from the book (never "Page 1").
+9. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside JSON.
+10. ALL 6 fields are required. Do not omit any field.
+11. CRITICAL: Do NOT return the structure or keys of a Case Analysis (do not use keys like "ai_recommendations", "suggested_readings", "ai_challenges", or "negotiation_style_tips"). You MUST return strictly the Action Plan structure below.
 
 Required JSON structure (return ALL fields, keep steps detailed but concise):
 {{
@@ -1049,6 +1134,9 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
                 parsed_content = repaired
             else:
                 return {"error": f"AI response missing required action plan phases: {missing_phases}", "raw_content": sanitized[:500]}
+
+        # Sanitize output of any cover images / fake page 1 references
+        parsed_content = sanitize_ai_output_content(parsed_content)
 
         total_time = time.time() - start_time
         print(f"[PERF] /generate-plan - SUCCESS. Total: {total_time:.3f}s", flush=True)
@@ -1200,7 +1288,8 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
             chapter = chunk.get("chapter", "")
             section = chunk.get("section", "")
             images  = chunk.get("images", [])
-            imgs_str = ", ".join([f"{AI_IMAGE_BASE_URL}/images/{img}" for img in images]) if images else "None"
+            valid_imgs = filter_valid_technique_images(images, page)
+            imgs_str = ", ".join([f"{AI_IMAGE_BASE_URL}/images/{img}" for img in valid_imgs]) if valid_imgs else "None"
             
             # Build rich source header with chapter/section info
             source_header = f"[Page: {page}"
@@ -1211,7 +1300,7 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
             source_header += f" | Images: {imgs_str}]"
             
             context += f"{source_header}\n{chunk['text']}\n\n"
-            for img in images:
+            for img in valid_imgs:
                 base_url = (AI_IMAGE_BASE_URL or "http://127.0.0.1:8000").rstrip("/")
                 collected_images.append(f"{base_url}/images/{img}")
             if page and str(page).strip() not in ["1", "0", "Unknown", "None", ""]:
