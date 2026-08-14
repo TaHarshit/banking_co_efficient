@@ -60,8 +60,8 @@ class SectionController extends Controller
     public function Store(Request $request)
     {
         $request->validate([
-            // 'title_en' => 'required|string|max:255',
-            // 'title_fr' => 'required|string|max:255',
+            'title_en' => 'required|string|max:255',
+            'title_fr' => 'required|string|max:255',
         ]);
 
         $id = $request->input('id', 0);
