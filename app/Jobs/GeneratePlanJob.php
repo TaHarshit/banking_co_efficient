@@ -56,13 +56,19 @@ class GeneratePlanJob implements ShouldQueue
             ['case_id' => $this->caseId]
         );
 
-        $caseData     = $this->caseData     ?? $clientCase->case_details;
         $analysisData = $this->analysisData ?? $clientCase->ai_analysis;
 
-        if (! $caseData || ! $analysisData) {
-            $this->markFailed($aiJob, $notificationsRepo, 'Missing case data or analysis data. Please run case analysis first.', $clientCase->client_alias ?? '');
+        if (empty($analysisData)) {
+            $this->markFailed($aiJob, $notificationsRepo, 'Missing AI analysis data. Please run case analysis first.', $clientCase->client_alias ?? '');
             return;
         }
+
+        $caseData = $this->caseData ?? [
+            'client_id'        => $clientCase->client_id,
+            'client_alias'     => $clientCase->client_alias ?? 'Client',
+            'context_overview' => $clientCase->context_overview ?? '',
+            'case_details'     => ! empty($clientCase->case_details) ? $clientCase->case_details : (object) [],
+        ];
 
         $pythonUrl = config('services.pdf_service.base_url');
         $endpoint  = rtrim($pythonUrl, '/') . '/generate-plan';

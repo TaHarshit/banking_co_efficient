@@ -256,12 +256,18 @@ class ClientCaseCls
                 return General::setResponse('VALIDATION_ERROR', 'Case not found.');
             }
 
-            $caseData     = $postData['case_data'] ?? $clientCase->case_details;
             $analysisData = $postData['analysis_data'] ?? $clientCase->ai_analysis;
 
-            if (! $caseData || ! $analysisData) {
-                return General::setResponse('VALIDATION_ERROR', 'Missing case data or analysis data. Please run AI analysis first.');
+            if (empty($analysisData)) {
+                return General::setResponse('VALIDATION_ERROR', 'Missing AI analysis data. Please run AI analysis first.');
             }
+
+            $caseData = $postData['case_data'] ?? [
+                'client_id'        => $clientCase->client_id,
+                'client_alias'     => $clientCase->client_alias ?? 'Client',
+                'context_overview' => $clientCase->context_overview ?? '',
+                'case_details'     => ! empty($clientCase->case_details) ? $clientCase->case_details : (object) [],
+            ];
 
             // Create a tracking record in ai_jobs
             $aiJob = AiJob::create([

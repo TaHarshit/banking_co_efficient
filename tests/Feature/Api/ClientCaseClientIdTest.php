@@ -240,4 +240,32 @@ class ClientCaseClientIdTest extends TestCase
 
         $response->assertStatus(422);
     }
+
+    /** @test */
+    public function it_can_queue_plan_generation_when_case_details_is_empty_but_analysis_exists()
+    {
+        \Illuminate\Support\Facades\Queue::fake();
+
+        $case = ClientCase::create([
+            'user_id'          => $this->user->id,
+            'client_alias'     => 'Acme Tech',
+            'context_overview' => 'Overview text',
+            'case_details'     => [],
+            'ai_analysis'      => [
+                'ai_recommendations' => ['Anchor high'],
+            ],
+        ]);
+
+        $response = $this->actingAs($this->user, 'api')
+            ->postJson('/api/ai/generate-plan', [
+                'case_id' => $case->id,
+            ], [
+                'api-key'  => 'BANKING-CO-EFFICIENT',
+                'platform' => 'WEB',
+            ]);
+
+        $response->assertStatus(200);
+        $this->assertNotEmpty($response->json('job_id'));
+        $this->assertEquals('pending', $response->json('status'));
+    }
 }
