@@ -26,9 +26,24 @@ class ClientCaseController extends Controller
 
     public function index(Request $request)
     {
+        $search   = $request->query('search');
+        $rating   = $request->query('rating');
+        $clientId = $request->query('client_id');
+        $data     = $this->clientCaseCls->GetCases($search, $rating, $clientId);
+        return get_response($request, $data);
+    }
+
+    public function clients(Request $request)
+    {
         $search = $request->query('search');
-        $rating = $request->query('rating');
-        $data = $this->clientCaseCls->GetCases($search, $rating);
+        $data   = $this->clientCaseCls->GetClientsDropdown($search);
+        return get_response($request, $data);
+    }
+
+    public function checkClientId(Request $request)
+    {
+        $clientId = $request->input('client_id') ?? $request->query('client_id');
+        $data     = $this->clientCaseCls->CheckClientId($clientId);
         return get_response($request, $data);
     }
 

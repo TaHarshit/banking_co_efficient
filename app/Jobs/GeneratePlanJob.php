@@ -70,10 +70,47 @@ class GeneratePlanJob implements ShouldQueue
         $user        = $clientCase->user;
         $userProfile = $user ? $user->getAiBehaviorProfile() : '';
 
+        // Retrieve historical cases for this client if client_id exists
+        $clientHistory = [];
+        if (! empty($clientCase->client_id)) {
+            $prevCases = ClientCase::where('user_id', $this->userId)
+                ->where('client_id', $clientCase->client_id)
+                ->where('id', '!=', $clientCase->id)
+                ->where(function ($q) {
+                    $q->whereNotNull('ai_analysis')
+                        ->orWhereNotNull('action_plan');
+                })
+                ->orderBy('created_at', 'desc')
+                ->limit(3)
+                ->get();
+
+            foreach ($prevCases as $prev) {
+                $clientHistory[] = [
+                    'case_reference'      => $prev->case_reference,
+                    'client_alias'        => $prev->client_alias,
+                    'context_overview'    => $prev->context_overview,
+                    'ai_recommendations'  => $prev->ai_analysis['ai_recommendations'] ?? [],
+                    'ai_challenges'       => $prev->ai_analysis['ai_challenges'] ?? [],
+                    'action_plan_summary' => $prev->action_plan['executive_summary'] ?? null,
+                    'plan_rating'         => $prev->plan_rating,
+                    'date'                => $prev->created_at?->format('Y-m-d'),
+                ];
+            }
+        }
+
+        if (empty($caseData) || ! is_array($caseData)) {
+            $caseData = (object) [];
+        }
+        if (empty($analysisData) || ! is_array($analysisData)) {
+            $analysisData = (object) [];
+        }
+
         $payload = [
-            'case_data'     => $caseData,
-            'analysis_data' => $analysisData,
-            'user_profile'  => $userProfile,
+            'client_id'      => $clientCase->client_id,
+            'case_data'      => $caseData,
+            'analysis_data'  => $analysisData,
+            'user_profile'   => $userProfile,
+            'client_history' => $clientHistory,
         ];
 
         $lastError = 'Unknown error.';

@@ -48,6 +48,7 @@ class ClientCaseCls
                 }
 
                 $data = [
+                    'client_id'        => $postData['client_id'] ?? $case->client_id,
                     'case_reference'   => $postData['case_reference'] ?? $case->case_reference,
                     'client_alias'     => $postData['client_alias'] ?? $case->client_alias,
                     'context_overview' => $postData['context_overview'] ?? $case->context_overview,
@@ -73,6 +74,7 @@ class ClientCaseCls
                 // Structure data for storage
                 $data = [
                     'user_id'          => Auth::id(),
+                    'client_id'        => $postData['client_id'] ?? null,
                     'case_reference'   => $postData['case_reference'] ?? null,
                     'client_alias'     => $postData['client_alias'],
                     'context_overview' => $postData['context_overview'] ?? null,
@@ -99,10 +101,10 @@ class ClientCaseCls
         }
     }
 
-    public function GetCases($search = null, $rating = null)
+    public function GetCases($search = null, $rating = null, $clientId = null)
     {
         try {
-            $cases            = $this->clientCaseRepository->GetUserCases(Auth::id(), $search, $rating);
+            $cases            = $this->clientCaseRepository->GetUserCases(Auth::id(), $search, $rating, $clientId);
             $response         = General::setResponse('SUCCESS', 'Cases retrieved successfully.');
             $response['data'] = $cases;
 
@@ -412,6 +414,70 @@ class ClientCaseCls
             $clientCase->update(['plan_rating' => $rating]);
 
             $response = General::setResponse('SUCCESS', 'Action plan rated successfully.');
+
+            return $response;
+        } catch (Exception $e) {
+            return General::setResponse('OTHER_ERROR', $e->getMessage());
+        }
+    }
+
+    /**
+     * Get distinct clients dropdown list for the authenticated user.
+     */
+    public function GetClientsDropdown($search = null)
+    {
+        try {
+            $clients = $this->clientCaseRepository->getDistinctClients(Auth::id(), $search);
+            $response = General::setResponse('SUCCESS', 'Clients retrieved successfully.');
+            $response['data'] = $clients;
+
+            return $response;
+        } catch (Exception $e) {
+            return General::setResponse('OTHER_ERROR', $e->getMessage());
+        }
+    }
+
+    /**
+     * Check if a client_id already exists and get its status.
+     */
+    public function CheckClientId($clientId)
+    {
+        try {
+            $clientId = trim((string) $clientId);
+
+            if ($clientId === '') {
+                return General::setResponse('VALIDATION_ERROR', 'Client ID is required.');
+            }
+
+            $userId = Auth::id();
+            $existingCase = $this->clientCaseRepository->checkClientIdExists($userId, $clientId);
+
+            if ($existingCase) {
+                $totalCases = $this->clientCaseRepository->countClientCases($userId, $clientId);
+                $response = General::setResponse('SUCCESS', 'Client ID already in use.');
+                $response['data'] = [
+                    'client_id'      => $clientId,
+                    'is_used'        => true,
+                    'exists'         => true,
+                    'client_alias'   => $existingCase->client_alias,
+                    'total_cases'    => $totalCases,
+                    'last_case_date' => $existingCase->created_at?->format('Y-m-d H:i:s'),
+                    'message'        => "Client ID '{$clientId}' is already associated with '{$existingCase->client_alias}' ({$totalCases} existing case" . ($totalCases > 1 ? 's' : '') . "). Creating this case will link it to this client's history.",
+                ];
+
+                return $response;
+            }
+
+            $response = General::setResponse('SUCCESS', 'Client ID is available.');
+            $response['data'] = [
+                'client_id'      => $clientId,
+                'is_used'        => false,
+                'exists'         => false,
+                'client_alias'   => null,
+                'total_cases'    => 0,
+                'last_case_date' => null,
+                'message'        => "Client ID '{$clientId}' is available.",
+            ];
 
             return $response;
         } catch (Exception $e) {

@@ -129,6 +129,8 @@ Route::middleware(['basicFilter'])->group(function () {
         Route::controller(ClientCaseController::class)->group(function () {
             Route::post('client-cases', 'store');
             Route::get('client-cases', 'index');
+            Route::get('client-cases/clients', 'clients');
+            Route::match(['get', 'post'], 'client-cases/check-client-id', 'checkClientId');
             Route::get('client-cases/{id}', 'show');
             Route::post('delete-client-cases/{id}', 'destroy');
             Route::get('client-cases/{id}/export-plan', 'exportPlan');

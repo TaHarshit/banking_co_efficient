@@ -313,19 +313,23 @@ class QuestionRequest(BaseModel):
     lang: str | None = None
 
 class CaseAnalysisRequest(BaseModel):
-    client_alias:     str
-    context_overview: str = ""
-    case_details:     dict
+    client_id:        str | None = None
+    client_alias:     str = "Client"
+    context_overview: str | None = ""
+    case_details:     dict | list | None = Field(default_factory=dict)
     user_profile:     str = ""
     history:          list = []
+    client_history:   list = []
     lang:             str | None = None
 
 class ActionPlanRequest(BaseModel):
-    case_data:     dict
-    analysis_data: dict
-    user_profile:  str = ""
-    history:       list = []
-    lang:             str | None = None
+    client_id:      str | None = None
+    case_data:      dict | list | None = Field(default_factory=dict)
+    analysis_data:  dict | list | None = Field(default_factory=dict)
+    user_profile:   str = ""
+    history:        list = []
+    client_history: list = []
+    lang:           str | None = None
 
 class Phase(BaseModel):
     title:    str
@@ -606,12 +610,13 @@ def analyze_case(request: CaseAnalysisRequest, accept_language: str | None = Hea
             else:
                 if "french" in target_lang_lower:
                     output_lang = "French"
-                elif "english" in target_lang_lower:
-                    output_lang = "English"
                 else:
                     output_lang = target_lang
-        details       = request.case_details
-        combined_input = f"{request.client_alias} {request.context_overview} {json.dumps(details)}"
+
+        details = request.case_details if isinstance(request.case_details, dict) else {}
+        overview = request.context_overview or ""
+        alias = request.client_alias or "Client"
+        combined_input = f"{alias} {overview} {json.dumps(details)}"
 
         # 1. Embedding — embed as-is; Qdrant filter selects the correct language book
         t0 = time.time()
@@ -668,6 +673,23 @@ def analyze_case(request: CaseAnalysisRequest, accept_language: str | None = Hea
         if output_lang and output_lang.lower() != "english":
             lang_warning = f"[CRITICAL LANGUAGE INSTRUCTION]\nYou MUST write ALL values, recommendations, challenges, style tips, reading reasons, and titles in {output_lang}. Do NOT write any values in English. Only the JSON keys themselves must remain strictly in English.\n[CRITICAL] Répondez uniquement en {output_lang} pour toutes les valeurs textuelles du JSON.\n\n"
 
+        client_history_context = ""
+        if request.client_history:
+            client_history_context = "[CLIENT PREVIOUS CASE HISTORY & OUTCOMES]\n"
+            for idx, h in enumerate(request.client_history, 1):
+                client_history_context += f"Previous Case {idx} ({h.get('date', 'Past')} - {h.get('client_alias', '')}):\n"
+                if h.get('case_reference'):
+                    client_history_context += f"  Reference: {h.get('case_reference')}\n"
+                if h.get('context_overview'):
+                    client_history_context += f"  Overview: {h.get('context_overview')}\n"
+                if h.get('ai_recommendations'):
+                    client_history_context += f"  Prior Recommendations: {json.dumps(h.get('ai_recommendations'))}\n"
+                if h.get('action_plan_summary'):
+                    client_history_context += f"  Prior Action Plan: {h.get('action_plan_summary')}\n"
+                if h.get('plan_rating'):
+                    client_history_context += f"  User Rating: {h.get('plan_rating')}/5\n"
+            client_history_context += "\n"
+
         system_prompt = lang_warning + f"""You are a World-Class Negotiation Expert and Strategic Advisor with 25+ years of experience.
 Your task: perform a deep, actionable analysis of the client case below.
 
@@ -679,7 +701,7 @@ Your task: perform a deep, actionable analysis of the client case below.
 
 [HISTORICAL MEMORY — Past similar cases & advice]
 {past_context}
-
+{client_history_context}
 [CURRENT CASE]
 Client Alias: {request.client_alias}
 Overview: {request.context_overview}
@@ -688,11 +710,12 @@ Details: {json.dumps(details, indent=2)}
 [INSTRUCTIONS]
 1. Think step-by-step before writing your final answer.
 2. Personalize every recommendation to match the user's behavioral profile weaknesses and strengths.
-3. Reference specific book techniques by name where applicable, AND cite the [Source Page] and [Images] URL if available.
-4. CRITICAL: When citing the [Images] URL, you MUST use the EXACT image URL specified for the corresponding chunk/page in the [BOOK KNOWLEDGE] context. Do NOT use the book cover image (page_1_snapshot.png) for techniques that are on other pages (e.g. if the technique is on Page 295, you MUST cite the image ending in page_295_snapshot.png). Never use a repeating cover image or fallback cover image for other pages.
-5. Each recommendation must be concrete and immediately actionable (not generic advice).
-6. Suggest at least 4 recommendations and 4 challenges.
-7. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside the JSON.
+3. If previous client case history is provided, ensure strategic continuity and address evolving client dynamics.
+4. Reference specific book techniques by name where applicable, AND cite the [Source Page] and [Images] URL if available.
+5. CRITICAL: When citing the [Images] URL, you MUST use the EXACT image URL specified for the corresponding chunk/page in the [BOOK KNOWLEDGE] context. Do NOT use the book cover image (page_1_snapshot.png) for techniques that are on other pages (e.g. if the technique is on Page 295, you MUST cite the image ending in page_295_snapshot.png). Never use a repeating cover image or fallback cover image for other pages.
+6. Each recommendation must be concrete and immediately actionable (not generic advice).
+7. Suggest at least 4 recommendations and 4 challenges.
+8. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside the JSON.
 
 Required JSON structure:
 {{
@@ -805,11 +828,12 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
             else:
                 if "french" in target_lang_lower:
                     output_lang = "French"
-                elif "english" in target_lang_lower:
-                    output_lang = "English"
                 else:
                     output_lang = target_lang
-        combined_input = json.dumps(request.case_data) + json.dumps(request.analysis_data)
+
+        case_data = request.case_data if isinstance(request.case_data, dict) else {}
+        analysis_data = request.analysis_data if isinstance(request.analysis_data, dict) else {}
+        combined_input = json.dumps(case_data) + json.dumps(analysis_data)
 
         # 1. Embedding — embed as-is; Qdrant filter selects the correct language book
         t0 = time.time()
@@ -853,6 +877,22 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
         if output_lang and output_lang.lower() != "english":
             lang_warning = f"[CRITICAL LANGUAGE INSTRUCTION]\nYou MUST write ALL values, summaries, meeting objectives, action plan steps, readings, and strategic recommendations in {output_lang}. Do NOT write any values in English. Only the JSON keys themselves must remain strictly in English.\n[CRITICAL] Répondez uniquement en {output_lang} pour toutes les valeurs textuelles du JSON.\n\n"
 
+        client_history_context = ""
+        if request.client_history:
+            client_history_context = "\n[CLIENT PREVIOUS CASE HISTORY & OUTCOMES]\n"
+            for idx, h in enumerate(request.client_history, 1):
+                client_history_context += f"Previous Case {idx} ({h.get('date', 'Past')} - {h.get('client_alias', '')}):\n"
+                if h.get('case_reference'):
+                    client_history_context += f"  Reference: {h.get('case_reference')}\n"
+                if h.get('context_overview'):
+                    client_history_context += f"  Overview: {h.get('context_overview')}\n"
+                if h.get('ai_recommendations'):
+                    client_history_context += f"  Prior Recommendations: {json.dumps(h.get('ai_recommendations'))}\n"
+                if h.get('action_plan_summary'):
+                    client_history_context += f"  Prior Action Plan: {h.get('action_plan_summary')}\n"
+                if h.get('plan_rating'):
+                    client_history_context += f"  User Rating: {h.get('plan_rating')}/5\n"
+
         system_prompt = lang_warning + f"""You are a World-Class Negotiation Coach creating a personalized, detailed Negotiation Action Plan.
 
 [USER BEHAVIORAL PROFILE]
@@ -860,7 +900,7 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
 
 [BOOK TECHNIQUES — Apply these specifically in your plan]
 {context}
-
+{client_history_context}
 [CASE DATA]
 {json.dumps(request.case_data, indent=2)}
 
@@ -870,13 +910,14 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
 [INSTRUCTIONS]
 1. Think carefully about each phase before writing.
 2. Tailor every step to address the user's behavioral strengths and weaknesses.
-3. Include specific negotiation techniques from the book by name, AND cite the [Source Page] and [Images] URL if available.
-4. CRITICAL: When citing the [Images] URL, you MUST use the EXACT image URL specified for the corresponding chunk/page in the [BOOK TECHNIQUES] context. Do NOT use the book cover image (page_1_snapshot.png) for techniques that are on other pages (e.g. if the technique is on Page 295, you MUST cite the image ending in page_295_snapshot.png). Never use a repeating cover image or fallback cover image for other pages.
-5. Each phase must have at least 3 detailed, actionable steps (not vague advice).
-6. Phases should flow logically: Before meeting → During meeting → After meeting.
-7. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside JSON.
-8. ALL 6 fields are required. Do not omit any field.
-9. CRITICAL: Do NOT return the structure or keys of a Case Analysis (do not use keys like "ai_recommendations", "suggested_readings", "ai_challenges", or "negotiation_style_tips"). You MUST return strictly the Action Plan structure below.
+3. If previous client case history is provided, build on prior outcomes and ensure cohesive tactical progression.
+4. Include specific negotiation techniques from the book by name, AND cite the [Source Page] and [Images] URL if available.
+5. CRITICAL: When citing the [Images] URL, you MUST use the EXACT image URL specified for the corresponding chunk/page in the [BOOK TECHNIQUES] context. Do NOT use the book cover image (page_1_snapshot.png) for techniques that are on other pages (e.g. if the technique is on Page 295, you MUST cite the image ending in page_295_snapshot.png). Never use a repeating cover image or fallback cover image for other pages.
+6. Each phase must have at least 3 detailed, actionable steps (not vague advice).
+7. Phases should flow logically: Before meeting → During meeting → After meeting.
+8. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside JSON.
+9. ALL 6 fields are required. Do not omit any field.
+10. CRITICAL: Do NOT return the structure or keys of a Case Analysis (do not use keys like "ai_recommendations", "suggested_readings", "ai_challenges", or "negotiation_style_tips"). You MUST return strictly the Action Plan structure below.
 
 Required JSON structure (return ALL fields, keep steps detailed but concise):
 {{

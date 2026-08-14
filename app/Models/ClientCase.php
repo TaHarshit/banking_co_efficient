@@ -11,6 +11,7 @@ class ClientCase extends Model
 
     protected $fillable = [
         'user_id',
+        'client_id',
         'case_reference',
         'client_alias',
         'context_overview',

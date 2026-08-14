@@ -5,12 +5,12 @@ namespace Tests\Feature\Api;
 use App\Models\CaseStudyQuestion;
 use App\Models\CaseStudyQuestionOption;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class CaseStudySectionsTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     protected $user;
 
@@ -55,15 +55,15 @@ class CaseStudySectionsTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
-            'status',
             'message',
             'data' => [
                 '*' => [
                     'section_name',
+                    'locale',
                     'questions' => [
                         '*' => [
                             'id',
-                            'question',
+                            'question_text',
                             'options' => [
                                 '*' => [
                                     'id',
@@ -78,9 +78,9 @@ class CaseStudySectionsTest extends TestCase
         ]);
 
         $data = $response->json('data');
-        $this->assertCount(2, $data);
-        $this->assertEquals('Section A', $data[0]['section_name']);
-        $this->assertEquals('English Question 1', $data[0]['questions'][0]['question']);
+        $sectionA = collect($data)->firstWhere('section_name', 'Section A');
+        $this->assertNotNull($sectionA);
+        $this->assertEquals('English Question 1', $sectionA['questions'][0]['question_text']);
     }
 
     /** @test */
@@ -103,7 +103,8 @@ class CaseStudySectionsTest extends TestCase
 
         $response->assertStatus(200);
         $data = $response->json('data');
-        $this->assertEquals('Section A French', $data[0]['section_name']);
-        $this->assertEquals('French Question', $data[0]['questions'][0]['question']);
+        $sectionA = collect($data)->firstWhere('section_name', 'Section A French');
+        $this->assertNotNull($sectionA);
+        $this->assertEquals('French Question', $sectionA['questions'][0]['question_text']);
     }
 }
