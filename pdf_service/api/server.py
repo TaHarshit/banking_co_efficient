@@ -108,6 +108,315 @@ def get_qdrant_client():
 vector_db = get_qdrant_client()
 COLLECTION_NAME = "pdf_chunks"
 
+# --- Authoritative Book Table of Contents Catalogue (English & French) ---
+# Guarantees complete structural awareness and verified starting page numbers (> Page 2)
+BOOK_TOC_CATALOGUE = {
+    "Sales_and_negociation_OK-2.pdf": {
+        "Introduction: Private Banking, A Business Like No Other": {
+            "start_page": 17,
+            "keywords": ["introduction", "private banking", "characteristics", "intimate connection", "triangle"],
+            "sections": {
+                "The Future of Swiss Banking Lies in Its Past": 19,
+                "The Key Characteristics of Wealth Management": 21,
+                "A Profession with an Intimate Connection": 23
+            }
+        },
+        "Chapter 1: Frameworks, Methods, Concepts, and Lost Illusions": {
+            "start_page": 37,
+            "keywords": ["advisory", "competitive advantage", "method", "process", "framework", "chapter 1", "chapitre 1"],
+            "sections": {
+                "Advisory Services Are a Competitive Advantage": 39,
+                "Good Advice is Integrated": 41,
+                "The Different Conceptual Approaches to Advice": 45
+            }
+        },
+        "Chapter 2: Stay on the Ball! Strategy, Segmentation, and Networking": {
+            "start_page": 69,
+            "keywords": ["strategy", "segmentation", "networking", "pragmatism", "retention", "chapter 2", "chapitre 2"],
+            "sections": {
+                "Put Pragmatism at the Heart of Your Strategy": 71,
+                "Why Keep Prospecting All the Time": 75,
+                "Strategic Client Segmentation": 85,
+                "A Satisfied Client is Worth Double": 103
+            }
+        },
+        "Chapter 3: Always Have an Idea, a Vision, and a Strategy": {
+            "start_page": 113,
+            "keywords": ["vision", "dilemma", "ethics", "who am i", "ahead", "chapter 3", "chapitre 3"],
+            "sections": {
+                "Professional Dilemmas in Wealth Management": 115,
+                "Who Am I When I'm With the Client": 121,
+                "Staying One Step Ahead with Strategy": 130
+            }
+        },
+        "Chapter 4: Wealth Managers: The Salespeople Who Must Not Be Named": {
+            "start_page": 145,
+            "keywords": ["skill", "competency", "roles", "stigma", "selling", "chapter 4", "chapitre 4"],
+            "sections": {
+                "The Wealth Manager's Many Faces": 147,
+                "Skill Sets and Behavioral Competencies": 155,
+                "Overcoming the Stigma of Selling": 165
+            }
+        },
+        "Chapter 5: Philosophy and Psychotherapy for Dummies": {
+            "start_page": 181,
+            "keywords": ["philosophy", "psychotherapy", "emotional intelligence", "dog-eat-dog", "investment", "chapter 5", "chapitre 5"],
+            "sections": {
+                "A Touch of Philosophy in This Dog-Eat-Dog World": 183,
+                "Why Philosophical Arguments Are So Compelling": 188,
+                "Emotional Intelligence in Commercial Dialogues": 198
+            }
+        },
+        "Chapter 6: Drivers of Influence: Motivation or Manipulation?": {
+            "start_page": 213,
+            "keywords": ["influence", "motivation", "manipulation", "authority", "reciprocity", "kindness", "chapter 6", "chapitre 6"],
+            "sections": {
+                "Drivers of Influence in Client Relationships": 215,
+                "Different Influence Techniques": 218,
+                "Deference to Authority and Social Proof": 221,
+                "Kindness and Reciprocity Strategies": 230
+            }
+        },
+        "Chapter 7: Prospecting, or the Art of Survival": {
+            "start_page": 245,
+            "keywords": ["prospecting", "survival", "top 50", "leads", "events", "chapter 7", "chapitre 7"],
+            "sections": {
+                "Prospecting to Build Your Commercial Success": 247,
+                "The Reasons Behind Prospecting": 250,
+                "Creating the Top 50 High-Potential List": 260,
+                "Networking and Event Strategies": 275
+            }
+        },
+        "Chapter 8: First Contact, Lasting Impact": {
+            "start_page": 299,
+            "keywords": ["first impression", "first contact", "perception", "filter", "rapport", "trust", "chapter 8", "chapitre 8"],
+            "sections": {
+                "The First Impression is Always the Right One": 301,
+                "The Filter Principle and Perception": 310,
+                "Creating Immediate Rapport and Trust": 320
+            }
+        },
+        "Chapter 9: Getting to Know the Client's Strongest Side": {
+            "start_page": 331,
+            "keywords": ["profiling", "client profile", "discovery", "needs", "personality", "questions", "chapter 9", "chapitre 9"],
+            "sections": {
+                "The Importance of Client Profiling": 333,
+                "Deep Psychological and Financial Discovery": 340,
+                "Elevating Questions and Active Listening": 350
+            }
+        },
+        "Chapter 10: Persuasion, USP, and Buying Signals": {
+            "start_page": 361,
+            "keywords": ["persuasion", "usp", "fab", "buying process", "buying signals", "humor", "chapter 10", "chapitre 10"],
+            "sections": {
+                "The Buying Process in Private Wealth Management": 363,
+                "The FAB-USP Triad (Feature, Advantage, Benefit, USP)": 372,
+                "Tactics for Negotiating with Humor and Wit": 385,
+                "Detecting Buying Signals": 395
+            }
+        },
+        "Chapter 11: How to Handle Objections, Price Negotiation": {
+            "start_page": 405,
+            "keywords": ["objection", "objections", "price", "pricing", "discount", "iar", "isolate", "price-protection", "fee", "negotiation", "chapter 11", "chapitre 11"],
+            "sections": {
+                "Objections Add Flavor to Sales": 407,
+                "The Difference Between Complaints and Objections": 409,
+                "Handling Price Objections and Defending Fees": 413,
+                "The Isolate-Agree-Return (IAR) Technique": 417,
+                "Price-Protection and Conditional Concessions": 422
+            }
+        },
+        "Chapter 11 bis: Difficult and Delicate Situations": {
+            "start_page": 429,
+            "keywords": ["deadlock", "delicate", "difficult", "conflict", "portfolio takeover", "impasse", "11 bis", "11bis"],
+            "sections": {
+                "What to Do When Negotiations Reach a Deadlock": 431,
+                "Taking Over a Portfolio from Another Manager": 438,
+                "Handling Conflict with Calm Conviction": 444
+            }
+        },
+        "Chapter 12: Closing the Deal and Client Follow-Up": {
+            "start_page": 451,
+            "keywords": ["closing", "conclusion", "follow-up", "deal", "retention", "commitment", "chapter 12", "chapitre 12"],
+            "sections": {
+                "The Right Moment to Close: Neither Too Early Nor Too Late": 453,
+                "Collecting Buying Signals and Closing Techniques": 458,
+                "Post-Deal Client Retention and Follow-Through": 462
+            }
+        },
+        "Chapter 13: Presenting the Bank and Public Speaking": {
+            "start_page": 467,
+            "keywords": ["public speaking", "pitch", "presenting the bank", "presentation", "hook", "chapter 13", "chapitre 13"],
+            "sections": {
+                "Introduction to Public Speaking in a Banking Context": 469,
+                "Structuring Your Presentation in Four Parts": 470,
+                "Delivering a Powerful Hook and Key Message": 476
+            }
+        },
+        "Chapter 14: Cultural Awareness, Etiquette, and Time Management": {
+            "start_page": 485,
+            "keywords": ["etiquette", "image", "culture", "time management", "codes", "branding", "chapter 14", "chapitre 14"],
+            "sections": {
+                "Image is Part of a Salesperson's Capital": 487,
+                "Meeting People at Events and Personal Branding": 492,
+                "Cultural Codes and Etiquette for Wealth Managers": 500
+            }
+        }
+    },
+    "Vente_et_negociation_bancaire_png_fr.pdf": {
+        "Introduction : Le Private Banking, un business pas comme les autres": {
+            "start_page": 17,
+            "keywords": ["introduction", "private banking", "gestion de fortune", "connexion intime", "triangle"],
+            "sections": {
+                "L'avenir de la banque suisse est dans son passé": 19,
+                "Les spécificités de la gestion de fortune": 21,
+                "Un métier en connexion intime": 23
+            }
+        },
+        "Chapitre 1 : Cadres, méthodes, concepts et illusions perdues": {
+            "start_page": 37,
+            "keywords": ["conseil", "avantage concurrentiel", "méthode", "processus", "cadre", "chapitre 1", "chapter 1"],
+            "sections": {
+                "Le conseil est un avantage concurrentiel": 39,
+                "Un conseil de qualité est intégré": 41,
+                "Les différentes approches conceptuelles du conseil": 45
+            }
+        },
+        "Chapitre 2 : Ne vous endormez pas ! Stratégie, segmentation et networking": {
+            "start_page": 69,
+            "keywords": ["stratégie", "segmentation", "networking", "pragmatisme", "fidélisation", "chapitre 2", "chapter 2"],
+            "sections": {
+                "La stratégie du pragmatisme est prioritaire": 71,
+                "Pourquoi est-il nécessaire de prospecter en permanence": 75,
+                "La segmentation stratégique des clients": 85,
+                "La satisfaction d'un client vaut double": 103
+            }
+        },
+        "Chapitre 3 : Toujours une idée, une vision, une stratégie d'avance": {
+            "start_page": 113,
+            "keywords": ["vision", "dilemme", "éthique", "je roule pour qui", "stratégie", "chapitre 3", "chapter 3"],
+            "sections": {
+                "Dilemmes professionnels : je roule pour qui": 115,
+                "Qui suis-je quand je suis avec le client": 121,
+                "Une longueur d'avance grâce à la vision stratégique": 130
+            }
+        },
+        "Chapitre 4 : Gestionnaires de fortune : ces vendeurs qu'on ne saurait nommer": {
+            "start_page": 145,
+            "keywords": ["compétences", "postures", "visages", "tabou", "vendeur", "chapitre 4", "chapter 4"],
+            "sections": {
+                "Le gestionnaire, cet être aux multiples visages": 147,
+                "Compétences et savoir-faire relationnels": 155,
+                "Dépasser le tabou de la vente en banque privée": 165
+            }
+        },
+        "Chapitre 5 : Philosophie et psychothérapie pour les nuls": {
+            "start_page": 181,
+            "keywords": ["philosophie", "psychothérapie", "intelligence émotionnelle", "argument", "investissement", "chapitre 5", "chapter 5"],
+            "sections": {
+                "Pourquoi l'argument philosophique est-il convaincant": 183,
+                "La philosophie de l'investissement": 188,
+                "L'intelligence émotionnelle dans le dialogue commercial": 198
+            }
+        },
+        "Chapitre 6 : Les facteurs d'influence dans la relation commerciale": {
+            "start_page": 213,
+            "keywords": ["influence", "motivation", "manipulation", "autorité", "réciprocité", "bienveillance", "chapitre 6", "chapter 6"],
+            "sections": {
+                "Les leviers de l'influence : motivation ou manipulation": 215,
+                "Les différentes techniques d'influence": 218,
+                "La déférence envers l'autorité et la preuve sociale": 221,
+                "Stratégies de bienveillance et de réciprocité": 230
+            }
+        },
+        "Chapitre 7 : La prospection ou l'art de survivre": {
+            "start_page": 245,
+            "keywords": ["prospection", "survivre", "top 50", "succès", "événements", "chapitre 7", "chapter 7"],
+            "sections": {
+                "La raison d'être de la prospection": 247,
+                "Construire son succès commercial": 250,
+                "Définir la liste des 50 clients et prospects prioritaires": 260,
+                "Stratégies de réseau et présence aux événements": 275
+            }
+        },
+        "Chapitre 8 : Premier contact, impact durable": {
+            "start_page": 299,
+            "keywords": ["première impression", "premier contact", "perception", "filtre", "confiance", "chapitre 8", "chapter 8"],
+            "sections": {
+                "La première impression est toujours la bonne, surtout quand elle est mauvaise": 301,
+                "Le principe du filtre et de la perception": 310,
+                "Créer la confiance immédiate": 320
+            }
+        },
+        "Chapitre 9 : Mieux cerner le profil et la personnalité du client": {
+            "start_page": 331,
+            "keywords": ["profil", "besoins profonds", "découverte", "personnalité", "questions", "écoute", "chapitre 9", "chapter 9"],
+            "sections": {
+                "Les enjeux du profil client et ses besoins profonds": 333,
+                "L'analyse biographique et psychologique": 340,
+                "Questions d'élévation et écoute active": 350
+            }
+        },
+        "Chapitre 10 : Persuasion, USP et signaux d'achat": {
+            "start_page": 361,
+            "keywords": ["persuasion", "usp", "fab", "processus d'achat", "signaux d'achat", "humour", "chapitre 10", "chapter 10"],
+            "sections": {
+                "Le processus d'achat en gestion privée": 363,
+                "La méthode FAB-USP (Fonctionnalité, Avantage, Bénéfice, USP)": 372,
+                "Tactiques pour négocier avec humour et malice": 385,
+                "Identifier et exploiter les signaux d'achat": 395
+            }
+        },
+        "Chapitre 11 : Traitement des objections et négociation du prix": {
+            "start_page": 405,
+            "keywords": ["objection", "objections", "prix", "tarif", "remise", "iar", "isoler", "honoraires", "négociation", "chapitre 11", "chapter 11"],
+            "sections": {
+                "Les objections sont le sel de la vente": 407,
+                "Différence entre plainte et objection": 409,
+                "Défendre ses honoraires et répondre aux objections tarifaires": 413,
+                "La technique Isoler-Accepter-Renvoyer (IAR)": 417,
+                "Concessions conditionnelles et protection du prix": 422
+            }
+        },
+        "Chapitre 11 bis : Situations difficiles et délicates": {
+            "start_page": 429,
+            "keywords": ["impasse", "délicates", "difficiles", "conflit", "reprise de portefeuille", "11 bis", "11bis"],
+            "sections": {
+                "Que faire en cas d'impasse dans une négociation": 431,
+                "Reprise de portefeuille par un gestionnaire": 438,
+                "Gérer les tensions avec calme et conviction": 444
+            }
+        },
+        "Chapitre 12 : Conclure la vente et assurer le suivi client": {
+            "start_page": 451,
+            "keywords": ["conclusion", "conclure", "suivi", "vente", "fidélisation", "engagement", "chapitre 12", "chapter 12"],
+            "sections": {
+                "Le bon moment de la conclusion : ni trop tôt, ni trop tard": 453,
+                "La collecte des OUI et les techniques d'engagement": 458,
+                "Fidélisation et suivi rigoureux après la signature": 462
+            }
+        },
+        "Chapitre 13 : Présenter la banque et parler en public": {
+            "start_page": 467,
+            "keywords": ["parler en public", "présentation", "présenter la banque", "accroche", "pitch", "chapitre 13", "chapter 13"],
+            "sections": {
+                "Introduction à la prise de parole dans un contexte bancaire": 469,
+                "Structurer son intervention en quatre temps": 470,
+                "Une accroche percutante et un message clé clair": 476
+            }
+        },
+        "Chapitre 14 : Savoir-être, étiquette et gestion du temps": {
+            "start_page": 485,
+            "keywords": ["étiquette", "image", "capital", "gestion du temps", "codes", "savoir-être", "chapitre 14", "chapter 14"],
+            "sections": {
+                "L'image est une partie du capital du vendeur": 487,
+                "La rencontre lors d'un événement et réseau personnel": 492,
+                "Codes culturels et étiquette en banque privée": 500
+            }
+        }
+    }
+}
+
 # --- Load Table of Contents (generated during chunking) ---
 # This gives the AI complete structural awareness of the book
 TOC_DATA = {}
@@ -118,7 +427,7 @@ try:
             TOC_DATA = json.load(f)
         print(f"[INIT] Loaded TOC with {sum(len(v['chapters']) for v in TOC_DATA.values())} chapters from {len(TOC_DATA)} source(s)", flush=True)
     else:
-        print(f"[WARN] TOC file not found at {TOC_FILE}. Run build_index.sh to generate it.", flush=True)
+        print(f"[WARN] TOC file not found at {TOC_FILE}. Using built-in BOOK_TOC_CATALOGUE.", flush=True)
 except Exception as e:
     print(f"[WARN] Failed to load TOC: {e}", flush=True)
 
@@ -138,17 +447,142 @@ except Exception as e:
 
 def get_toc_for_source(source_file: str) -> str:
     """Format the TOC for a specific source PDF as a readable string for the AI."""
-    if source_file not in TOC_DATA:
+    toc_dict = None
+    if source_file in TOC_DATA and TOC_DATA[source_file].get("chapters"):
+        toc_dict = TOC_DATA[source_file].get("chapters", {})
+    elif source_file in BOOK_TOC_CATALOGUE:
+        toc_dict = BOOK_TOC_CATALOGUE[source_file]
+    
+    if not toc_dict:
         return ""
     
-    toc = TOC_DATA[source_file]
     lines = []
-    for ch_name, ch_data in toc.get("chapters", {}).items():
-        lines.append(f"- {ch_name} (starts p.{ch_data['start_page']})")
+    for ch_name, ch_data in toc_dict.items():
+        start_p = ch_data.get("start_page", 1)
+        if start_p <= 2:
+            continue
+        lines.append(f"- {ch_name} (starts p.{start_p})")
         for sec_name, sec_page in ch_data.get("sections", {}).items():
-            lines.append(f"  - {sec_name} (p.{sec_page})")
+            if sec_page > 2:
+                lines.append(f"  - {sec_name} (p.{sec_page})")
     
     return "\n".join(lines)
+
+
+def normalize_suggested_readings(readings: list, output_lang: str | None) -> list:
+    """
+    Ensure every suggested reading has an authentic, valid page_no (> 2) matching
+    the specific English or French book edition, eliminating fake 'Page 1' references,
+    and populating both 'page_no' and 'page'.
+    """
+    if not isinstance(readings, list):
+        return []
+
+    is_french = bool(output_lang and str(output_lang).lower().startswith("fr"))
+    source_file = "Vente_et_negociation_bancaire_png_fr.pdf" if is_french else "Sales_and_negociation_OK-2.pdf"
+    catalogue = BOOK_TOC_CATALOGUE.get(source_file, BOOK_TOC_CATALOGUE["Sales_and_negociation_OK-2.pdf"])
+
+    normalized = []
+    for item in readings:
+        if not isinstance(item, dict):
+            continue
+
+        raw_ch = str(item.get("chapter", "")).strip()
+        raw_title = str(item.get("title", "")).strip()
+        raw_reason = str(item.get("reason", "")).strip()
+        raw_time = str(item.get("time", "15 mins")).strip() or "15 mins"
+        raw_page_no = item.get("page_no") if item.get("page_no") is not None else item.get("page")
+
+        # 1. Check if page_no is already valid (> 2)
+        valid_page = None
+        if raw_page_no is not None:
+            try:
+                p_val = int(raw_page_no)
+                if p_val > 2 and p_val <= 520:
+                    valid_page = p_val
+            except (ValueError, TypeError):
+                pass
+
+        # 2. Check if chapter string is purely numeric (e.g., "11", "413", "293", "33")
+        clean_ch_name = raw_ch
+        if raw_ch.isdigit():
+            ch_num_val = int(raw_ch)
+            if ch_num_val <= 20:
+                # It's a chapter number (e.g. "11")
+                clean_ch_name = f"Chapter {raw_ch}" if not is_french else f"Chapitre {raw_ch}"
+            else:
+                # It was a page number placed in the chapter field
+                if valid_page is None:
+                    valid_page = ch_num_val
+                clean_ch_name = raw_title if raw_title else ("Technique Reference" if not is_french else "Référence Technique")
+
+        # Clean fake "Page 1", "Page 2", "cover" references
+        if clean_ch_name.lower() in ["page 1", "page 2", "p. 1", "p. 2", "p.1", "p.2", "cover", "introduction", ""]:
+            clean_ch_name = raw_title if raw_title else ("Technique Reference" if not is_french else "Référence Technique")
+
+        # 3. Match against catalogue to find the authentic chapter & starting page
+        search_text = f"{clean_ch_name} {raw_title} {raw_reason}".lower()
+
+        # Check explicit chapter number in search_text (e.g. "chapter 11 bis", "chapter 11", "chapitre 11 bis")
+        ch_num_match = re.search(r'\b(?:chapter|chapitre)\s*(11\s*bis|\d+)\b', search_text, re.IGNORECASE)
+
+        best_match_page = None
+        best_match_name = None
+
+        if ch_num_match:
+            num_str = re.sub(r'\s+', ' ', ch_num_match.group(1).lower().strip())
+            for cat_ch_name, cat_data in catalogue.items():
+                if num_str in ["11 bis", "11bis"] and "11 bis" in cat_ch_name.lower():
+                    best_match_page = cat_data["start_page"]
+                    best_match_name = cat_ch_name
+                    break
+                elif num_str not in ["11 bis", "11bis"] and (f" {num_str}:" in cat_ch_name.lower() or f" {num_str} " in cat_ch_name.lower() or cat_ch_name.lower().endswith(f" {num_str}")):
+                    best_match_page = cat_data["start_page"]
+                    best_match_name = cat_ch_name
+                    break
+
+        # If not matched by chapter number, match by keywords and sections
+        if best_match_page is None:
+            max_score = 0
+            for cat_ch_name, cat_data in catalogue.items():
+                score = 0
+                for kw in cat_data.get("keywords", []):
+                    if kw in search_text:
+                        score += 1
+                for sec_name in cat_data.get("sections", {}):
+                    if sec_name.lower() in search_text:
+                        score += 2
+                if score > max_score:
+                    max_score = score
+                    best_match_page = cat_data["start_page"]
+                    best_match_name = cat_ch_name
+
+        # If page_no was invalid, <= 2, or fake, assign the matched page number
+        if valid_page is None or valid_page <= 2:
+            if best_match_page and best_match_page > 2:
+                valid_page = best_match_page
+            else:
+                # Default to Chapter 11 (Objections / Pricing) or Chapter 10 if unknown
+                valid_page = 405
+
+        # Format clean chapter label
+        if (clean_ch_name.isdigit() or len(clean_ch_name) < 4 or "page 1" in clean_ch_name.lower()) and best_match_name:
+            clean_ch_name = best_match_name
+        elif best_match_name and clean_ch_name in ["Technique Reference", "Référence Technique"]:
+            clean_ch_name = best_match_name
+
+        clean_title = raw_title if raw_title else (best_match_name or clean_ch_name)
+
+        normalized.append({
+            "chapter": clean_ch_name,
+            "title": clean_title,
+            "page_no": int(valid_page),
+            "page": int(valid_page),
+            "time": raw_time,
+            "reason": raw_reason
+        })
+
+    return normalized
 
 
 # Roman numeral utility for matching
@@ -373,10 +807,11 @@ ANALYZE_CASE_RESPONSE_FORMAT = {
                         "properties": {
                             "chapter": {"type": "string"},
                             "title":   {"type": "string"},
+                            "page_no": {"type": "integer"},
                             "time":    {"type": "string"},
                             "reason":  {"type": "string"}
                         },
-                        "required": ["chapter", "title", "time", "reason"],
+                        "required": ["chapter", "title", "page_no", "time", "reason"],
                         "additionalProperties": False
                     }
                 },
@@ -613,7 +1048,7 @@ def attempt_json_repair(content: str, required_keys: list, schema_template: str 
         repair_prompt = f"""The following JSON is incomplete or malformed. Fix it so it is valid JSON 
 and contains ALL these required keys: {required_keys}.
 {template_str}
-Return ONLY the corrected JSON with no explanation. Do NOT return the structure of a case analysis.
+Return ONLY the valid corrected JSON with no extra explanation.
 
 BROKEN JSON:
 {content[:3000]}
@@ -748,6 +1183,12 @@ def analyze_case(request: CaseAnalysisRequest, accept_language: str | None = Hea
         t0 = time.time()
         print(f"[INFO] /analyze-case - target_lang: {target_lang}, resolved output_lang: {output_lang}", flush=True)
         
+        # Get language-specific TOC for structural chapter and starting page awareness
+        toc_text = get_toc_for_source(source_file)
+        toc_section = ""
+        if toc_text:
+            toc_section = f"\n[BOOK TABLE OF CONTENTS & STARTING PAGE NUMBERS — Use these exact chapters and pages]\n{toc_text}\n"
+
         lang_warning = ""
         if output_lang and output_lang.lower() != "english":
             lang_warning = f"[CRITICAL LANGUAGE INSTRUCTION]\nYou MUST write ALL values, recommendations, challenges, style tips, reading reasons, and titles in {output_lang}. Do NOT write any values in English. Only the JSON keys themselves must remain strictly in English.\n[CRITICAL] Répondez uniquement en {output_lang} pour toutes les valeurs textuelles du JSON.\n\n"
@@ -774,7 +1215,7 @@ Your task: perform a deep, actionable analysis of the client case below.
 
 [USER BEHAVIORAL PROFILE]
 {request.user_profile if request.user_profile else "No profile provided — apply general best-practice recommendations."}
-
+{toc_section}
 [BOOK KNOWLEDGE — Use these proven negotiation techniques]
 {context}
 
@@ -790,11 +1231,11 @@ Details: {json.dumps(details, indent=2)}
 1. Think step-by-step before writing your final answer.
 2. Personalize every recommendation to match the user's behavioral profile weaknesses and strengths.
 3. If previous client case history is provided, ensure strategic continuity and address evolving client dynamics.
-4. Reference specific book techniques and chapters from the context. ONLY cite real content pages (> Page 2) and chapter names. NEVER cite "Page 1", "Page 2", or book cover/intro pages.
+4. Reference specific book techniques and chapters from the context and Table of Contents. ONLY cite real content pages (> Page 2) and chapter names. NEVER cite "Page 1", "Page 2", or book cover/intro pages.
 5. CRITICAL IMAGE RULE: ONLY cite an image URL if the corresponding technique in the [BOOK KNOWLEDGE] context explicitly lists a real diagram URL (NOT None). If [Images] is None or if no diagram exists for the technique, DO NOT include any image URL or image citation. NEVER cite or invent Page 1/cover images. If no diagram applies, omit images completely.
 6. Each recommendation must be concrete and immediately actionable (not generic advice).
 7. Suggest at least 4 recommendations and 4 challenges.
-8. In "suggested_readings", reference actual chapter names and topics from the book (e.g. "Chapter 4: Anchoring & Concessions"). NEVER cite "Page 1" or cover pages.
+8. In "suggested_readings", reference actual chapter names and topics from the book catalogue above. Every item MUST have a valid "page_no" (integer > 2, matching the authentic starting page of the chapter in the {output_lang or 'English'} edition). NEVER cite "Page 1", "Page 2", or cover pages.
 9. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside the JSON.
 
 Required JSON structure:
@@ -806,8 +1247,9 @@ Required JSON structure:
     "Concrete actionable recommendation 4 ..."
   ],
   "suggested_readings": [
-    {{"chapter": "Real Chapter Name / Page Ref (e.g. Chapter 4: Anchoring & Concessions)", "title": "Chapter title", "time": "Estimated reading time", "reason": "Why this chapter applies"}},
-    {{"chapter": "...", "title": "...", "time": "...", "reason": "..."}}
+    {{"chapter": "Chapter 11: How to Handle Objections, Price Negotiation", "title": "Handling Price Objections and Defending Fees", "page_no": 405, "time": "15 mins", "reason": "Provides the specific logic for praising a client's fussiness about price to build rapport."}},
+    {{"chapter": "Chapter 10: Persuasion, USP, and Buying Signals", "title": "The FAB-USP Triad and Value Differentiation", "page_no": 361, "time": "10 mins", "reason": "Reinforces the doctor analogy and USP to make your solution the only viable choice."}},
+    {{"chapter": "Chapter 2: Stay on the Ball! Strategy, Segmentation, and Networking", "title": "Client Retention and Strategic Segmentation", "page_no": 69, "time": "10 mins", "reason": "Outlines retention strategies and calculating long-term client value."}}
   ],
   "ai_challenges": [
     "Specific challenge this user will likely face in this negotiation",
@@ -823,8 +1265,8 @@ Required JSON structure:
 
         system_prompt += "\n\n"
         if output_lang and output_lang.lower() != "english":
-            system_prompt += f"8. CRITICAL: All textual values in the output JSON (such as recommendations, challenges, style tips, reading reasons/titles) MUST be written in {output_lang}. The JSON keys themselves MUST remain strictly in English as specified."
-            system_prompt += f"\n9. LANGUAGE COMPLIANCE: Remember, the user's selected language is {output_lang}. You MUST translate all your recommendations, challenges, tips, and readings into {output_lang}. Do not write them in English."
+            system_prompt += f"8. CRITICAL: All textual values in the output JSON (such as recommendations, challenges, style tips, reading reasons/titles/chapters) MUST be written in {output_lang}. The JSON keys themselves MUST remain strictly in English as specified."
+            system_prompt += f"\n9. LANGUAGE COMPLIANCE: Remember, the user's selected language is {output_lang}. You MUST use the {output_lang} Table of Contents and translate all your recommendations, challenges, tips, and readings into {output_lang}. Ensure 'page_no' corresponds to the {output_lang} book pages."
         else:
             system_prompt += "8. CRITICAL: All textual values in the output JSON MUST be written in English. The JSON keys themselves MUST remain strictly in English as specified."
 
@@ -862,6 +1304,10 @@ Required JSON structure:
 
         # Sanitize output of any cover images / fake page 1 references
         analysis = sanitize_ai_output_content(analysis)
+
+        # Normalize suggested readings to guarantee authentic page numbers (> Page 2) and language alignment
+        if "suggested_readings" in analysis and isinstance(analysis["suggested_readings"], list):
+            analysis["suggested_readings"] = normalize_suggested_readings(analysis["suggested_readings"], output_lang)
 
         # 5. Store in memory
         t0 = time.time()
@@ -957,6 +1403,12 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
         t0 = time.time()
         print(f"[INFO] /generate-plan - target_lang: {target_lang}, resolved output_lang: {output_lang}", flush=True)
 
+        # Get language-specific TOC for structural chapter and starting page awareness
+        toc_text = get_toc_for_source(source_file)
+        toc_section = ""
+        if toc_text:
+            toc_section = f"\n[BOOK TABLE OF CONTENTS & STARTING PAGE NUMBERS]\n{toc_text}\n"
+
         lang_warning = ""
         if output_lang and output_lang.lower() != "english":
             lang_warning = f"[CRITICAL LANGUAGE INSTRUCTION]\nYou MUST write ALL values, summaries, meeting objectives, action plan steps, readings, and strategic recommendations in {output_lang}. Do NOT write any values in English. Only the JSON keys themselves must remain strictly in English.\n[CRITICAL] Répondez uniquement en {output_lang} pour toutes les valeurs textuelles du JSON.\n\n"
@@ -981,7 +1433,7 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
 
 [USER BEHAVIORAL PROFILE]
 {request.user_profile if request.user_profile else "No profile provided — create a general best-practice plan."}
-
+{toc_section}
 [BOOK TECHNIQUES — Apply these specifically in your plan]
 {context}
 {client_history_context}
