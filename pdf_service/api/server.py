@@ -113,305 +113,305 @@ COLLECTION_NAME = "pdf_chunks"
 BOOK_TOC_CATALOGUE = {
     "Sales_and_negociation_OK-2.pdf": {
         "Introduction: Private Banking, A Business Like No Other": {
-            "start_page": 17,
+            "start_page": 15,
             "keywords": ["introduction", "private banking", "characteristics", "intimate connection", "triangle"],
             "sections": {
-                "The Future of Swiss Banking Lies in Its Past": 19,
-                "The Key Characteristics of Wealth Management": 21,
-                "A Profession with an Intimate Connection": 23
+                "The Future of Swiss Banking Lies in Its Past": 17,
+                "The Key Characteristics of Wealth Management": 19,
+                "A Profession with an Intimate Connection": 21
             }
         },
         "Chapter 1: Frameworks, Methods, Concepts, and Lost Illusions": {
-            "start_page": 37,
+            "start_page": 35,
             "keywords": ["advisory", "competitive advantage", "method", "process", "framework", "chapter 1", "chapitre 1"],
             "sections": {
-                "Advisory Services Are a Competitive Advantage": 39,
-                "Good Advice is Integrated": 41,
-                "The Different Conceptual Approaches to Advice": 45
+                "Advisory Services Are a Competitive Advantage": 37,
+                "Good Advice is Integrated": 39,
+                "The Different Conceptual Approaches to Advice": 43
             }
         },
         "Chapter 2: Stay on the Ball! Strategy, Segmentation, and Networking": {
-            "start_page": 69,
+            "start_page": 67,
             "keywords": ["strategy", "segmentation", "networking", "pragmatism", "retention", "chapter 2", "chapitre 2"],
             "sections": {
-                "Put Pragmatism at the Heart of Your Strategy": 71,
-                "Why Keep Prospecting All the Time": 75,
-                "Strategic Client Segmentation": 85,
-                "A Satisfied Client is Worth Double": 103
+                "Put Pragmatism at the Heart of Your Strategy": 69,
+                "Why Keep Prospecting All the Time": 73,
+                "Strategic Client Segmentation": 83,
+                "A Satisfied Client is Worth Double": 101
             }
         },
         "Chapter 3: Always Have an Idea, a Vision, and a Strategy": {
-            "start_page": 113,
+            "start_page": 111,
             "keywords": ["vision", "dilemma", "ethics", "who am i", "ahead", "chapter 3", "chapitre 3"],
             "sections": {
-                "Professional Dilemmas in Wealth Management": 115,
-                "Who Am I When I'm With the Client": 121,
-                "Staying One Step Ahead with Strategy": 130
+                "Professional Dilemmas in Wealth Management": 113,
+                "Who Am I When I'm With the Client": 119,
+                "Staying One Step Ahead with Strategy": 128
             }
         },
         "Chapter 4: Wealth Managers: The Salespeople Who Must Not Be Named": {
-            "start_page": 145,
+            "start_page": 143,
             "keywords": ["skill", "competency", "roles", "stigma", "selling", "chapter 4", "chapitre 4"],
             "sections": {
-                "The Wealth Manager's Many Faces": 147,
-                "Skill Sets and Behavioral Competencies": 155,
-                "Overcoming the Stigma of Selling": 165
+                "The Wealth Manager's Many Faces": 145,
+                "Skill Sets and Behavioral Competencies": 153,
+                "Overcoming the Stigma of Selling": 163
             }
         },
         "Chapter 5: Philosophy and Psychotherapy for Dummies": {
-            "start_page": 181,
+            "start_page": 179,
             "keywords": ["philosophy", "psychotherapy", "emotional intelligence", "dog-eat-dog", "investment", "chapter 5", "chapitre 5"],
             "sections": {
-                "A Touch of Philosophy in This Dog-Eat-Dog World": 183,
-                "Why Philosophical Arguments Are So Compelling": 188,
-                "Emotional Intelligence in Commercial Dialogues": 198
+                "A Touch of Philosophy in This Dog-Eat-Dog World": 181,
+                "Why Philosophical Arguments Are So Compelling": 186,
+                "Emotional Intelligence in Commercial Dialogues": 196
             }
         },
         "Chapter 6: Drivers of Influence: Motivation or Manipulation?": {
-            "start_page": 213,
+            "start_page": 211,
             "keywords": ["influence", "motivation", "manipulation", "authority", "reciprocity", "kindness", "chapter 6", "chapitre 6"],
             "sections": {
-                "Drivers of Influence in Client Relationships": 215,
-                "Different Influence Techniques": 218,
-                "Deference to Authority and Social Proof": 221,
-                "Kindness and Reciprocity Strategies": 230
+                "Drivers of Influence in Client Relationships": 213,
+                "Different Influence Techniques": 216,
+                "Deference to Authority and Social Proof": 219,
+                "Kindness and Reciprocity Strategies": 228
             }
         },
         "Chapter 7: Prospecting, or the Art of Survival": {
-            "start_page": 245,
+            "start_page": 243,
             "keywords": ["prospecting", "survival", "top 50", "leads", "events", "chapter 7", "chapitre 7"],
             "sections": {
-                "Prospecting to Build Your Commercial Success": 247,
-                "The Reasons Behind Prospecting": 250,
-                "Creating the Top 50 High-Potential List": 260,
-                "Networking and Event Strategies": 275
+                "Prospecting to Build Your Commercial Success": 245,
+                "The Reasons Behind Prospecting": 248,
+                "Creating the Top 50 High-Potential List": 258,
+                "Networking and Event Strategies": 273
             }
         },
         "Chapter 8: First Contact, Lasting Impact": {
-            "start_page": 299,
+            "start_page": 297,
             "keywords": ["first impression", "first contact", "perception", "filter", "rapport", "trust", "chapter 8", "chapitre 8"],
             "sections": {
-                "The First Impression is Always the Right One": 301,
-                "The Filter Principle and Perception": 310,
-                "Creating Immediate Rapport and Trust": 320
+                "The First Impression is Always the Right One": 299,
+                "The Filter Principle and Perception": 308,
+                "Creating Immediate Rapport and Trust": 318
             }
         },
         "Chapter 9: Getting to Know the Client's Strongest Side": {
-            "start_page": 331,
+            "start_page": 329,
             "keywords": ["profiling", "client profile", "discovery", "needs", "personality", "questions", "chapter 9", "chapitre 9"],
             "sections": {
-                "The Importance of Client Profiling": 333,
-                "Deep Psychological and Financial Discovery": 340,
-                "Elevating Questions and Active Listening": 350
+                "The Importance of Client Profiling": 331,
+                "Deep Psychological and Financial Discovery": 338,
+                "Elevating Questions and Active Listening": 348
             }
         },
         "Chapter 10: Persuasion, USP, and Buying Signals": {
-            "start_page": 361,
+            "start_page": 359,
             "keywords": ["persuasion", "usp", "fab", "buying process", "buying signals", "humor", "chapter 10", "chapitre 10"],
             "sections": {
-                "The Buying Process in Private Wealth Management": 363,
-                "The FAB-USP Triad (Feature, Advantage, Benefit, USP)": 372,
-                "Tactics for Negotiating with Humor and Wit": 385,
-                "Detecting Buying Signals": 395
+                "The Buying Process in Private Wealth Management": 361,
+                "The FAB-USP Triad (Feature, Advantage, Benefit, USP)": 370,
+                "Tactics for Negotiating with Humor and Wit": 383,
+                "Detecting Buying Signals": 393
             }
         },
         "Chapter 11: How to Handle Objections, Price Negotiation": {
-            "start_page": 405,
+            "start_page": 403,
             "keywords": ["objection", "objections", "price", "pricing", "discount", "iar", "isolate", "price-protection", "fee", "negotiation", "chapter 11", "chapitre 11"],
             "sections": {
-                "Objections Add Flavor to Sales": 407,
-                "The Difference Between Complaints and Objections": 409,
-                "Handling Price Objections and Defending Fees": 413,
-                "The Isolate-Agree-Return (IAR) Technique": 417,
-                "Price-Protection and Conditional Concessions": 422
+                "Objections Add Flavor to Sales": 405,
+                "The Difference Between Complaints and Objections": 407,
+                "Handling Price Objections and Defending Fees": 411,
+                "The Isolate-Agree-Return (IAR) Technique": 415,
+                "Price-Protection and Conditional Concessions": 420
             }
         },
         "Chapter 11 bis: Difficult and Delicate Situations": {
-            "start_page": 429,
+            "start_page": 427,
             "keywords": ["deadlock", "delicate", "difficult", "conflict", "portfolio takeover", "impasse", "11 bis", "11bis"],
             "sections": {
-                "What to Do When Negotiations Reach a Deadlock": 431,
-                "Taking Over a Portfolio from Another Manager": 438,
-                "Handling Conflict with Calm Conviction": 444
+                "What to Do When Negotiations Reach a Deadlock": 429,
+                "Taking Over a Portfolio from Another Manager": 436,
+                "Handling Conflict with Calm Conviction": 442
             }
         },
         "Chapter 12: Closing the Deal and Client Follow-Up": {
-            "start_page": 451,
+            "start_page": 449,
             "keywords": ["closing", "conclusion", "follow-up", "deal", "retention", "commitment", "chapter 12", "chapitre 12"],
             "sections": {
-                "The Right Moment to Close: Neither Too Early Nor Too Late": 453,
-                "Collecting Buying Signals and Closing Techniques": 458,
-                "Post-Deal Client Retention and Follow-Through": 462
+                "The Right Moment to Close: Neither Too Early Nor Too Late": 451,
+                "Collecting Buying Signals and Closing Techniques": 456,
+                "Post-Deal Client Retention and Follow-Through": 460
             }
         },
         "Chapter 13: Presenting the Bank and Public Speaking": {
-            "start_page": 467,
+            "start_page": 465,
             "keywords": ["public speaking", "pitch", "presenting the bank", "presentation", "hook", "chapter 13", "chapitre 13"],
             "sections": {
-                "Introduction to Public Speaking in a Banking Context": 469,
-                "Structuring Your Presentation in Four Parts": 470,
-                "Delivering a Powerful Hook and Key Message": 476
+                "Introduction to Public Speaking in a Banking Context": 467,
+                "Structuring Your Presentation in Four Parts": 468,
+                "Delivering a Powerful Hook and Key Message": 474
             }
         },
         "Chapter 14: Cultural Awareness, Etiquette, and Time Management": {
-            "start_page": 485,
+            "start_page": 483,
             "keywords": ["etiquette", "image", "culture", "time management", "codes", "branding", "chapter 14", "chapitre 14"],
             "sections": {
-                "Image is Part of a Salesperson's Capital": 487,
-                "Meeting People at Events and Personal Branding": 492,
-                "Cultural Codes and Etiquette for Wealth Managers": 500
+                "Image is Part of a Salesperson's Capital": 485,
+                "Meeting People at Events and Personal Branding": 490,
+                "Cultural Codes and Etiquette for Wealth Managers": 498
             }
         }
     },
     "Vente_et_negociation_bancaire_png_fr.pdf": {
         "Introduction : Le Private Banking, un business pas comme les autres": {
-            "start_page": 17,
+            "start_page": 15,
             "keywords": ["introduction", "private banking", "gestion de fortune", "connexion intime", "triangle"],
             "sections": {
-                "L'avenir de la banque suisse est dans son passé": 19,
-                "Les spécificités de la gestion de fortune": 21,
-                "Un métier en connexion intime": 23
+                "L'avenir de la banque suisse est dans son passé": 17,
+                "Les spécificités de la gestion de fortune": 19,
+                "Un métier en connexion intime": 21
             }
         },
         "Chapitre 1 : Cadres, méthodes, concepts et illusions perdues": {
-            "start_page": 37,
+            "start_page": 35,
             "keywords": ["conseil", "avantage concurrentiel", "méthode", "processus", "cadre", "chapitre 1", "chapter 1"],
             "sections": {
-                "Le conseil est un avantage concurrentiel": 39,
-                "Un conseil de qualité est intégré": 41,
-                "Les différentes approches conceptuelles du conseil": 45
+                "Le conseil est un avantage concurrentiel": 37,
+                "Un conseil de qualité est intégré": 39,
+                "Les différentes approches conceptuelles du conseil": 43
             }
         },
         "Chapitre 2 : Ne vous endormez pas ! Stratégie, segmentation et networking": {
-            "start_page": 69,
+            "start_page": 67,
             "keywords": ["stratégie", "segmentation", "networking", "pragmatisme", "fidélisation", "chapitre 2", "chapter 2"],
             "sections": {
-                "La stratégie du pragmatisme est prioritaire": 71,
-                "Pourquoi est-il nécessaire de prospecter en permanence": 75,
-                "La segmentation stratégique des clients": 85,
-                "La satisfaction d'un client vaut double": 103
+                "La stratégie du pragmatisme est prioritaire": 69,
+                "Pourquoi est-il nécessaire de prospecter en permanence": 73,
+                "La segmentation stratégique des clients": 83,
+                "La satisfaction d'un client vaut double": 101
             }
         },
         "Chapitre 3 : Toujours une idée, une vision, une stratégie d'avance": {
-            "start_page": 113,
+            "start_page": 111,
             "keywords": ["vision", "dilemme", "éthique", "je roule pour qui", "stratégie", "chapitre 3", "chapter 3"],
             "sections": {
-                "Dilemmes professionnels : je roule pour qui": 115,
-                "Qui suis-je quand je suis avec le client": 121,
-                "Une longueur d'avance grâce à la vision stratégique": 130
+                "Dilemmes professionnels : je roule pour qui": 113,
+                "Qui suis-je quand je suis avec le client": 119,
+                "Une longueur d'avance grâce à la vision stratégique": 128
             }
         },
         "Chapitre 4 : Gestionnaires de fortune : ces vendeurs qu'on ne saurait nommer": {
-            "start_page": 145,
+            "start_page": 143,
             "keywords": ["compétences", "postures", "visages", "tabou", "vendeur", "chapitre 4", "chapter 4"],
             "sections": {
-                "Le gestionnaire, cet être aux multiples visages": 147,
-                "Compétences et savoir-faire relationnels": 155,
-                "Dépasser le tabou de la vente en banque privée": 165
+                "Le gestionnaire, cet être aux multiples visages": 145,
+                "Compétences et savoir-faire relationnels": 153,
+                "Dépasser le tabou de la vente en banque privée": 163
             }
         },
         "Chapitre 5 : Philosophie et psychothérapie pour les nuls": {
-            "start_page": 181,
+            "start_page": 179,
             "keywords": ["philosophie", "psychothérapie", "intelligence émotionnelle", "argument", "investissement", "chapitre 5", "chapter 5"],
             "sections": {
-                "Pourquoi l'argument philosophique est-il convaincant": 183,
-                "La philosophie de l'investissement": 188,
-                "L'intelligence émotionnelle dans le dialogue commercial": 198
+                "Pourquoi l'argument philosophique est-il convaincant": 181,
+                "La philosophie de l'investissement": 186,
+                "L'intelligence émotionnelle dans le dialogue commercial": 196
             }
         },
         "Chapitre 6 : Les facteurs d'influence dans la relation commerciale": {
-            "start_page": 213,
+            "start_page": 211,
             "keywords": ["influence", "motivation", "manipulation", "autorité", "réciprocité", "bienveillance", "chapitre 6", "chapter 6"],
             "sections": {
-                "Les leviers de l'influence : motivation ou manipulation": 215,
-                "Les différentes techniques d'influence": 218,
-                "La déférence envers l'autorité et la preuve sociale": 221,
-                "Stratégies de bienveillance et de réciprocité": 230
+                "Les leviers de l'influence : motivation ou manipulation": 213,
+                "Les différentes techniques d'influence": 216,
+                "La déférence envers l'autorité et la preuve sociale": 219,
+                "Stratégies de bienveillance et de réciprocité": 228
             }
         },
         "Chapitre 7 : La prospection ou l'art de survivre": {
-            "start_page": 245,
+            "start_page": 243,
             "keywords": ["prospection", "survivre", "top 50", "succès", "événements", "chapitre 7", "chapter 7"],
             "sections": {
-                "La raison d'être de la prospection": 247,
-                "Construire son succès commercial": 250,
-                "Définir la liste des 50 clients et prospects prioritaires": 260,
-                "Stratégies de réseau et présence aux événements": 275
+                "La raison d'être de la prospection": 245,
+                "Construire son succès commercial": 248,
+                "Définir la liste des 50 clients et prospects prioritaires": 258,
+                "Stratégies de réseau et présence aux événements": 273
             }
         },
         "Chapitre 8 : Premier contact, impact durable": {
-            "start_page": 299,
+            "start_page": 297,
             "keywords": ["première impression", "premier contact", "perception", "filtre", "confiance", "chapitre 8", "chapter 8"],
             "sections": {
-                "La première impression est toujours la bonne, surtout quand elle est mauvaise": 301,
-                "Le principe du filtre et de la perception": 310,
-                "Créer la confiance immédiate": 320
+                "La première impression est toujours la bonne, surtout quand elle est mauvaise": 299,
+                "Le principe du filtre et de la perception": 308,
+                "Créer la confiance immédiate": 318
             }
         },
         "Chapitre 9 : Mieux cerner le profil et la personnalité du client": {
-            "start_page": 331,
+            "start_page": 329,
             "keywords": ["profil", "besoins profonds", "découverte", "personnalité", "questions", "écoute", "chapitre 9", "chapter 9"],
             "sections": {
-                "Les enjeux du profil client et ses besoins profonds": 333,
-                "L'analyse biographique et psychologique": 340,
-                "Questions d'élévation et écoute active": 350
+                "Les enjeux du profil client et ses besoins profonds": 331,
+                "L'analyse biographique et psychologique": 338,
+                "Questions d'élévation et écoute active": 348
             }
         },
         "Chapitre 10 : Persuasion, USP et signaux d'achat": {
-            "start_page": 361,
+            "start_page": 359,
             "keywords": ["persuasion", "usp", "fab", "processus d'achat", "signaux d'achat", "humour", "chapitre 10", "chapter 10"],
             "sections": {
-                "Le processus d'achat en gestion privée": 363,
-                "La méthode FAB-USP (Fonctionnalité, Avantage, Bénéfice, USP)": 372,
-                "Tactiques pour négocier avec humour et malice": 385,
-                "Identifier et exploiter les signaux d'achat": 395
+                "Le processus d'achat en gestion privée": 361,
+                "La méthode FAB-USP (Fonctionnalité, Avantage, Bénéfice, USP)": 370,
+                "Tactiques pour négocier avec humour et malice": 383,
+                "Identifier et exploiter les signaux d'achat": 393
             }
         },
         "Chapitre 11 : Traitement des objections et négociation du prix": {
-            "start_page": 405,
+            "start_page": 403,
             "keywords": ["objection", "objections", "prix", "tarif", "remise", "iar", "isoler", "honoraires", "négociation", "chapitre 11", "chapter 11"],
             "sections": {
-                "Les objections sont le sel de la vente": 407,
-                "Différence entre plainte et objection": 409,
-                "Défendre ses honoraires et répondre aux objections tarifaires": 413,
-                "La technique Isoler-Accepter-Renvoyer (IAR)": 417,
-                "Concessions conditionnelles et protection du prix": 422
+                "Les objections sont le sel de la vente": 405,
+                "Différence entre plainte et objection": 407,
+                "Défendre ses honoraires et répondre aux objections tarifaires": 411,
+                "La technique Isoler-Accepter-Renvoyer (IAR)": 415,
+                "Concessions conditionnelles et protection du prix": 420
             }
         },
         "Chapitre 11 bis : Situations difficiles et délicates": {
-            "start_page": 429,
+            "start_page": 427,
             "keywords": ["impasse", "délicates", "difficiles", "conflit", "reprise de portefeuille", "11 bis", "11bis"],
             "sections": {
-                "Que faire en cas d'impasse dans une négociation": 431,
-                "Reprise de portefeuille par un gestionnaire": 438,
-                "Gérer les tensions avec calme et conviction": 444
+                "Que faire en cas d'impasse dans une négociation": 429,
+                "Reprise de portefeuille par un gestionnaire": 436,
+                "Gérer les tensions avec calme et conviction": 442
             }
         },
         "Chapitre 12 : Conclure la vente et assurer le suivi client": {
-            "start_page": 451,
+            "start_page": 449,
             "keywords": ["conclusion", "conclure", "suivi", "vente", "fidélisation", "engagement", "chapitre 12", "chapter 12"],
             "sections": {
-                "Le bon moment de la conclusion : ni trop tôt, ni trop tard": 453,
-                "La collecte des OUI et les techniques d'engagement": 458,
-                "Fidélisation et suivi rigoureux après la signature": 462
+                "Le bon moment de la conclusion : ni trop tôt, ni trop tard": 451,
+                "La collecte des OUI et les techniques d'engagement": 456,
+                "Fidélisation et suivi rigoureux après la signature": 460
             }
         },
         "Chapitre 13 : Présenter la banque et parler en public": {
-            "start_page": 467,
+            "start_page": 465,
             "keywords": ["parler en public", "présentation", "présenter la banque", "accroche", "pitch", "chapitre 13", "chapter 13"],
             "sections": {
-                "Introduction à la prise de parole dans un contexte bancaire": 469,
-                "Structurer son intervention en quatre temps": 470,
-                "Une accroche percutante et un message clé clair": 476
+                "Introduction à la prise de parole dans un contexte bancaire": 467,
+                "Structurer son intervention en quatre temps": 468,
+                "Une accroche percutante et un message clé clair": 474
             }
         },
         "Chapitre 14 : Savoir-être, étiquette et gestion du temps": {
-            "start_page": 485,
+            "start_page": 483,
             "keywords": ["étiquette", "image", "capital", "gestion du temps", "codes", "savoir-être", "chapitre 14", "chapter 14"],
             "sections": {
-                "L'image est une partie du capital du vendeur": 487,
-                "La rencontre lors d'un événement et réseau personnel": 492,
-                "Codes culturels et étiquette en banque privée": 500
+                "L'image est une partie du capital du vendeur": 485,
+                "La rencontre lors d'un événement et réseau personnel": 490,
+                "Codes culturels et étiquette en banque privée": 498
             }
         }
     }
@@ -563,7 +563,7 @@ def normalize_suggested_readings(readings: list, output_lang: str | None) -> lis
                 valid_page = best_match_page
             else:
                 # Default to Chapter 11 (Objections / Pricing) or Chapter 10 if unknown
-                valid_page = 405
+                valid_page = 403
 
         # Format clean chapter label
         if (clean_ch_name.isdigit() or len(clean_ch_name) < 4 or "page 1" in clean_ch_name.lower()) and best_match_name:
