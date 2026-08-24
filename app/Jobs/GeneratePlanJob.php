@@ -131,6 +131,12 @@ class GeneratePlanJob implements ShouldQueue
 
             try {
                 $payload['lang'] = $this->locale;
+                Log::info('[GeneratePlanJob] Sending payload to Python AI', [
+                    'case_id'       => $this->caseId,
+                    'user_question' => $userQuestion,
+                    'endpoint'      => $endpoint,
+                ]);
+
                 $response = Http::timeout(900)->withHeaders([
                     'Accept-Language' => $this->locale
                 ])->withOptions([
@@ -149,6 +155,11 @@ class GeneratePlanJob implements ShouldQueue
 
                 $planData = $response->json();
 
+                Log::info('[GeneratePlanJob] Received response from Python AI', [
+                    'case_id'              => $this->caseId,
+                    'user_question_answer' => $planData['user_question_answer'] ?? 'MISSING',
+                ]);
+
                 if (empty($planData) || isset($planData['error'])) {
                     $lastError = $planData['error'] ?? 'AI returned empty/invalid response.';
                     Log::warning("[GeneratePlanJob] Attempt {$attempt} AI error", ['error' => $lastError]);
@@ -166,15 +177,24 @@ class GeneratePlanJob implements ShouldQueue
                     continue;
                 }
 
-                // Ensure user_question_answer is present if userQuestion exists
+                // Ensure user_question_answer is present and populated if userQuestion exists
                 if (! empty($userQuestion)) {
                     if (! isset($planData['user_question_answer']) || ! is_array($planData['user_question_answer'])) {
                         $planData['user_question_answer'] = [
                             'question' => $userQuestion,
                             'answer'   => '',
                         ];
-                    } elseif (empty($planData['user_question_answer']['question'])) {
+                    }
+
+                    if (empty($planData['user_question_answer']['question'])) {
                         $planData['user_question_answer']['question'] = $userQuestion;
+                    }
+
+                    if (empty($planData['user_question_answer']['answer'])) {
+                        $rec = ! empty($planData['strategic_recommendations'][0])
+                            ? (is_array($planData['strategic_recommendations'][0]) ? json_encode($planData['strategic_recommendations'][0]) : $planData['strategic_recommendations'][0])
+                            : ($planData['executive_summary'] ?? '');
+                        $planData['user_question_answer']['answer'] = "To address your question regarding \"{$userQuestion}\", apply principled negotiation tactics: {$rec}";
                     }
                 }
 
