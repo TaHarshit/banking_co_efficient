@@ -49,12 +49,12 @@ class GeneratePlanJob implements ShouldQueue
 
         $aiJob->update(['status' => 'processing']);
 
-        \App\General\General::sendNotificationV1(
-            $this->userId,
-            'Action Plan Generation Started',
-            "Your negotiation action plan for case \"{$clientCase->client_alias}\" has started.",
-            ['case_id' => $this->caseId]
-        );
+        // \App\General\General::sendNotificationV1(
+        //     $this->userId,
+        //     'Action Plan Generation Started',
+        //     "Your negotiation action plan for case \"{$clientCase->client_alias}\" has started.",
+        //     ['case_id' => $this->caseId]
+        // );
 
         $analysisData = $this->analysisData ?? $clientCase->ai_analysis;
 

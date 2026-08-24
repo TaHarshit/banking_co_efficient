@@ -60,12 +60,12 @@ class AnalyzeCaseJob implements ShouldQueue
          Log::info("case id is ".$this->caseId);
 
 
-        \App\General\General::sendNotificationV1(
-            $this->userId,
-            'AI Analysis Started',
-            "Your negotiation analysis has started."
-            // ['case_id' => $this->caseId]
-        );
+        // \App\General\General::sendNotificationV1(
+        //     $this->userId,
+        //     'AI Analysis Started',
+        //     "Your negotiation analysis has started."
+        //     // ['case_id' => $this->caseId]
+        // );
 
         $pythonUrl = config('services.pdf_service.base_url');
         $endpoint  = rtrim($pythonUrl, '/') . '/analyze-case';
@@ -159,12 +159,12 @@ class AnalyzeCaseJob implements ShouldQueue
                     'result' => $analysisData,
                 ]);
 
-                \App\General\General::sendNotificationV1(
-                    $this->userId,
-                    'AI Analysis Complete',
-                    'Your negotiation analysis for case '.$clientCase->client_alias.' is ready.',
-                    ['case_id' => $this->caseId]
-                );
+                // \App\General\General::sendNotificationV1(
+                //     $this->userId,
+                //     'AI Analysis Complete',
+                //     'Your negotiation analysis for case '.$clientCase->client_alias.' is ready.',
+                //     ['case_id' => $this->caseId]
+                // );
 
                 Log::info("[AnalyzeCaseJob] Completed successfully for case #{$this->caseId}");
                 return;
