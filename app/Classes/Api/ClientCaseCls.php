@@ -278,7 +278,14 @@ class ClientCaseCls
                 'attempts' => 0,
             ]);
 
-            $userQuestion = $postData['user_question'] ?? $postData['question'] ?? null;
+            $userQuestion = $postData['user_question']
+                ?? $postData['userQuestion']
+                ?? $postData['question']
+                ?? $postData['custom_question']
+                ?? $postData['query']
+                ?? $clientCase->user_question
+                ?? null;
+
             if (!empty($userQuestion)) {
                 $clientCase->user_question = $userQuestion;
                 $clientCase->save();

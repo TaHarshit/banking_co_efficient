@@ -177,24 +177,29 @@ class GeneratePlanJob implements ShouldQueue
                     continue;
                 }
 
-                // Ensure user_question_answer is present and populated if userQuestion exists
-                if (! empty($userQuestion)) {
-                    if (! isset($planData['user_question_answer']) || ! is_array($planData['user_question_answer'])) {
-                        $planData['user_question_answer'] = [
-                            'question' => $userQuestion,
-                            'answer'   => '',
-                        ];
-                    }
+                // Resolve question from all possible sources
+                $q = ! empty($userQuestion)
+                    ? $userQuestion
+                    : (! empty($clientCase->user_question)
+                        ? $clientCase->user_question
+                        : (! empty($planData['user_question_answer']['question']) ? $planData['user_question_answer']['question'] : ''));
 
-                    if (empty($planData['user_question_answer']['question'])) {
-                        $planData['user_question_answer']['question'] = $userQuestion;
-                    }
-
-                    if (empty($planData['user_question_answer']['answer'])) {
+                if (! empty($q)) {
+                    $ans = ! empty($planData['user_question_answer']['answer']) ? $planData['user_question_answer']['answer'] : '';
+                    if (empty($ans)) {
                         $rec = ! empty($planData['strategic_recommendations'][0])
                             ? (is_array($planData['strategic_recommendations'][0]) ? json_encode($planData['strategic_recommendations'][0]) : $planData['strategic_recommendations'][0])
                             : ($planData['executive_summary'] ?? '');
-                        $planData['user_question_answer']['answer'] = "To address your question regarding \"{$userQuestion}\", apply principled negotiation tactics: {$rec}";
+                        $ans = "To address your question regarding \"{$q}\", apply principled negotiation tactics: {$rec}";
+                    }
+                    $planData['user_question_answer'] = [
+                        'question' => $q,
+                        'answer'   => $ans,
+                    ];
+
+                    // Also sync back to clientCase model
+                    if (empty($clientCase->user_question)) {
+                        $clientCase->user_question = $q;
                     }
                 }
 
