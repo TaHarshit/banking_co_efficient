@@ -30,7 +30,8 @@ class GeneratePlanJob implements ShouldQueue
         protected $userId,
         protected $caseData     = null,
         protected $analysisData = null,
-        protected $locale       = 'en'
+        protected $locale       = 'en',
+        protected $userQuestion = null
     ) {}
 
     public function handle(NotificationsRepository $notificationsRepo): void
@@ -117,6 +118,7 @@ class GeneratePlanJob implements ShouldQueue
             'analysis_data'  => $analysisData,
             'user_profile'   => $userProfile,
             'client_history' => $clientHistory,
+            'user_question'  => $this->userQuestion,
         ];
 
         $lastError = 'Unknown error.';

@@ -278,6 +278,8 @@ class ClientCaseCls
                 'attempts' => 0,
             ]);
 
+            $userQuestion = $postData['user_question'] ?? $postData['question'] ?? null;
+
             $locale = request()->input('lang', request()->header('Accept-Language', 'en'));
             if (str_starts_with(strtolower($locale), 'fr')) {
                 $locale = 'fr';
@@ -285,7 +287,7 @@ class ClientCaseCls
                 $locale = 'en';
             }
             // Dispatch job to queue
-            GeneratePlanJob::dispatch($aiJob->id, $clientCase->id, $user->id, $caseData, $analysisData, $locale);
+            GeneratePlanJob::dispatch($aiJob->id, $clientCase->id, $user->id, $caseData, $analysisData, $locale, $userQuestion);
 
             // Auto-trigger background queue worker (no separate worker process needed)
             $this->spawnQueueWorker();

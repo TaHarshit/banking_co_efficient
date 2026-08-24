@@ -299,5 +299,22 @@
     </div>
     @endif
 
+    @if(isset($plan['user_question_answer']) && !empty($plan['user_question_answer']))
+        @php
+            $qAnswer = $plan['user_question_answer'];
+            $questionText = is_array($qAnswer) ? ($qAnswer['question'] ?? '') : '';
+            $answerText   = is_array($qAnswer) ? ($qAnswer['answer'] ?? '') : (is_string($qAnswer) ? $qAnswer : '');
+        @endphp
+        @if(!empty($answerText))
+        <div class="section">
+            <h2>User Question & Analysis</h2>
+            @if(!empty($questionText))
+                <p><span class="bold">Question:</span> {{ $questionText }}</p>
+            @endif
+            <p><span class="bold">Answer:</span> {{ $answerText }}</p>
+        </div>
+        @endif
+    @endif
+
 </body>
 </html>

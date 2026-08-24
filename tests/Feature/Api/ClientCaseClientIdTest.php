@@ -268,4 +268,42 @@ class ClientCaseClientIdTest extends TestCase
         $this->assertNotEmpty($response->json('job_id'));
         $this->assertEquals('pending', $response->json('status'));
     }
+
+    /** @test */
+    public function it_can_queue_plan_generation_with_user_question()
+    {
+        \Illuminate\Support\Facades\Queue::fake();
+
+        $case = ClientCase::create([
+            'user_id'          => $this->user->id,
+            'client_alias'     => 'Acme Tech',
+            'context_overview' => 'Overview text',
+            'case_details'     => [],
+            'ai_analysis'      => [
+                'ai_recommendations' => ['Anchor high'],
+            ],
+        ]);
+
+        $userQuestion = 'How should I handle a request for a 20% discount upfront?';
+
+        $response = $this->actingAs($this->user, 'api')
+            ->postJson('/api/ai/generate-plan', [
+                'case_id'       => $case->id,
+                'user_question' => $userQuestion,
+            ], [
+                'api-key'  => 'BANKING-CO-EFFICIENT',
+                'platform' => 'WEB',
+            ]);
+
+        $response->assertStatus(200);
+        $this->assertNotEmpty($response->json('job_id'));
+        $this->assertEquals('pending', $response->json('status'));
+
+        \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\GeneratePlanJob::class, function ($job) use ($userQuestion) {
+            $reflection = new \ReflectionClass($job);
+            $property = $reflection->getProperty('userQuestion');
+            $property->setAccessible(true);
+            return $property->getValue($job) === $userQuestion;
+        });
+    }
 }

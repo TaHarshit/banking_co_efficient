@@ -765,6 +765,7 @@ class ActionPlanRequest(BaseModel):
     history:        list = []
     client_history: list = []
     lang:           str | None = None
+    user_question:  str | None = None
 
 class Phase(BaseModel):
     title:    str
@@ -898,6 +899,15 @@ GENERATE_PLAN_RESPONSE_FORMAT = {
                 "plan_b": {
                     "type": "array",
                     "items": {"type": "string"}
+                },
+                "user_question_answer": {
+                    "type": "object",
+                    "properties": {
+                        "question": {"type": "string"},
+                        "answer":   {"type": "string"}
+                    },
+                    "required": ["question", "answer"],
+                    "additionalProperties": False
                 }
             },
             "required": [
@@ -906,7 +916,8 @@ GENERATE_PLAN_RESPONSE_FORMAT = {
                 "action_plan",
                 "strategic_recommendations",
                 "critical_success_factors",
-                "plan_b"
+                "plan_b",
+                "user_question_answer"
             ],
             "additionalProperties": False
         }
@@ -1411,7 +1422,7 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
 
         lang_warning = ""
         if output_lang and output_lang.lower() != "english":
-            lang_warning = f"[CRITICAL LANGUAGE INSTRUCTION]\nYou MUST write ALL values, summaries, meeting objectives, action plan steps, readings, and strategic recommendations in {output_lang}. Do NOT write any values in English. Only the JSON keys themselves must remain strictly in English.\n[CRITICAL] Répondez uniquement en {output_lang} pour toutes les valeurs textuelles du JSON.\n\n"
+            lang_warning = f"[CRITICAL LANGUAGE INSTRUCTION]\nYou MUST write ALL values, summaries, meeting objectives, action plan steps, readings, strategic recommendations, and user_question_answer.answer in {output_lang}. Do NOT write any values in English. Only the JSON keys themselves must remain strictly in English.\n[CRITICAL] Répondez uniquement en {output_lang} pour toutes les valeurs textuelles du JSON.\n\n"
 
         client_history_context = ""
         if request.client_history:
@@ -1429,6 +1440,19 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
                 if h.get('plan_rating'):
                     client_history_context += f"  User Rating: {h.get('plan_rating')}/5\n"
 
+        user_question_section = ""
+        if request.user_question and request.user_question.strip():
+            target_lang_str = output_lang if output_lang else "the user's language"
+            user_question_section = f"""\n[USER SPECIFIC QUESTION]
+The user submitted the following specific question regarding this negotiation:
+"{request.user_question.strip()}"
+Provide a detailed, tactical answer to this specific question in {target_lang_str} in the "user_question_answer" field below. The "question" subfield must contain the user's question, and "answer" subfield must contain your expert response written in {target_lang_str}.
+"""
+        else:
+            user_question_section = """\n[USER SPECIFIC QUESTION]
+No user question was submitted. Set "question" to "" and "answer" to "" in the "user_question_answer" field.
+"""
+
         system_prompt = lang_warning + f"""You are a World-Class Negotiation Coach creating a personalized, detailed Negotiation Action Plan.
 
 [USER BEHAVIORAL PROFILE]
@@ -1437,6 +1461,7 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
 [BOOK TECHNIQUES — Apply these specifically in your plan]
 {context}
 {client_history_context}
+{user_question_section}
 [CASE DATA]
 {json.dumps(request.case_data, indent=2)}
 
@@ -1453,7 +1478,7 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
 7. Phases should flow logically: Before meeting → During meeting → After meeting.
 8. In action_plan.*.readings, reference actual technique chapters and topics from the book (never "Page 1").
 9. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside JSON.
-10. ALL 6 fields are required. Do not omit any field.
+10. ALL fields including user_question_answer are required. Do not omit any field.
 11. CRITICAL: Do NOT return the structure or keys of a Case Analysis (do not use keys like "ai_recommendations", "suggested_readings", "ai_challenges", or "negotiation_style_tips"). You MUST return strictly the Action Plan structure below.
 
 Required JSON structure (return ALL fields, keep steps detailed but concise):
@@ -1507,13 +1532,17 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
     "Alternative approach 1 if primary strategy fails",
     "Alternative approach 2",
     "BATNA (Best Alternative To Negotiated Agreement): describe the fallback"
-  ]
+  ],
+  "user_question_answer": {{
+    "question": "User question string if provided, or empty string if none",
+    "answer": "Detailed answer string to user question if provided, or empty string if none"
+  }}
 }}"""
 
         system_prompt += "\n\n"
         if output_lang and output_lang.lower() != "english":
-            system_prompt += f"10. CRITICAL: All textual values in the output JSON (such as executive summary, objectives, action plan steps/titles, recommendations, CSF, plan B) MUST be written in {output_lang}. The JSON keys themselves MUST remain strictly in English as specified."
-            system_prompt += f"\n11. LANGUAGE COMPLIANCE: Remember, the user's selected language is {output_lang}. You MUST translate all your summaries, objectives, action plan steps/readings, recommendations, CSFs, and Plan B elements into {output_lang}. Do not write them in English."
+            system_prompt += f"10. CRITICAL: All textual values in the output JSON (such as executive summary, objectives, action plan steps/titles, recommendations, CSF, plan B, and user_question_answer.answer) MUST be written in {output_lang}. The JSON keys themselves MUST remain strictly in English as specified."
+            system_prompt += f"\n11. LANGUAGE COMPLIANCE: Remember, the user's selected language is {output_lang}. You MUST translate all your summaries, objectives, action plan steps/readings, recommendations, CSFs, Plan B elements, and user question answers into {output_lang}. Do not write them in English."
         else:
             system_prompt += "10. CRITICAL: All textual values in the output JSON MUST be written in English. The JSON keys themselves MUST remain strictly in English as specified."
 
@@ -1527,7 +1556,8 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
 
         sanitized = sanitize_json_response(content)
         required_fields = ["executive_summary", "meeting_objectives", "action_plan",
-                           "strategic_recommendations", "critical_success_factors", "plan_b"]
+                           "strategic_recommendations", "critical_success_factors", "plan_b",
+                           "user_question_answer"]
         required_phases = ["phase_1_before", "phase_2_during", "phase_3_after"]
 
         schema_template = """{
