@@ -279,6 +279,10 @@ class ClientCaseCls
             ]);
 
             $userQuestion = $postData['user_question'] ?? $postData['question'] ?? null;
+            if (!empty($userQuestion)) {
+                $clientCase->user_question = $userQuestion;
+                $clientCase->save();
+            }
 
             $locale = request()->input('lang', request()->header('Accept-Language', 'en'));
             if (str_starts_with(strtolower($locale), 'fr')) {

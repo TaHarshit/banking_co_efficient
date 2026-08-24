@@ -18,6 +18,7 @@ class ClientCase extends Model
         'case_details',
         'ai_analysis',
         'action_plan',
+        'user_question',
         'plan_rating',
     ];
 
