@@ -177,6 +177,11 @@ class GeneratePlanJob implements ShouldQueue
                     continue;
                 }
 
+                Log::info('[GeneratePlanJob] Received response from Python AI', [
+                    'case_id'              => $this->caseId,
+                    'user_question_answer' => $userQuestion ?? 'MISSING',
+                ]);
+
                 // Resolve question from all possible sources
                 $q = ! empty($userQuestion)
                     ? $userQuestion
