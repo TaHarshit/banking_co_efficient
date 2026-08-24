@@ -1443,10 +1443,13 @@ def generate_plan(request: ActionPlanRequest, accept_language: str | None = Head
         user_question_section = ""
         if request.user_question and request.user_question.strip():
             target_lang_str = output_lang if output_lang else "the user's language"
-            user_question_section = f"""\n[USER SPECIFIC QUESTION]
+            user_question_section = f"""\n[USER SPECIFIC QUESTION - MANDATORY ANSWER REQUIRED]
 The user submitted the following specific question regarding this negotiation:
 "{request.user_question.strip()}"
-Provide a detailed, tactical answer to this specific question in {target_lang_str} in the "user_question_answer" field below. The "question" subfield must contain the user's question, and "answer" subfield must contain your expert response written in {target_lang_str}.
+
+INSTRUCTIONS FOR "user_question_answer":
+- "question": "{request.user_question.strip()}"
+- "answer": MUST NOT BE EMPTY. Provide a comprehensive, 3-5 sentence expert tactical negotiation strategy directly answering the user's question in {target_lang_str}.
 """
         else:
             user_question_section = """\n[USER SPECIFIC QUESTION]

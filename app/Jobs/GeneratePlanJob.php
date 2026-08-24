@@ -112,13 +112,15 @@ class GeneratePlanJob implements ShouldQueue
             $analysisData = (object) [];
         }
 
+        $userQuestion = $this->userQuestion ?? $clientCase->user_question ?? null;
+
         $payload = [
             'client_id'      => $clientCase->client_id,
             'case_data'      => $caseData,
             'analysis_data'  => $analysisData,
             'user_profile'   => $userProfile,
             'client_history' => $clientHistory,
-            'user_question'  => $this->userQuestion,
+            'user_question'  => $userQuestion,
         ];
 
         $lastError = 'Unknown error.';
@@ -162,6 +164,18 @@ class GeneratePlanJob implements ShouldQueue
                     Log::warning("[GeneratePlanJob] Attempt {$attempt} incomplete response", ['missing' => $missingFields]);
                     $this->sleepBetweenRetries($attempt);
                     continue;
+                }
+
+                // Ensure user_question_answer is present if userQuestion exists
+                if (! empty($userQuestion)) {
+                    if (! isset($planData['user_question_answer']) || ! is_array($planData['user_question_answer'])) {
+                        $planData['user_question_answer'] = [
+                            'question' => $userQuestion,
+                            'answer'   => '',
+                        ];
+                    } elseif (empty($planData['user_question_answer']['question'])) {
+                        $planData['user_question_answer']['question'] = $userQuestion;
+                    }
                 }
 
                 $savedImages = $this->collectImageUrls([$caseData, $analysisData, $planData]);
