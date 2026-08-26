@@ -125,8 +125,10 @@ Route::middleware(['basicFilter'])->group(function () {
             Route::POST('pdf/sessions/delete', 'deleteSession');
         });
 
-        // Client Case Management
+        // Client & Client Case Management
         Route::controller(ClientCaseController::class)->group(function () {
+            Route::get('clients', 'getClientsList');
+            Route::post('clients', 'saveClient');
             Route::post('client-cases', 'store');
             Route::get('client-cases', 'index');
             Route::get('client-cases/clients', 'clients');

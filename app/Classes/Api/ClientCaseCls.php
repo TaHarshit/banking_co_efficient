@@ -9,6 +9,7 @@ use App\Jobs\GeneratePlanJob;
 use App\Models\AiJob;
 use App\Repositories\Api\CaseStudyQuestionRepository;
 use App\Repositories\Api\ClientCaseRepository;
+use App\Repositories\Api\ClientRepository;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -20,12 +21,16 @@ class ClientCaseCls
 
     protected $caseStudyQuestionRepository;
 
+    protected $clientRepository;
+
     public function __construct(
         ClientCaseRepository $clientCaseRepository,
-        CaseStudyQuestionRepository $caseStudyQuestionRepository
+        CaseStudyQuestionRepository $caseStudyQuestionRepository,
+        ClientRepository $clientRepository
     ) {
         $this->clientCaseRepository = $clientCaseRepository;
         $this->caseStudyQuestionRepository = $caseStudyQuestionRepository;
+        $this->clientRepository = $clientRepository;
     }
 
     public function CreateCase($postData)
@@ -57,6 +62,13 @@ class ClientCaseCls
 
                 DB::beginTransaction();
                 $case->update($data);
+
+                if (! empty($data['client_id'])) {
+                    $this->clientRepository->StoreOrUpdate(Auth::id(), [
+                        'client_id'    => $data['client_id'],
+                        'client_alias' => $data['client_alias'],
+                    ]);
+                }
                 DB::commit();
 
                 $response         = General::setResponse('SUCCESS', 'Case updated successfully.');
@@ -83,6 +95,13 @@ class ClientCaseCls
 
                 DB::beginTransaction();
                 $case = $this->clientCaseRepository->Store($data);
+
+                if ($case && ! empty($data['client_id'])) {
+                    $this->clientRepository->StoreOrUpdate(Auth::id(), [
+                        'client_id'    => $data['client_id'],
+                        'client_alias' => $data['client_alias'],
+                    ]);
+                }
                 DB::commit();
 
                 if ($case) {
@@ -500,6 +519,56 @@ class ClientCaseCls
 
             return $response;
         } catch (Exception $e) {
+            return General::setResponse('OTHER_ERROR', $e->getMessage());
+        }
+    }
+
+    /**
+     * Get paginated clients list with search.
+     */
+    public function GetPaginatedClientsList($search = null, $perPage = 10)
+    {
+        try {
+            $clients  = $this->clientRepository->GetPaginatedClients(Auth::id(), $search, $perPage);
+            $response = General::setResponse('SUCCESS', 'Clients retrieved successfully.');
+            $response['data'] = $clients;
+
+            return $response;
+        } catch (Exception $e) {
+            return General::setResponse('OTHER_ERROR', $e->getMessage());
+        }
+    }
+
+    /**
+     * Create or update a client.
+     */
+    public function SaveClient($postData)
+    {
+        try {
+            $validator = Validate::required($postData, ['client_id', 'client_alias']);
+            if ($validator->fails()) {
+                return General::setResponse('VALIDATION_ERROR', $validator->errors()->first());
+            }
+
+            DB::beginTransaction();
+            $client = $this->clientRepository->StoreOrUpdate(Auth::id(), $postData);
+            
+            // If client_alias was updated, update existing cases for this client as well
+            if (! empty($postData['client_alias']) && ! empty($postData['client_id'])) {
+                DB::table('client_cases')
+                    ->where('user_id', Auth::id())
+                    ->where('client_id', $postData['client_id'])
+                    ->update(['client_alias' => $postData['client_alias']]);
+            }
+            DB::commit();
+
+            $response = General::setResponse('SUCCESS', 'Client saved successfully.');
+            $response['data'] = $client;
+
+            return $response;
+        } catch (Exception $e) {
+            DB::rollBack();
+
             return General::setResponse('OTHER_ERROR', $e->getMessage());
         }
     }

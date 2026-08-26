@@ -40,6 +40,21 @@ class ClientCaseController extends Controller
         return get_response($request, $data);
     }
 
+    public function getClientsList(Request $request)
+    {
+        $search  = $request->query('search');
+        $perPage = (int) ($request->query('per_page', 10));
+        $data    = $this->clientCaseCls->GetPaginatedClientsList($search, $perPage);
+        return get_response($request, $data);
+    }
+
+    public function saveClient(Request $request)
+    {
+        $postData = General::stripRequest($request->all());
+        $data     = $this->clientCaseCls->SaveClient($postData);
+        return get_response($request, $data);
+    }
+
     public function checkClientId(Request $request)
     {
         $clientId = $request->input('client_id') ?? $request->query('client_id');
