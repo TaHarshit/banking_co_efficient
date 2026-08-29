@@ -55,6 +55,13 @@ class ClientCaseController extends Controller
         return get_response($request, $data);
     }
 
+    public function deleteClient($id = null, Request $request = null)
+    {
+        $clientId = $id ?? ($request ? ($request->input('client_id') ?? $request->input('id')) : null);
+        $data     = $this->clientCaseCls->DeleteClient($clientId);
+        return get_response($request, $data);
+    }
+
     public function checkClientId(Request $request)
     {
         $clientId = $request->input('client_id') ?? $request->query('client_id');

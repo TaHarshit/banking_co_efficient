@@ -3,6 +3,8 @@
 namespace App\Repositories\Api;
 
 use App\Models\Client;
+use App\Models\ClientCase;
+use App\Models\AiJob;
 use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
 
@@ -89,5 +91,54 @@ class ClientRepository extends BaseRepository
         return $this->model->where('user_id', $userId)
             ->where('client_id', $clientId)
             ->first();
+    }
+
+    public function DeleteClient($userId, $clientIdOrId)
+    {
+        $clientIdOrId = trim((string) $clientIdOrId);
+        if ($clientIdOrId === '') {
+            return false;
+        }
+
+        $client = $this->model->where('user_id', $userId)
+            ->where(function ($q) use ($clientIdOrId) {
+                if (is_numeric($clientIdOrId)) {
+                    $q->where('id', (int) $clientIdOrId)
+                      ->orWhere('client_id', $clientIdOrId);
+                } else {
+                    $q->where('client_id', $clientIdOrId);
+                }
+            })
+            ->first();
+
+        $stringClientId = $client ? $client->client_id : $clientIdOrId;
+
+        $cases = ClientCase::where('user_id', $userId)
+            ->where('client_id', $stringClientId)
+            ->get();
+
+        if (! $client && $cases->isEmpty()) {
+            return false;
+        }
+
+        DB::beginTransaction();
+        try {
+            if ($cases->isNotEmpty()) {
+                $caseIds = $cases->pluck('id')->toArray();
+                AiJob::whereIn('case_id', $caseIds)->delete();
+                ClientCase::whereIn('id', $caseIds)->delete();
+            }
+
+            if ($client) {
+                $client->delete();
+            }
+
+            DB::commit();
+
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }

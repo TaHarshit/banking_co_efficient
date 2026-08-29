@@ -572,4 +572,29 @@ class ClientCaseCls
             return General::setResponse('OTHER_ERROR', $e->getMessage());
         }
     }
+
+    /**
+     * Delete a client and all associated cases & AI jobs.
+     */
+    public function DeleteClient($clientIdOrId)
+    {
+        try {
+            $clientIdOrId = trim((string) $clientIdOrId);
+
+            if ($clientIdOrId === '') {
+                return General::setResponse('VALIDATION_ERROR', 'Client ID or ID is required.');
+            }
+
+            $userId = Auth::id();
+            $deleted = $this->clientRepository->DeleteClient($userId, $clientIdOrId);
+
+            if (! $deleted) {
+                return General::setResponse('VALIDATION_ERROR', 'Client not found or you do not have permission to delete it.');
+            }
+
+            return General::setResponse('SUCCESS', 'Client and associated cases deleted successfully.');
+        } catch (Exception $e) {
+            return General::setResponse('OTHER_ERROR', $e->getMessage());
+        }
+    }
 }
