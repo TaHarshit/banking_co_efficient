@@ -32,6 +32,9 @@ if(!function_exists('addLog')){
 
     function addLog($request='', $response='')
     {
+        if (!$request instanceof \Illuminate\Http\Request) {
+            $request = request();
+        }
         $cyd        = date('Y/m');
         $cf         = 'api-log/'.$cyd;
         $fname      = $cf.'/logs-'.date('Y-m-d').'.html';
