@@ -5,6 +5,8 @@ namespace App\Classes\Api;
 use App\Models\ContactUs;
 use Exception;
 use App\General\General;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ContactUsNotification;
 
 class ContactUsCls
 {
@@ -51,6 +53,14 @@ class ContactUsCls
                 'status' => 'pending',
                 'business_id' => $postData['company_id'] ?? null, // Map input company_id to business_id
             ]);
+
+            // Send notification email
+            try {
+                Mail::to('support@negomaster.ch')->send(new ContactUsNotification($postData));
+            } catch (Exception $mailException) {
+                // Log the error but don't fail the request since the contact is already saved
+                \Illuminate\Support\Facades\Log::error('Failed to send contact us email: ' . $mailException->getMessage());
+            }
 
             $data = General::setResponse('SUCCESS', 'Your message has been submitted successfully. We will get back to you soon.');
             return $data;
