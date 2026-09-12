@@ -389,6 +389,7 @@ class UserCls
 
             $update_profile = [
                 'name'                   => isset($postData['name']) ? $postData['name'] : $UserObj->name,
+                'surname'                => isset($postData['surname']) ? $postData['surname'] : $UserObj->surname,
                 'country_code'           => isset($postData['country_code']) ? $postData['country_code'] : $UserObj->country_code,
                 'phone_no'               => isset($postData['phone_no']) ? $postData['phone_no'] : $UserObj->phone_no,
                 'job_title'              => isset($postData['job_title']) ? $postData['job_title'] : $UserObj->job_title,
