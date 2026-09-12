@@ -56,7 +56,7 @@ class ContactUsCls
 
             // Send notification email
             try {
-                Mail::to('ta.lhc5922@gmail.com')->send(new ContactUsNotification($postData));
+                Mail::to('support@negomaster.ch')->send(new ContactUsNotification($postData));
             } catch (Exception $mailException) {
                 // Log the error but don't fail the request since the contact is already saved
                 \Illuminate\Support\Facades\Log::error('Failed to send contact us email: ' . $mailException->getMessage());
