@@ -81,25 +81,39 @@
                                         <div class="col-12">
                                             <label for="password"
                                                 class="form-label">{{ __('messages.password') }}</label>
-                                            <input type="password" name="password"
-                                                class="form-control {{ $errors->has('password') ? 'is-invalid' : '' }}"
-                                                id="password" required>
-                                            @if ($errors->has('password'))
-                                                <div class="invalid-feedback">{{ $errors->first('password') }}</div>
-                                            @else
-                                                <div class="invalid-feedback">
-                                                    {{ __('messages.please_enter_password_min') }}</div>
-                                            @endif
+                                            <div class="input-group has-validation">
+                                                <input type="password" name="password"
+                                                    class="form-control {{ $errors->has('password') ? 'is-invalid' : '' }}"
+                                                    id="password" required>
+                                                <button class="btn btn-outline-secondary" type="button" id="togglePassword"
+                                                    style="position: relative; z-index: 5;"
+                                                    onclick="togglePasswordVisibility(event)">
+                                                    <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                                                </button>
+                                                @if ($errors->has('password'))
+                                                    <div class="invalid-feedback">{{ $errors->first('password') }}</div>
+                                                @else
+                                                    <div class="invalid-feedback">
+                                                        {{ __('messages.please_enter_password_min') }}</div>
+                                                @endif
+                                            </div>
                                             <small class="text-muted">{{ __('messages.password_min_chars') }}</small>
                                         </div>
 
                                         <div class="col-12">
                                             <label for="password_confirmation"
                                                 class="form-label">{{ __('messages.confirm_password') }}</label>
-                                            <input type="password" name="password_confirmation"
-                                                class="form-control {{ $errors->has('password') ? 'is-invalid' : '' }}"
-                                                id="password_confirmation" required>
-                                            <div class="invalid-feedback">{{ __('messages.please_confirm_password') }}
+                                            <div class="input-group has-validation">
+                                                <input type="password" name="password_confirmation"
+                                                    class="form-control {{ $errors->has('password') ? 'is-invalid' : '' }}"
+                                                    id="password_confirmation" required>
+                                                <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword"
+                                                    style="position: relative; z-index: 5;"
+                                                    onclick="toggleConfirmPasswordVisibility(event)">
+                                                    <i class="bi bi-eye" id="toggleConfirmPasswordIcon"></i>
+                                                </button>
+                                                <div class="invalid-feedback">{{ __('messages.please_confirm_password') }}
+                                                </div>
                                             </div>
                                         </div>
 
@@ -125,6 +139,45 @@
     </main>
     <script src="{{ url('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url('assets/js/main.js') }}"></script>
+    <script>
+        window.togglePasswordVisibility = function(e) {
+            if (e) e.preventDefault();
+            var passwordInput = document.getElementById('password');
+            var togglePasswordIcon = document.getElementById('togglePasswordIcon');
+            if (passwordInput) {
+                var type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                if (togglePasswordIcon) {
+                    if (togglePasswordIcon.classList.contains('bi-eye')) {
+                        togglePasswordIcon.classList.remove('bi-eye');
+                        togglePasswordIcon.classList.add('bi-eye-slash');
+                    } else {
+                        togglePasswordIcon.classList.remove('bi-eye-slash');
+                        togglePasswordIcon.classList.add('bi-eye');
+                    }
+                }
+            }
+        };
+
+        window.toggleConfirmPasswordVisibility = function(e) {
+            if (e) e.preventDefault();
+            var confirmInput = document.getElementById('password_confirmation');
+            var toggleConfirmIcon = document.getElementById('toggleConfirmPasswordIcon');
+            if (confirmInput) {
+                var type = confirmInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                confirmInput.setAttribute('type', type);
+                if (toggleConfirmIcon) {
+                    if (toggleConfirmIcon.classList.contains('bi-eye')) {
+                        toggleConfirmIcon.classList.remove('bi-eye');
+                        toggleConfirmIcon.classList.add('bi-eye-slash');
+                    } else {
+                        toggleConfirmIcon.classList.remove('bi-eye-slash');
+                        toggleConfirmIcon.classList.add('bi-eye');
+                    }
+                }
+            }
+        };
+    </script>
 </body>
 
 </html>
