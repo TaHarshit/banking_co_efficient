@@ -33,7 +33,7 @@ class UserWelcomeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome to Banking Co-Efficient',
+            subject: 'Welcome to NegoMaster',
         );
     }
 
