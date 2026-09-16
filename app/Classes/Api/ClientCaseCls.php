@@ -13,6 +13,7 @@ use App\Repositories\Api\ClientRepository;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ClientCaseCls
@@ -595,6 +596,167 @@ class ClientCaseCls
             return General::setResponse('SUCCESS', 'Client and associated cases deleted successfully.');
         } catch (Exception $e) {
             return General::setResponse('OTHER_ERROR', $e->getMessage());
+        }
+    }
+
+    /**
+     * AI-powered Executive Summary of Client Cases and Action Plans.
+     * Summarizes the client's historical trajectory, recurring patterns,
+     * action plans, what worked/failed, and future recommendations.
+     */
+    public function SummarizeClientCases($postData)
+    {
+        try {
+            $user = Auth::user();
+            if (! $user) {
+                return General::setResponse('VALIDATION_ERROR', 'User not authenticated.');
+            }
+
+            $clientId    = $postData['client_id'] ?? null;
+            $caseId      = $postData['case_id'] ?? null;
+            $clientAlias = $postData['client_alias'] ?? null;
+            $focus       = $postData['focus'] ?? null;
+            $limit       = (int) ($postData['limit'] ?? 30);
+
+            // Determine language preference
+            $locale = $postData['lang'] ?? request()->header('Accept-Language', 'en');
+            if (str_starts_with(strtolower($locale), 'fr')) {
+                $locale = 'fr';
+            } else {
+                $locale = 'en';
+            }
+
+            // Retrieve cases ordered chronologically for evolutionary analysis
+            $cases = $this->clientCaseRepository->getCasesForSummary($user->id, $clientId, $caseId, $clientAlias, $limit);
+
+            if ($cases->isEmpty()) {
+                $emptyMsg = $locale === 'fr' 
+                    ? 'Aucun cas précédent trouvé pour ce client.' 
+                    : 'No historical cases found for this client.';
+
+                $emptyData = [
+                    'executive_summary'                    => $emptyMsg,
+                    'client_profile_and_evolution'        => 'N/A',
+                    'total_cases_analyzed'                => 0,
+                    'cases_overview'                       => [],
+                    'recurring_patterns_and_objections'   => [],
+                    'proven_strategies_and_successes'      => [],
+                    'pitfalls_and_lessons_learned'         => [],
+                    'strategic_recommendations_for_future' => [],
+                ];
+
+                $response         = General::setResponse('SUCCESS', 'No cases found to summarize.');
+                $response['data'] = $emptyData;
+                $response['meta'] = [
+                    'client_id'    => $clientId,
+                    'client_alias' => $clientAlias,
+                    'cases_count'  => 0,
+                    'lang'         => $locale,
+                ];
+
+                return $response;
+            }
+
+            $resolvedClientAlias = $clientAlias;
+            $resolvedClientId    = $clientId;
+
+            $formattedCases = [];
+            foreach ($cases as $c) {
+                if (empty($resolvedClientAlias) && ! empty($c->client_alias)) {
+                    $resolvedClientAlias = $c->client_alias;
+                }
+                if (empty($resolvedClientId) && ! empty($c->client_id)) {
+                    $resolvedClientId = $c->client_id;
+                }
+
+                $caseDetails = $c->case_details;
+                if (is_string($caseDetails)) {
+                    $caseDetails = json_decode($caseDetails, true) ?: [];
+                }
+
+                $aiAnalysis = $c->ai_analysis;
+                if (is_string($aiAnalysis)) {
+                    $aiAnalysis = json_decode($aiAnalysis, true) ?: [];
+                }
+
+                $actionPlan = $c->action_plan;
+                if (is_string($actionPlan)) {
+                    $actionPlan = json_decode($actionPlan, true) ?: [];
+                }
+
+                $formattedCases[] = [
+                    'id'               => $c->id,
+                    'case_reference'   => $c->case_reference ?? ('Case #' . $c->id),
+                    'client_id'        => $c->client_id,
+                    'client_alias'     => $c->client_alias,
+                    'date'             => $c->created_at?->format('Y-m-d H:i:s'),
+                    'context_overview' => $c->context_overview,
+                    'case_details'     => is_array($caseDetails) ? $caseDetails : [],
+                    'ai_analysis'      => is_array($aiAnalysis) ? $aiAnalysis : [],
+                    'action_plan'      => is_array($actionPlan) ? $actionPlan : [],
+                    'plan_rating'      => $c->plan_rating,
+                    'user_question'    => $c->user_question,
+                ];
+            }
+
+            $userProfile = method_exists($user, 'getAiBehaviorProfile') ? $user->getAiBehaviorProfile() : '';
+
+            $pythonUrl = config('services.pdf_service.base_url');
+            $endpoint  = rtrim($pythonUrl, '/') . '/summarize-client-cases';
+
+            $payload = [
+                'client_id'    => $resolvedClientId,
+                'client_alias' => $resolvedClientAlias ?? 'Client',
+                'user_profile' => $userProfile,
+                'cases'        => $formattedCases,
+                'lang'         => $locale,
+                'focus'        => $focus,
+            ];
+
+            Log::info('[ClientCaseCls] Requesting client cases summary from AI', [
+                'user_id'      => $user->id,
+                'client_id'    => $resolvedClientId,
+                'client_alias' => $resolvedClientAlias,
+                'cases_count'  => count($formattedCases),
+                'endpoint'     => $endpoint,
+            ]);
+
+            $httpResponse = Http::timeout(180)->withHeaders([
+                'Accept-Language' => $locale,
+                'Content-Type'    => 'application/json',
+            ])->post($endpoint, $payload);
+
+            if (! $httpResponse->successful()) {
+                Log::error('[ClientCaseCls] AI summary endpoint failed', [
+                    'status' => $httpResponse->status(),
+                    'body'   => $httpResponse->body(),
+                ]);
+
+                return General::setResponse('OTHER_ERROR', 'AI summarization service request failed (' . $httpResponse->status() . ').');
+            }
+
+            $summaryData = $httpResponse->json();
+
+            if (isset($summaryData['error'])) {
+                Log::error('[ClientCaseCls] AI service returned error', ['error' => $summaryData['error']]);
+                return General::setResponse('OTHER_ERROR', $summaryData['error']);
+            }
+
+            $response         = General::setResponse('SUCCESS', 'Client cases summarized successfully.');
+            $response['data'] = $summaryData;
+            $response['meta'] = [
+                'client_id'     => $resolvedClientId,
+                'client_alias'  => $resolvedClientAlias,
+                'cases_count'   => count($formattedCases),
+                'lang'          => $locale,
+            ];
+
+            return $response;
+
+        } catch (Exception $e) {
+            Log::error('[ClientCaseCls] SummarizeClientCases error', ['error' => $e->getMessage()]);
+
+            return General::setResponse('OTHER_ERROR', 'Failed to generate cases summary: ' . $e->getMessage());
         }
     }
 }

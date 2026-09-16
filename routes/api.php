@@ -136,6 +136,7 @@ Route::middleware(['basicFilter'])->group(function () {
             Route::get('client-cases', 'index');
             Route::get('client-cases/clients', 'clients');
             Route::match(['get', 'post'], 'client-cases/check-client-id', 'checkClientId');
+            Route::match(['get', 'post'], 'client-cases/summary', 'summarizeClientCases');
             Route::get('client-cases/{id}', 'show');
             Route::post('delete-client-cases/{id}', 'destroy');
             Route::get('client-cases/{id}/export-plan', 'exportPlan');
@@ -149,6 +150,7 @@ Route::middleware(['basicFilter'])->group(function () {
             Route::post('ai/generate-plan', 'generatePlan');
             Route::get('ai/job-status/{job_id}', 'getAiJobStatus');
             Route::post('ai/rate-plan', 'ratePlan');
+            Route::match(['get', 'post'], 'ai/client-cases-summary', 'summarizeClientCases');
         });
 
         Route::controller(UserSubscriptionsController::class)->group(function () {

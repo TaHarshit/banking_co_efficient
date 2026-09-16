@@ -111,4 +111,37 @@ class ClientCaseRepository extends BaseRepository
             ->where('client_id', $clientId)
             ->count();
     }
+
+    public function getCasesForSummary($userId, $clientId = null, $caseId = null, $clientAlias = null, int $limit = 30)
+    {
+        $query = $this->model->where('user_id', $userId);
+
+        if (! empty($caseId)) {
+            $targetCase = $this->model->where('user_id', $userId)->where('id', $caseId)->first();
+            if ($targetCase) {
+                if (! empty($targetCase->client_id)) {
+                    $query->where('client_id', $targetCase->client_id);
+                } elseif (! empty($targetCase->client_alias)) {
+                    $query->where('client_alias', $targetCase->client_alias);
+                } else {
+                    $query->where('id', $caseId);
+                }
+            } else {
+                $query->where('id', $caseId);
+            }
+        } elseif (! empty($clientId)) {
+            $query->where('client_id', $clientId);
+        } elseif (! empty($clientAlias)) {
+            $query->where('client_alias', $clientAlias);
+        }
+
+        return $query->where(function ($q) {
+                $q->whereNotNull('ai_analysis')
+                    ->orWhereNotNull('action_plan')
+                    ->orWhereNotNull('context_overview');
+            })
+            ->orderBy('created_at', 'asc')
+            ->limit($limit)
+            ->get();
+    }
 }

@@ -999,6 +999,14 @@ class ActionPlanSchema(BaseModel):
     critical_success_factors: list[str]
     plan_b:                   list[str]
 
+class ClientCasesSummaryRequest(BaseModel):
+    client_id:    str | None = None
+    client_alias: str | None = None
+    user_profile: str = ""
+    cases:        list[dict] = Field(default_factory=list)
+    lang:         str | None = None
+    focus:        str | None = None
+
 # --- Case Memory Storage ---
 CASES_COLLECTION    = "past_cases"
 ANALYZED_COLLECTION = "analyzed_cases"
@@ -1137,6 +1145,82 @@ GENERATE_PLAN_RESPONSE_FORMAT = {
                 "critical_success_factors",
                 "plan_b",
                 "user_question_answer"
+            ],
+            "additionalProperties": False
+        }
+    }
+}
+
+SUMMARIZE_CASES_RESPONSE_FORMAT = {
+    "type": "json_schema",
+    "json_schema": {
+        "name": "client_cases_summary",
+        "strict": True,
+        "schema": {
+            "type": "object",
+            "properties": {
+                "executive_summary": {"type": "string"},
+                "client_profile_and_evolution": {"type": "string"},
+                "total_cases_analyzed": {"type": "integer"},
+                "cases_overview": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "case_id": {"type": "string"},
+                            "case_reference": {"type": "string"},
+                            "date": {"type": "string"},
+                            "situation_summary": {"type": "string"},
+                            "core_challenges": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            },
+                            "action_plan_summary": {"type": "string"},
+                            "key_techniques_applied": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            },
+                            "rating_or_outcome": {"type": "string"}
+                        },
+                        "required": [
+                            "case_id",
+                            "case_reference",
+                            "date",
+                            "situation_summary",
+                            "core_challenges",
+                            "action_plan_summary",
+                            "key_techniques_applied",
+                            "rating_or_outcome"
+                        ],
+                        "additionalProperties": False
+                    }
+                },
+                "recurring_patterns_and_objections": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "proven_strategies_and_successes": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "pitfalls_and_lessons_learned": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "strategic_recommendations_for_future": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                }
+            },
+            "required": [
+                "executive_summary",
+                "client_profile_and_evolution",
+                "total_cases_analyzed",
+                "cases_overview",
+                "recurring_patterns_and_objections",
+                "proven_strategies_and_successes",
+                "pitfalls_and_lessons_learned",
+                "strategic_recommendations_for_future"
             ],
             "additionalProperties": False
         }
@@ -1849,6 +1933,219 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
 
     except Exception as e:
         print(f"[ERROR] /generate-plan: {str(e)}", flush=True)
+        return {"error": str(e)}
+
+
+@app.post("/summarize-client-cases")
+def summarize_client_cases(request: ClientCasesSummaryRequest, accept_language: str | None = Header(default=None)):
+    start_time = time.time()
+    try:
+        # Determine output language
+        target_lang = request.lang or accept_language
+        output_lang = None
+        if target_lang:
+            target_lang_lower = target_lang.lower()
+            if target_lang_lower.startswith("fr"):
+                output_lang = "French"
+            elif target_lang_lower.startswith("en"):
+                output_lang = "English"
+            else:
+                output_lang = target_lang
+
+        # Handle empty case list gracefully
+        if not request.cases:
+            empty_msg = "Aucun cas précédent trouvé pour ce client." if output_lang == "French" else "No past cases found for this client."
+            return {
+                "executive_summary": empty_msg,
+                "client_profile_and_evolution": "N/A",
+                "total_cases_analyzed": 0,
+                "cases_overview": [],
+                "recurring_patterns_and_objections": [],
+                "proven_strategies_and_successes": [],
+                "pitfalls_and_lessons_learned": [],
+                "strategic_recommendations_for_future": []
+            }
+
+        # Format chronological narrative of all client cases
+        cases_narrative = []
+        for idx, c in enumerate(request.cases, 1):
+            c_id = str(c.get("id") or idx)
+            c_ref = c.get("case_reference") or f"Case #{c_id}"
+            c_alias = c.get("client_alias") or request.client_alias or "Client"
+            c_date = c.get("date") or c.get("created_at") or "N/A"
+            c_context = c.get("context_overview") or ""
+            c_details = c.get("case_details") or {}
+            c_analysis = c.get("ai_analysis") or {}
+            c_plan = c.get("action_plan") or {}
+            c_rating = c.get("plan_rating")
+            c_q = c.get("user_question")
+
+            # Extract recommendations & challenges
+            recs = c_analysis.get("ai_recommendations", []) if isinstance(c_analysis, dict) else []
+            challenges = c_analysis.get("ai_challenges", []) if isinstance(c_analysis, dict) else []
+            style_tips = c_analysis.get("negotiation_style_tips", []) if isinstance(c_analysis, dict) else []
+
+            # Extract action plan details
+            plan_exec = ""
+            objectives = []
+            strat_recs = []
+            plan_phases_summary = []
+            if isinstance(c_plan, dict):
+                plan_exec = c_plan.get("executive_summary", "")
+                objectives = c_plan.get("meeting_objectives", [])
+                strat_recs = c_plan.get("strategic_recommendations", [])
+                ap_obj = c_plan.get("action_plan", {})
+                if isinstance(ap_obj, dict):
+                    for p_key, p_val in ap_obj.items():
+                        if isinstance(p_val, dict):
+                            p_title = p_val.get("title", p_key)
+                            p_steps = p_val.get("steps", [])
+                            plan_phases_summary.append(f"{p_title}: {'; '.join(p_steps[:3])}")
+
+            case_block = f"""--- CASE {idx} ---
+Case ID: {c_id}
+Reference: {c_ref}
+Date: {c_date}
+Client Alias: {c_alias}
+Context / Background: {c_context}
+Case Deal / Details: {json.dumps(c_details, ensure_ascii=False)}
+Identified Challenges: {json.dumps(challenges, ensure_ascii=False)}
+Negotiation Tips Given: {json.dumps(style_tips, ensure_ascii=False)}
+AI Recommendations Given: {json.dumps(recs, ensure_ascii=False)}
+Action Plan Executive Summary: {plan_exec}
+Meeting Objectives: {json.dumps(objectives, ensure_ascii=False)}
+Action Plan Phases Summary: {json.dumps(plan_phases_summary, ensure_ascii=False)}
+Strategic Recommendations: {json.dumps(strat_recs, ensure_ascii=False)}
+User Plan Rating: {f'{c_rating}/5' if c_rating is not None else 'Not rated'}
+User Custom Question: {c_q if c_q else 'None'}
+"""
+            cases_narrative.append(case_block)
+
+        all_cases_text = "\n".join(cases_narrative)
+
+        lang_instruction = ""
+        if output_lang and output_lang.lower() == "french":
+            lang_instruction = "[LANGUAGE MANDATE] You MUST write your entire response, including all summaries, descriptions, overviews, and bullet points, in FRENCH (Français).\n\n"
+        elif output_lang and output_lang.lower() == "english":
+            lang_instruction = "[LANGUAGE MANDATE] You MUST write your entire response in ENGLISH.\n\n"
+        elif output_lang:
+            lang_instruction = f"[LANGUAGE MANDATE] You MUST write your entire response in {output_lang}.\n\n"
+
+        system_prompt = lang_instruction + f"""You are a Senior Strategic Negotiation Advisor and Executive Banking Coach.
+Your task is to analyze all past negotiation cases and action plans for a client to produce a comprehensive, high-level strategic overview and retrospective summary.
+
+This summary will be used by wealth managers, private bankers, and negotiation executives to quickly understand:
+1. The historical trajectory of negotiations with this client.
+2. The core challenges and recurring patterns across previous cases.
+3. What action plans and negotiation strategies were deployed and how well they worked.
+4. Lessons learned and high-impact recommendations for any upcoming negotiations with this client.
+
+[USER/BANKER BEHAVIORAL PROFILE]
+{request.user_profile if request.user_profile else "General banking & wealth management executive profile."}
+
+[FOCUS INSTRUCTION]
+{f'Special user focus: {request.focus}' if request.focus else 'Provide a balanced, comprehensive strategic review across all dimensions.'}
+
+[CLIENT IDENTIFIER]
+Client ID: {request.client_id or 'N/A'}
+Client Alias: {request.client_alias or 'Client'}
+Total Cases in History: {len(request.cases)}
+
+[CHRONOLOGICAL CASE HISTORY & ACTION PLANS]
+{all_cases_text}
+
+[INSTRUCTIONS]
+1. Produce an insightful executive summary capturing the big picture of the client relationship and negotiation evolution.
+2. In 'client_profile_and_evolution', describe the client's decision-making style, key sensitivities, leverage points, and how their behavior has changed over time.
+3. In 'cases_overview', create an entry for EACH case provided in the history. Summarize the situation, core challenges, action plan summary, key techniques applied, and rating/outcome.
+4. In 'recurring_patterns_and_objections', list the recurring pushbacks, objections, or behavioral patterns that appear repeatedly.
+5. In 'proven_strategies_and_successes', detail specific tactics, framing methods, and action plan steps that worked best (especially cases with high ratings).
+6. In 'pitfalls_and_lessons_learned', highlight what caused friction, failed, or must be avoided when negotiating with this client.
+7. In 'strategic_recommendations_for_future', deliver 3 to 6 actionable, concrete rules and tactics for the banker's next interaction with this client.
+8. Set 'total_cases_analyzed' to {len(request.cases)}.
+9. Return ONLY valid JSON strictly matching the schema. No markdown outside JSON.
+"""
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Please generate the executive summary and historical cases overview for client '{request.client_alias or request.client_id or 'Client'}' based on the {len(request.cases)} cases provided."}
+        ]
+
+        raw_content = call_ai_with_retry(
+            messages=messages,
+            max_tokens=8192,
+            max_retries=2,
+            response_format=SUMMARIZE_CASES_RESPONSE_FORMAT
+        )
+
+        if not raw_content:
+            return {"error": "AI returned empty response after retries"}
+
+        sanitized = sanitize_json_response(raw_content)
+
+        required_fields = [
+            "executive_summary",
+            "client_profile_and_evolution",
+            "total_cases_analyzed",
+            "cases_overview",
+            "recurring_patterns_and_objections",
+            "proven_strategies_and_successes",
+            "pitfalls_and_lessons_learned",
+            "strategic_recommendations_for_future"
+        ]
+
+        schema_template = """{
+  "executive_summary": "Comprehensive summary of client relationship and negotiation trajectory",
+  "client_profile_and_evolution": "Analysis of how client behavior, demands, and negotiation style evolved",
+  "total_cases_analyzed": 2,
+  "cases_overview": [
+    {
+      "case_id": "1",
+      "case_reference": "REF-001",
+      "date": "2026-01-10",
+      "situation_summary": "Summary of situation",
+      "core_challenges": ["Challenge 1", "Challenge 2"],
+      "action_plan_summary": "Summary of the action plan",
+      "key_techniques_applied": ["Technique 1"],
+      "rating_or_outcome": "4/5"
+    }
+  ],
+  "recurring_patterns_and_objections": ["Pattern 1"],
+  "proven_strategies_and_successes": ["Strategy 1"],
+  "pitfalls_and_lessons_learned": ["Pitfall 1"],
+  "strategic_recommendations_for_future": ["Recommendation 1"]
+}"""
+
+        try:
+            parsed_content = json.loads(sanitized)
+        except json.JSONDecodeError as e:
+            print(f"[WARN] /summarize-client-cases - JSON parse failed, attempting repair: {e}", flush=True)
+            parsed_content = attempt_json_repair(sanitized, required_fields, schema_template, response_format=SUMMARIZE_CASES_RESPONSE_FORMAT)
+            if parsed_content is None:
+                return {
+                    "error": f"AI returned malformed JSON and repair failed: {str(e)}",
+                    "raw_content": sanitized[:1000]
+                }
+
+        # Validate all required top-level fields
+        missing_fields = [f for f in required_fields if f not in parsed_content]
+        if missing_fields:
+            print(f"[WARN] /summarize-client-cases - Missing fields: {missing_fields}, attempting repair", flush=True)
+            repaired = attempt_json_repair(sanitized, required_fields, schema_template, response_format=SUMMARIZE_CASES_RESPONSE_FORMAT)
+            if repaired:
+                parsed_content = repaired
+            else:
+                return {"error": f"AI response missing required fields: {missing_fields}", "raw_content": sanitized[:500]}
+
+        parsed_content = sanitize_ai_output_content(parsed_content)
+
+        total_time = time.time() - start_time
+        print(f"[PERF] /summarize-client-cases - SUCCESS. Total: {total_time:.3f}s", flush=True)
+
+        return parsed_content
+
+    except Exception as e:
+        print(f"[ERROR] /summarize-client-cases: {str(e)}", flush=True)
         return {"error": str(e)}
 
 

@@ -116,6 +116,16 @@ class ClientCaseController extends Controller
         return get_response($request, $data);
     }
 
+    public function summarizeClientCases(Request $request)
+    {
+        $params = General::stripRequest($request->all());
+        if ($request->isMethod('get')) {
+            $params = array_merge($request->query(), $params);
+        }
+        $data = $this->clientCaseCls->SummarizeClientCases($params);
+        return get_response($request, $data);
+    }
+
     /**
      * Export the generated AI plan as a PDF document.
      */
