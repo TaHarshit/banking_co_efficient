@@ -9,6 +9,9 @@ RUN apt-get update && apt-get install -y \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
+# Upgrade pip to fix metadata normalization bug with wheel names (e.g. typing-extensions vs typing_extensions)
+RUN pip install --no-cache-dir --upgrade pip
+
 # Install Python dependencies (CPU-only to save space)
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir sentence-transformers qdrant-client==1.17.1
