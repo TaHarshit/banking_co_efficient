@@ -874,4 +874,110 @@ class ClientCaseCls
             return General::setResponse('OTHER_ERROR', 'Failed to generate cases summary: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Get client summary and metadata for PDF export.
+     * If summary does not exist yet, it will generate it synchronously.
+     */
+    public function GetClientSummaryForExport($params)
+    {
+        try {
+            $user = Auth::user();
+            if (! $user) {
+                return General::setResponse('VALIDATION_ERROR', 'Unauthorized.');
+            }
+
+            $clientId    = trim((string) ($params['client_id'] ?? $params['clientId'] ?? ''));
+            $caseId      = $params['case_id'] ?? $params['caseId'] ?? null;
+            $clientAlias = $params['client_alias'] ?? $params['clientAlias'] ?? null;
+
+            // Validate client_id if provided
+            if (! empty($clientId)) {
+                $userClient = $this->clientRepository->FindByClientId($user->id, $clientId)
+                    ?? $this->clientCaseRepository->checkClientIdExists($user->id, $clientId);
+
+                if (! $userClient) {
+                    return General::setResponse('VALIDATION_ERROR', 'Client not found or does not belong to your account.');
+                }
+
+                if (empty($clientAlias) && ! empty($userClient->client_alias)) {
+                    $clientAlias = $userClient->client_alias;
+                }
+            }
+
+            // Validate case_id if provided
+            if (! empty($caseId)) {
+                $userCase = $this->clientCaseRepository->GetCaseDetails($caseId, $user->id);
+                if (! $userCase) {
+                    return General::setResponse('VALIDATION_ERROR', 'Case not found or does not belong to your account.');
+                }
+
+                if (empty($clientId) && ! empty($userCase->client_id)) {
+                    $clientId = $userCase->client_id;
+                }
+                if (empty($clientAlias) && ! empty($userCase->client_alias)) {
+                    $clientAlias = $userCase->client_alias;
+                }
+            }
+
+            if (empty($clientId) && empty($caseId) && empty($clientAlias)) {
+                return General::setResponse('VALIDATION_ERROR', 'Please provide client_id or case_id.');
+            }
+
+            // Check if summary already exists in clients table
+            $summaryData = null;
+            if (! empty($clientId)) {
+                $clientRecord = $this->clientRepository->FindByClientId($user->id, $clientId);
+                if (! empty($clientRecord?->ai_summary)) {
+                    $summaryData = is_string($clientRecord->ai_summary)
+                        ? json_decode($clientRecord->ai_summary, true)
+                        : $clientRecord->ai_summary;
+                }
+            }
+
+            // Check client_cases table if not found in clients table
+            if (empty($summaryData)) {
+                $cases = $this->clientCaseRepository->getCasesForSummary($user->id, $clientId, $caseId, $clientAlias, 30);
+                $caseWithSummary = $cases->first(fn($c) => ! empty($c->client_summary));
+                if ($caseWithSummary) {
+                    $summaryData = is_string($caseWithSummary->client_summary)
+                        ? json_decode($caseWithSummary->client_summary, true)
+                        : $caseWithSummary->client_summary;
+                }
+            }
+
+            // If no summary exists yet, run synchronous generation
+            if (empty($summaryData)) {
+                $genParams = array_merge($params, ['sync' => true]);
+                $genResponse = $this->SummarizeClientCases($genParams);
+
+                if (! isset($genResponse['code']) || $genResponse['code'] !== 200 || empty($genResponse['data'])) {
+                    return $genResponse;
+                }
+
+                $summaryData = $genResponse['data'];
+            }
+
+            // Count total cases
+            $totalCases = 0;
+            if (! empty($clientId)) {
+                $totalCases = $this->clientCaseRepository->countClientCases($user->id, $clientId);
+            }
+            if ($totalCases === 0 && isset($summaryData['cases_overview']) && is_array($summaryData['cases_overview'])) {
+                $totalCases = count($summaryData['cases_overview']);
+            }
+
+            $response = General::setResponse('SUCCESS', 'Client summary retrieved for export.');
+            $response['data'] = [
+                'summary'      => $summaryData,
+                'client_id'    => $clientId,
+                'client_alias' => $clientAlias ?? 'Client',
+                'total_cases'  => $totalCases,
+            ];
+
+            return $response;
+        } catch (Exception $e) {
+            return General::setResponse('OTHER_ERROR', $e->getMessage());
+        }
+    }
 }

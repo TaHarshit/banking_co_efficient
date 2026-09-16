@@ -122,8 +122,70 @@ class ClientCaseController extends Controller
         if ($request->isMethod('get')) {
             $params = array_merge($request->query(), $params);
         }
+
+        // Check if user requested PDF format (e.g. ?pdf=true, ?export_pdf=1, format=pdf)
+        $wantsPdf = filter_var($params['pdf'] ?? $params['export_pdf'] ?? false, FILTER_VALIDATE_BOOLEAN)
+            || strtolower($params['format'] ?? '') === 'pdf'
+            || strtolower($params['export'] ?? '') === 'pdf';
+
+        if ($wantsPdf) {
+            return $this->exportSummaryPdf($request);
+        }
+
         $data = $this->clientCaseCls->SummarizeClientCases($params);
         return get_response($request, $data);
+    }
+
+    /**
+     * Export the client cases strategic summary as a PDF document.
+     */
+    public function exportSummaryPdf(Request $request)
+    {
+        $params = General::stripRequest($request->all());
+        if ($request->isMethod('get')) {
+            $params = array_merge($request->query(), $params);
+        }
+
+        $result = $this->clientCaseCls->GetClientSummaryForExport($params);
+        if (!isset($result['code']) || $result['code'] !== 200 || empty($result['data'])) {
+            return get_response($request, $result);
+        }
+
+        $summaryData = $result['data']['summary'];
+        $clientAlias = $result['data']['client_alias'] ?? 'Client';
+        $clientId    = $result['data']['client_id'] ?? null;
+        $totalCases  = $result['data']['total_cases'] ?? 0;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.client-summary', [
+            'summary'     => $summaryData,
+            'clientAlias' => $clientAlias,
+            'clientId'    => $clientId,
+            'totalCases'  => $totalCases,
+            'generatedAt' => now(),
+        ])->setOption('isRemoteEnabled', true);
+
+        $cleanAlias = preg_replace('/[^A-Za-z0-9_\-]/', '_', $clientAlias);
+        $fileName = 'Client_Summary_' . $cleanAlias . '.pdf';
+
+        // If direct file download requested (?download=1 or ?download=true)
+        $isDownload = filter_var($params['download'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        if ($isDownload) {
+            return $pdf->download($fileName);
+        }
+
+        $pdfContent = $pdf->output();
+        $base64Pdf  = base64_encode($pdfContent);
+
+        $apiResponse = General::setResponse('SUCCESS', 'Client summary PDF generated successfully.');
+        $apiResponse['data'] = [
+            'client_id'    => $clientId,
+            'client_alias' => $clientAlias,
+            'file_name'    => $fileName,
+            'pdf_base64'   => $base64Pdf,
+            'summary'      => $summaryData,
+        ];
+
+        return get_response($request, $apiResponse);
     }
 
     /**
