@@ -2061,8 +2061,8 @@ Total Cases in History: {len(request.cases)}
 {all_cases_text}
 
 [INSTRUCTIONS]
-1. Produce an insightful executive summary capturing the big picture of the client relationship and negotiation evolution.
-2. In 'client_profile_and_evolution', describe the client's decision-making style, key sensitivities, leverage points, and how their behavior has changed over time.
+1. In 'executive_summary', produce an ULTRA-CONCISE, PUNCHY overview (STRICTLY 2 to 3 sentences, maximum 45-60 words). Synthesize only the core trajectory and current relationship posture. DO NOT write long paragraphs (strictly avoid 5-7 lines of text), even if there are 18+ cases in history. It must be instantly scannable on mobile app cards.
+2. In 'client_profile_and_evolution', provide a crisp, compact synthesis (STRICTLY 2 to 3 sentences, under 50 words) capturing their primary decision style, sensitivity, and how their posture shifted.
 3. In 'cases_overview', create an entry for EACH case provided in the history. Summarize the situation, core challenges, action plan summary, key techniques applied, and rating/outcome.
 4. In 'recurring_patterns_and_objections', list the recurring pushbacks, objections, or behavioral patterns that appear repeatedly.
 5. In 'client_red_flags', list the critical negative tendencies, vulnerability triggers, and friction points of this client. Specifically explain:
@@ -2078,7 +2078,7 @@ Total Cases in History: {len(request.cases)}
 
         messages = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Please generate the executive summary and historical cases overview for client '{request.client_alias or request.client_id or 'Client'}' based on the {len(request.cases)} cases provided."}
+            {"role": "user", "content": f"Please generate the executive summary and historical cases overview for client '{request.client_alias or request.client_id or 'Client'}' based on the {len(request.cases)} cases provided. CRITICAL: Keep 'executive_summary' and 'client_profile_and_evolution' very short and punchy (strictly 2-3 sentences max, under 60 words)."}
         ]
 
         raw_content = call_ai_with_retry(
@@ -2106,8 +2106,8 @@ Total Cases in History: {len(request.cases)}
         ]
 
         schema_template = """{
-  "executive_summary": "Comprehensive summary of client relationship and negotiation trajectory",
-  "client_profile_and_evolution": "Analysis of how client behavior, demands, and negotiation style evolved",
+  "executive_summary": "Crisp, concise 2-3 sentence overview of client relationship and current posture (under 60 words)",
+  "client_profile_and_evolution": "Brief 2-3 sentence analysis of negotiation style and posture shift (under 50 words)",
   "total_cases_analyzed": 2,
   "cases_overview": [
     {
