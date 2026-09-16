@@ -26,6 +26,14 @@ except ImportError:
     HAS_LANGDETECT = False
     print("[WARN] langdetect not installed, language detection will fall back to AI call", flush=True)
 
+# Direct PDF page reader for 100% reliable page-level retrieval
+try:
+    import fitz
+    HAS_FITZ = True
+except ImportError:
+    HAS_FITZ = False
+    print("[WARN] PyMuPDF (fitz) not available, direct PDF fallback disabled", flush=True)
+
 # Load .env
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(env_path)
@@ -604,41 +612,159 @@ NUM_TO_ROMAN = {v: k for k, v in ROMAN_TO_NUM.items()}
 def extract_page_numbers_from_query(query: str) -> list[int]:
     """
     Robustly extract all requested page numbers from user query.
-    Handles:
-    - 'page 417', 'pages 417 and 418'
-    - 'page no 417', 'page no. 417', 'page number 417'
-    - 'page #417', 'page # 417'
-    - 'pg 417', 'pg. 417', 'pg no 417', 'pg no. 417'
-    - 'p 417', 'p. 417', 'p.no 417', 'p.no. 417'
-    - 'page 415-418', 'pages 415 to 418'
+    Handles English and French queries, symbols, colons, ranges, and informal phrasing:
+    - 'page 417', 'page no 417', 'page no. 417', 'page no: 417', 'page number 417'
+    - 'page #417', 'page : 417', 'page-417', 'page417', 'p417', 'pg417'
+    - 'page n° 417', 'page n°: 417', 'page numéro 417', 'page numero 417'
+    - 'pg 417', 'pg. 417', 'p 417', 'p. 417', 'p.417'
+    - 'page 415-418', 'pages 415 to 418', 'pages 415 à 418'
+    - 'page no from the book on question 417', 'page of the book 417'
     """
     pages = set()
-    pattern1 = re.compile(
-        r'\b(?:pages?|pags?|p\.|pgs?\.?|p)\s*(?:(?:no|num|number)\.?)?\s*(?:#)?\s*(\d+)\b',
+    if not query:
+        return []
+
+    # 1. Page range e.g. "page 415-418", "pages 415 to 418", "pages 415 à 418"
+    pattern_range = re.compile(
+        r'\b(?:pages?|pgs?|pags?)\s*(?:[:#\-])?\s*(?:(?:no|num|number|num[eé]ro|n[°º])\.?[:\s-]*)?\s*(\d+)\s*(?:-|to|[aà])\s*(\d+)\b',
         re.IGNORECASE
     )
-    for m in pattern1.findall(query):
-        try:
-            val = int(m)
-            if val > 0:
-                pages.add(val)
-        except (ValueError, TypeError):
-            pass
-            
-    pattern2 = re.compile(
-        r'\b(?:pages?|pgs?)\s*(?:(?:no|num|number)\.?)?\s*(?:#)?\s*(\d+)\s*(?:-|to)\s*(\d+)\b',
-        re.IGNORECASE
-    )
-    for m in pattern2.finditer(query):
+    for m in pattern_range.finditer(query):
         try:
             start, end = int(m.group(1)), int(m.group(2))
             if end > start and (end - start) <= 15:
                 for p in range(start, end + 1):
-                    pages.add(p)
+                    if 1 <= p <= 700:
+                        pages.add(p)
         except (ValueError, TypeError):
             pass
-            
+
+    # 2. Standard page patterns: handles page, pg, p, p. with optional no, num, number, numéro, n°, #, :, -, spaces
+    pattern_standard = re.compile(
+        r'\b(?:pages?|pags?|p\.|pgs?\.?)\s*(?:[:#\-])?\s*(?:(?:no|num|number|num[eé]ro|n[°º])\.?[:\s-]*)?(?:#|:|-)?\s*(\d+)\b',
+        re.IGNORECASE
+    )
+    for m in pattern_standard.findall(query):
+        try:
+            val = int(m)
+            if 1 <= val <= 700:
+                pages.add(val)
+        except (ValueError, TypeError):
+            pass
+
+    # 3. Compact forms: page417, pg417, p417 (no boundary between letter and digit)
+    pattern_compact = re.compile(
+        r'\b(?:page|pg|p)(\d{1,4})\b',
+        re.IGNORECASE
+    )
+    for m in pattern_compact.findall(query):
+        try:
+            val = int(m)
+            if 1 <= val <= 700:
+                pages.add(val)
+        except (ValueError, TypeError):
+            pass
+
+    # 4. Phrase forms with intervening words: "page ... 417", "page no from the book ... 417", "page in the book 417"
+    pattern_phrased = re.compile(
+        r'\b(?:page|pages|livre|book)[^\d\n]{1,40}?\b(?:no|num|number|num[eé]ro|n[°º])?[:\s#-]*(\d{1,4})\b',
+        re.IGNORECASE
+    )
+    for m in pattern_phrased.findall(query):
+        try:
+            val = int(m)
+            if 1 <= val <= 700:
+                pages.add(val)
+        except (ValueError, TypeError):
+            pass
+
+    # 5. Standalone digits if query is purely asking about a number or very short: e.g. "417", "about 417", "show 417"
+    if not pages:
+        short_num_match = re.search(r'^(?:what\s+is\s+on|show|explain|about|sur)?\s*#?\s*(\d{1,4})\s*\??$', query.strip(), re.IGNORECASE)
+        if short_num_match:
+            try:
+                val = int(short_num_match.group(1))
+                if 1 <= val <= 700:
+                    pages.add(val)
+            except (ValueError, TypeError):
+                pass
+
     return sorted(list(pages))
+
+
+def fetch_page_chunks_direct_from_pdf(source_file: str, page_num: int) -> list[dict]:
+    """
+    Directly extract page text from original PDF file on disk.
+    Acts as a 100% reliable fallback whenever chunks.json or Qdrant
+    do not have chunks for the requested page number.
+    Also handles the 2-page book frontmatter offset (PDF page = printed book page + 2).
+    """
+    if not HAS_FITZ:
+        return []
+
+    candidate_files = [source_file]
+    for alt in ["Sales_and_negociation_OK-2.pdf", "Vente_et_negociation_bancaire_png_fr.pdf"]:
+        if alt not in candidate_files:
+            candidate_files.append(alt)
+
+    results = []
+    for c_file in candidate_files:
+        pdf_path = BASE_DIR / "data" / c_file
+        if not pdf_path.exists():
+            continue
+        try:
+            doc = fitz.open(pdf_path)
+            total_doc_pages = len(doc)
+
+            # The book has a 2-page frontmatter offset: PDF physical page = Book printed page + 2.
+            # If user asks for page N, we check:
+            # 1. Physical PDF page N (which is Book page N - 2)
+            # 2. Physical PDF page N + 2 (which is Book printed page N)
+            pages_to_check = [page_num]
+            if page_num + 2 <= total_doc_pages and (page_num + 2) not in pages_to_check:
+                pages_to_check.append(page_num + 2)
+
+            for p in pages_to_check:
+                p_idx = p - 1  # 0-indexed in PyMuPDF
+                if 0 <= p_idx < total_doc_pages:
+                    text = doc[p_idx].get_text("text").strip()
+                    if text and len(text) >= 15:
+                        ch_name = ""
+                        sec_name = ""
+                        for c_name, c_info in BOOK_TOC_CATALOGUE.get(c_file, {}).items():
+                            if c_info.get("start_page", 0) <= p:
+                                ch_name = c_name
+                                for s_name, s_p in c_info.get("sections", {}).items():
+                                    if s_p <= p:
+                                        sec_name = s_name
+
+                        if c_file in TOC_DATA and "chapters" in TOC_DATA[c_file]:
+                            for c_name, c_info in TOC_DATA[c_file]["chapters"].items():
+                                if c_info.get("start_page", 0) <= p:
+                                    ch_name = c_name
+                                    for s_name, s_p in c_info.get("sections", {}).items():
+                                        if s_p <= p:
+                                            sec_name = s_name
+
+                        book_page_note = f" (Book Page {p - 2})" if p >= 3 else ""
+                        results.append({
+                            "id": f"direct_pdf_{c_file}_{p}",
+                            "source": c_file,
+                            "page": p,
+                            "chapter": ch_name,
+                            "section": sec_name,
+                            "images": [f"{c_file}_page_{p}_snapshot.png"],
+                            "text": text,
+                            "is_direct_pdf": True,
+                            "book_page_note": book_page_note
+                        })
+            doc.close()
+            if results:
+                break
+        except Exception as e:
+            print(f"[WARN] Error reading direct PDF {c_file} for page {page_num}: {e}", flush=True)
+
+    return results
 
 
 class TempPoint:
@@ -737,8 +863,15 @@ def hybrid_search(query: str, target_lang: str | None, limit: int = 15) -> list:
                 for pt in q_pts:
                     if pt.payload:
                         add_chunk(pt.payload, 10.0)
+                        found_in_chunks_data = True
             except Exception as e:
                 print(f"[HYBRID] Qdrant page search fallback failed for p.{target_page}: {e}", flush=True)
+
+        # Fallback: Read directly from original PDF on disk
+        if not found_in_chunks_data:
+            direct_chunks = fetch_page_chunks_direct_from_pdf(source_file, target_page)
+            for dc in direct_chunks:
+                add_chunk(dc, 15.0)
 
     # --- C. Acronym / Term Matching ---
     # E.g. CWMA, ISFB, USP
@@ -1903,6 +2036,16 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
                     except Exception as e:
                         print(f"[WARN] Qdrant scroll for page {tp} failed: {e}", flush=True)
 
+            # 3. Direct PDF extraction fallback:
+            # If Qdrant/CHUNKS_DATA don't have this page, read directly from the original PDF on disk
+            found_pages = {p.payload.get("page") for p in pinned_chunks}
+            for tp in target_pages:
+                if tp not in found_pages and str(tp) not in [str(x) for x in found_pages]:
+                    direct_chunks = fetch_page_chunks_direct_from_pdf(source_file, tp)
+                    for dc in direct_chunks:
+                        pinned_chunks.append(TempPoint(id=dc["id"], payload=dc, score=2000.0))
+                        found_pages.add(dc.get("page"))
+
         # 1. Hybrid Search (combines heuristics and vector embeddings)
         t0 = time.time()
         search_result = hybrid_search(search_query, output_lang, limit=15)
@@ -1957,7 +2100,8 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
             imgs_str = ", ".join([f"{AI_IMAGE_BASE_URL}/images/{img}" for img in valid_imgs]) if valid_imgs else "None"
             
             # Build rich source header with chapter/section info
-            source_header = f"[Page: {page}"
+            book_page_note = chunk.get("book_page_note", "")
+            source_header = f"[Page: {page}{book_page_note}"
             if chapter:
                 source_header += f" | Chapter: {chapter}"
             if section:
@@ -1990,7 +2134,7 @@ For greetings or conversational interactions (e.g., "Hi", "Hello", "How are you?
 [INSTRUCTIONS FOR ANSWERING]
 1. Answer the user's question using the Context and Table of Contents provided below.
 2. STRICT GROUNDING: Answer ONLY using facts and information present in the Context and Table of Contents. NEVER invent or hallucinate principles, methods, or details from outside knowledge. If the answer is not in the document, clearly say "I cannot find the answer to that in the document."
-3. SPECIFIC PAGE LOOKUP: If the user asks about a specific page (e.g. "Look at page 259", "What is on page X?"), focus directly on the context provided for that page and explain what it covers, citing the page number clearly (e.g., p.259).
+3. SPECIFIC PAGE LOOKUP: If the user asks about a specific page (e.g. "Look at page 259", "What is on page X?", "Page no 417"), focus directly on the context provided for that page and explain what it covers, citing the page number clearly (e.g., p.259 or p.417). If both physical PDF page and book printed page numbers are shown in the headers, explain the content clearly and mention both numbers for clarity.
 4. Be flexible with wording. If the user searches for a chapter using only a few words or partial names, match it to the closest chapter in the Context or Table of Contents.
 5. For structural questions (e.g., "What are the subsections of Chapter X?", "What is the name of Chapter 2?", "What chapters are there?"), use the [BOOK TABLE OF CONTENTS] above AND the [Chapter] and [Section] metadata tags in the Context to give a complete answer.
 6. INLINE CITATIONS: When referencing specific information from the document, include inline citations in the format (Chapter Name, p.XX) or (p.XX) ONLY IF XX is a valid, specific page number greater than 1 (e.g., p.2, p.5). NEVER cite page 1, p.1, or (p.1). If the page number is 1, missing, or unknown, do NOT include any page citation in your answer.

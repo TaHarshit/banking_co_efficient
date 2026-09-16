@@ -34,15 +34,24 @@ def extract_pdfs():
         print(f"  Running single-pass chunked markdown extraction for {total_pages} pages...")
         extracted_pages = []
         try:
-            # page_chunks=True returns list of dicts: [{"text": "...", "page": 1}, ...]
+            # page_chunks=True returns list of dicts: [{"text": "...", "metadata": {"page": 0}}, ...]
             chunks = pymupdf4llm.to_markdown(doc, page_chunks=True)
-            for chunk in chunks:
-                # Page numbers in pymupdf4llm page_chunks are 0-indexed or 1-indexed depending on version
-                # To be safe, we retrieve page or look at chunk metadata
-                pg = chunk.get("page", 0) + 1  # Often 0-indexed
-                # Some versions might return 1-indexed, let's calibrate
-                # We can also fall back to checking sequence
-                text = chunk.get("text", "").strip()
+            for idx, chunk in enumerate(chunks):
+                # Page numbers in pymupdf4llm are in metadata["page"] (0-indexed)
+                pg = None
+                if isinstance(chunk, dict):
+                    meta = chunk.get("metadata")
+                    if isinstance(meta, dict) and "page" in meta:
+                        pg = meta["page"] + 1
+                    elif "page" in chunk:
+                        pg = chunk["page"]
+                        if pg == 0:
+                            pg = idx + 1
+                # Guarantee sequential 1-based page number if missing or defaulted to 1
+                if pg is None or (pg == 1 and idx > 0):
+                    pg = idx + 1
+
+                text = chunk.get("text", "").strip() if isinstance(chunk, dict) else str(chunk).strip()
                 extracted_pages.append((pg, text))
             print(f"  Successfully extracted {len(extracted_pages)} page chunks.")
         except Exception as e:

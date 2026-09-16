@@ -63,6 +63,22 @@ def embed_chunks():
     print("Uploading to Qdrant...")
     client.upsert(collection_name=COLLECTION_NAME, points=points)
 
+    # Create payload index for fast filtering by page and source
+    try:
+        client.create_payload_index(
+            collection_name=COLLECTION_NAME,
+            field_name="page",
+            field_schema="integer"
+        )
+        client.create_payload_index(
+            collection_name=COLLECTION_NAME,
+            field_name="source",
+            field_schema="keyword"
+        )
+        print("Created payload indexes on 'page' and 'source'")
+    except Exception as idx_err:
+        print(f"Notice: payload index creation: {idx_err}")
+
     print("✅ Successfully embedded and uploaded to Qdrant!")
 
 if __name__ == "__main__":
