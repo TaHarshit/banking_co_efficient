@@ -438,9 +438,17 @@ try:
     if CHUNKS_FILE.exists():
         with open(CHUNKS_FILE, "r", encoding="utf-8") as f:
             CHUNKS_DATA = json.load(f)
-        print(f"[INIT] Loaded {len(CHUNKS_DATA)} chunks for hybrid search", flush=True)
+        print(f"[INIT] Loaded {len(CHUNKS_DATA)} chunks from {CHUNKS_FILE} for hybrid search", flush=True)
     else:
-        print(f"[WARN] Chunks file not found at {CHUNKS_FILE}. Run build_index.sh first.", flush=True)
+        print(f"[WARN] Chunks file not found at {CHUNKS_FILE}. Attempting to load from Qdrant...", flush=True)
+        try:
+            scroll_res, _ = vector_db.scroll(collection_name=COLLECTION_NAME, limit=3000, with_payload=True)
+            for pt in scroll_res:
+                if pt.payload:
+                    CHUNKS_DATA.append(pt.payload)
+            print(f"[INIT] Loaded {len(CHUNKS_DATA)} chunks directly from Qdrant into memory", flush=True)
+        except Exception as q_err:
+            print(f"[WARN] Could not load chunks from Qdrant on init: {q_err}", flush=True)
 except Exception as e:
     print(f"[WARN] Failed to load chunks data: {e}", flush=True)
 
@@ -593,6 +601,13 @@ ROMAN_TO_NUM = {
 NUM_TO_ROMAN = {v: k for k, v in ROMAN_TO_NUM.items()}
 
 
+class TempPoint:
+    def __init__(self, id, payload, score=1.0):
+        self.id = id
+        self.payload = payload
+        self.score = score
+
+
 def hybrid_search(query: str, target_lang: str | None, limit: int = 15) -> list:
     """
     Perform a hybrid search combining rule-based heuristics and vector search:
@@ -607,12 +622,6 @@ def hybrid_search(query: str, target_lang: str | None, limit: int = 15) -> list:
     
     results = []
     seen_ids = set()
-    
-    class TempPoint:
-        def __init__(self, id, payload, score=1.0):
-            self.id = id
-            self.payload = payload
-            self.score = score
 
     # Helper to add a chunk with a specific score
     def add_chunk(chunk, score):
@@ -645,14 +654,37 @@ def hybrid_search(query: str, target_lang: str | None, limit: int = 15) -> list:
                 add_chunk(c, 3.0)  # Very high score for exact quote matches
 
     # --- B. Page Number Matching ---
-    # e.g. "page 47", "p. 47", "page number 310"
-    page_match = re.search(r'\b(?:page|p\.?)\s*(\d+)\b', query, re.IGNORECASE)
-    if page_match:
-        target_page = int(page_match.group(1))
+    # e.g. "page 47", "p. 47", "page number 310", "page 258 and 259"
+    page_matches = re.findall(r'\b(?:pages?|p\.?)\s*(\d+)\b', query, re.IGNORECASE)
+    matched_target_pages = [int(p) for p in page_matches if p.isdigit()]
+    for target_page in matched_target_pages:
         print(f"[HYBRID] Searching directly for Page: {target_page}", flush=True)
+        found_in_chunks_data = False
         for c in CHUNKS_DATA:
             if c.get("source") == source_file and c.get("page") == target_page:
-                add_chunk(c, 2.5)  # High score for page matching
+                add_chunk(c, 10.0)  # High score for page matching
+                found_in_chunks_data = True
+        
+        # Fallback to direct Qdrant query by page
+        if not found_in_chunks_data or len(CHUNKS_DATA) == 0:
+            try:
+                page_filter = Filter(
+                    must=[
+                        FieldCondition(key="source", match=MatchValue(value=source_file)),
+                        FieldCondition(key="page", match=MatchValue(value=target_page))
+                    ]
+                )
+                q_pts, _ = vector_db.scroll(
+                    collection_name=COLLECTION_NAME,
+                    scroll_filter=page_filter,
+                    limit=10,
+                    with_payload=True
+                )
+                for pt in q_pts:
+                    if pt.payload:
+                        add_chunk(pt.payload, 10.0)
+            except Exception as e:
+                print(f"[HYBRID] Qdrant page search fallback failed for p.{target_page}: {e}", flush=True)
 
     # --- C. Acronym / Term Matching ---
     # E.g. CWMA, ISFB, USP
@@ -1733,34 +1765,107 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
             output_lang = detected_lang
             print(f"[INFO] Detected language locally: {detected_lang} (free, no AI credit)", flush=True)
 
+        # Check if the query is a follow-up or references previous turns (e.g., "Can include the page reference?")
+        last_user_query = ""
+        if history:
+            for item in reversed(history):
+                if isinstance(item, dict) and item.get("role") == "user":
+                    last_user_query = item.get("content", "").strip()
+                    break
+
         search_query = query
-        print(f"[INFO] Output language: {output_lang} (detection time: {time.time()-t0_lang:.3f}s)", flush=True)
+        ref_keywords = ["page", "reference", "cite", "where", "which page", "chapter", "source", "book", "explain", "more", "why", "detail"]
+        is_short_or_ref = len(query.split()) <= 10 or any(re.search(rf'\b{kw}\b', query, re.IGNORECASE) for kw in ref_keywords)
+        
+        if last_user_query and is_short_or_ref and last_user_query.lower() not in query.lower():
+            search_query = f"{last_user_query} {query}"
+            print(f"[INFO] Expanded follow-up search query: '{search_query}'", flush=True)
+
+        # Detect explicit page requests in the query (e.g., "Look at page 259", "page 47", "p. 259")
+        target_pages = []
+        page_matches = re.findall(r'\b(?:pages?|p\.?)\s*(\d+)\b', query, re.IGNORECASE)
+        for pm in page_matches:
+            try:
+                p_int = int(pm)
+                if p_int > 0:
+                    target_pages.append(p_int)
+            except (ValueError, TypeError):
+                pass
+        target_pages = list(set(target_pages))
+
+        source_file, source_filter = get_pdf_source_filter(output_lang)
+
+        # Gather pinned chunks for explicitly requested pages
+        pinned_chunks = []
+        if target_pages:
+            print(f"[INFO] Explicit page request detected: {target_pages}", flush=True)
+            # 1. Search in CHUNKS_DATA
+            for c in CHUNKS_DATA:
+                if c.get("source") == source_file and c.get("page") in target_pages:
+                    chunk_id = c.get("id") or str(uuid.uuid4())
+                    pinned_chunks.append(TempPoint(id=chunk_id, payload=c, score=1000.0))
+            
+            # 2. If missing or partial, query Qdrant directly
+            found_pages = {p.payload.get("page") for p in pinned_chunks}
+            for tp in target_pages:
+                if tp not in found_pages:
+                    try:
+                        p_filter = Filter(
+                            must=[
+                                FieldCondition(key="source", match=MatchValue(value=source_file)),
+                                FieldCondition(key="page", match=MatchValue(value=tp))
+                            ]
+                        )
+                        q_pts, _ = vector_db.scroll(
+                            collection_name=COLLECTION_NAME,
+                            scroll_filter=p_filter,
+                            limit=10,
+                            with_payload=True
+                        )
+                        for pt in q_pts:
+                            if pt.payload:
+                                pinned_chunks.append(TempPoint(id=str(pt.id), payload=pt.payload, score=1000.0))
+                    except Exception as e:
+                        print(f"[WARN] Qdrant scroll for page {tp} failed: {e}", flush=True)
 
         # 1. Hybrid Search (combines heuristics and vector embeddings)
         t0 = time.time()
-        source_file, source_filter = get_pdf_source_filter(output_lang)
         search_result = hybrid_search(search_query, output_lang, limit=15)
         print(f"[PERF] /ask - Hybrid Search ({len(search_result)} results): {time.time()-t0:.3f}s", flush=True)
 
-        if not search_result:
+        # 3. Re-ranking — rerank candidate search results
+        if search_result:
+            t0 = time.time()
+            print(f"[INFO] Re-ranking {len(search_result)} candidates...", flush=True)
+
+            pairs  = [[search_query, res.payload["text"]] for res in search_result]
+            scores = rerank_model.predict(pairs)
+
+            for i, score in enumerate(scores):
+                search_result[i].score = score
+
+            search_result.sort(key=lambda x: x.score, reverse=True)
+            print(f"[PERF] /ask - Re-ranking: {time.time()-t0:.3f}s", flush=True)
+
+        # Build top_chunks: explicit page chunks ALWAYS come first, then top reranked chunks
+        seen_chunk_ids = set()
+        top_chunks = []
+        for pc in pinned_chunks:
+            if pc.id not in seen_chunk_ids:
+                top_chunks.append(pc)
+                seen_chunk_ids.add(pc.id)
+        
+        for res in search_result:
+            if res.id not in seen_chunk_ids:
+                top_chunks.append(res)
+                seen_chunk_ids.add(res.id)
+            if len(top_chunks) >= 8:
+                break
+
+        if not top_chunks:
             if output_lang.lower() == "french":
-                return {"answer": "Aucune information pertinente trouvée.", "images": [], "reference_pages": []}
-            return {"answer": "No relevant information found.", "images": [], "reference_pages": []}
-
-        # 3. Re-ranking — now re-ranking 10 instead of 20 (~50% faster)
-        t0 = time.time()
-        print(f"[INFO] Re-ranking {len(search_result)} candidates...", flush=True)
-
-        pairs  = [[search_query, res.payload["text"]] for res in search_result]
-        scores = rerank_model.predict(pairs)
-
-        for i, score in enumerate(scores):
-            search_result[i].score = score
-
-        search_result.sort(key=lambda x: x.score, reverse=True)
-        # Keep top 5 — focused context gives better AI answers than diluted top 8
-        top_chunks = search_result[:5]
-        print(f"[PERF] /ask - Re-ranking: {time.time()-t0:.3f}s", flush=True)
+                return {"answer": "Aucune information pertinente trouvée dans le document.", "images": [], "reference_pages": []}
+            return {"answer": "No relevant information found in the document.", "images": [], "reference_pages": []}
 
         # 4. Context Building — now includes chapter/section metadata
         context          = ""
@@ -1809,10 +1914,11 @@ For greetings or conversational interactions (e.g., "Hi", "Hello", "How are you?
 {toc_section}
 [INSTRUCTIONS FOR ANSWERING]
 1. Answer the user's question using the Context and Table of Contents provided below.
-2. Be flexible with wording. If the user searches for a chapter using only a few words or partial names, match it to the closest chapter in the Context or Table of Contents.
-3. For structural questions (e.g., "What are the subsections of Chapter X?", "What is the name of Chapter 2?", "What chapters are there?"), use the [BOOK TABLE OF CONTENTS] above AND the [Chapter] and [Section] metadata tags in the Context to give a complete answer.
-4. If the requested information is genuinely missing from BOTH the Context and the Table of Contents, say "I cannot find the answer to that in the document."
-5. INLINE CITATIONS: When referencing specific information from the document, include inline citations in the format (Chapter Name, p.XX) or (p.XX) ONLY IF XX is a valid, specific page number greater than 1 (e.g., p.2, p.5). NEVER cite page 1, p.1, or (p.1). If the page number is 1, missing, or unknown, do NOT include any page citation in your answer.
+2. STRICT GROUNDING: Answer ONLY using facts and information present in the Context and Table of Contents. NEVER invent or hallucinate principles, methods, or details from outside knowledge. If the answer is not in the document, clearly say "I cannot find the answer to that in the document."
+3. SPECIFIC PAGE LOOKUP: If the user asks about a specific page (e.g. "Look at page 259", "What is on page X?"), focus directly on the context provided for that page and explain what it covers, citing the page number clearly (e.g., p.259).
+4. Be flexible with wording. If the user searches for a chapter using only a few words or partial names, match it to the closest chapter in the Context or Table of Contents.
+5. For structural questions (e.g., "What are the subsections of Chapter X?", "What is the name of Chapter 2?", "What chapters are there?"), use the [BOOK TABLE OF CONTENTS] above AND the [Chapter] and [Section] metadata tags in the Context to give a complete answer.
+6. INLINE CITATIONS: When referencing specific information from the document, include inline citations in the format (Chapter Name, p.XX) or (p.XX) ONLY IF XX is a valid, specific page number greater than 1 (e.g., p.2, p.5). NEVER cite page 1, p.1, or (p.1). If the page number is 1, missing, or unknown, do NOT include any page citation in your answer.
 
 [IMPORTANT]
 At the end of your response, provide exactly 3 short and sweet follow-up suggestions for the user.
