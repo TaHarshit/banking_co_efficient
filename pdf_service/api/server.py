@@ -601,6 +601,46 @@ ROMAN_TO_NUM = {
 NUM_TO_ROMAN = {v: k for k, v in ROMAN_TO_NUM.items()}
 
 
+def extract_page_numbers_from_query(query: str) -> list[int]:
+    """
+    Robustly extract all requested page numbers from user query.
+    Handles:
+    - 'page 417', 'pages 417 and 418'
+    - 'page no 417', 'page no. 417', 'page number 417'
+    - 'page #417', 'page # 417'
+    - 'pg 417', 'pg. 417', 'pg no 417', 'pg no. 417'
+    - 'p 417', 'p. 417', 'p.no 417', 'p.no. 417'
+    - 'page 415-418', 'pages 415 to 418'
+    """
+    pages = set()
+    pattern1 = re.compile(
+        r'\b(?:pages?|pags?|p\.|pgs?\.?|p)\s*(?:(?:no|num|number)\.?)?\s*(?:#)?\s*(\d+)\b',
+        re.IGNORECASE
+    )
+    for m in pattern1.findall(query):
+        try:
+            val = int(m)
+            if val > 0:
+                pages.add(val)
+        except (ValueError, TypeError):
+            pass
+            
+    pattern2 = re.compile(
+        r'\b(?:pages?|pgs?)\s*(?:(?:no|num|number)\.?)?\s*(?:#)?\s*(\d+)\s*(?:-|to)\s*(\d+)\b',
+        re.IGNORECASE
+    )
+    for m in pattern2.finditer(query):
+        try:
+            start, end = int(m.group(1)), int(m.group(2))
+            if end > start and (end - start) <= 15:
+                for p in range(start, end + 1):
+                    pages.add(p)
+        except (ValueError, TypeError):
+            pass
+            
+    return sorted(list(pages))
+
+
 class TempPoint:
     def __init__(self, id, payload, score=1.0):
         self.id = id
@@ -653,15 +693,16 @@ def hybrid_search(query: str, target_lang: str | None, limit: int = 15) -> list:
             if c.get("source") == source_file and quote_clean in c.get("text", "").lower():
                 add_chunk(c, 3.0)  # Very high score for exact quote matches
 
-    # --- B. Page Number Matching ---
-    # e.g. "page 47", "p. 47", "page number 310", "page 258 and 259"
-    page_matches = re.findall(r'\b(?:pages?|p\.?)\s*(\d+)\b', query, re.IGNORECASE)
-    matched_target_pages = [int(p) for p in page_matches if p.isdigit()]
+    # --- B. Dynamic Page Number Matching ---
+    # Automatically extracts ANY page number (e.g., page 5, page no 417, pg 259, etc.)
+    matched_target_pages = extract_page_numbers_from_query(query)
     for target_page in matched_target_pages:
         print(f"[HYBRID] Searching directly for Page: {target_page}", flush=True)
         found_in_chunks_data = False
         for c in CHUNKS_DATA:
-            if c.get("source") == source_file and c.get("page") == target_page:
+            c_page = c.get("page")
+            c_source = c.get("source")
+            if (c_source == source_file or not c_source) and (c_page == target_page or str(c_page) == str(target_page)):
                 add_chunk(c, 10.0)  # High score for page matching
                 found_in_chunks_data = True
         
@@ -680,6 +721,19 @@ def hybrid_search(query: str, target_lang: str | None, limit: int = 15) -> list:
                     limit=10,
                     with_payload=True
                 )
+                if not q_pts:
+                    page_filter_str = Filter(
+                        must=[
+                            FieldCondition(key="source", match=MatchValue(value=source_file)),
+                            FieldCondition(key="page", match=MatchValue(value=str(target_page)))
+                        ]
+                    )
+                    q_pts, _ = vector_db.scroll(
+                        collection_name=COLLECTION_NAME,
+                        scroll_filter=page_filter_str,
+                        limit=10,
+                        with_payload=True
+                    )
                 for pt in q_pts:
                     if pt.payload:
                         add_chunk(pt.payload, 10.0)
@@ -1781,35 +1835,29 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
             search_query = f"{last_user_query} {query}"
             print(f"[INFO] Expanded follow-up search query: '{search_query}'", flush=True)
 
-        # Detect explicit page requests in the query (e.g., "Look at page 259", "page 47", "p. 259")
-        target_pages = []
-        page_matches = re.findall(r'\b(?:pages?|p\.?)\s*(\d+)\b', query, re.IGNORECASE)
-        for pm in page_matches:
-            try:
-                p_int = int(pm)
-                if p_int > 0:
-                    target_pages.append(p_int)
-            except (ValueError, TypeError):
-                pass
-        target_pages = list(set(target_pages))
+        # Dynamically extract ANY page number entered by user (e.g., page 5, page no 417, pg 259, etc.)
+        target_pages = extract_page_numbers_from_query(query)
 
         source_file, source_filter = get_pdf_source_filter(output_lang)
 
         # Gather pinned chunks for explicitly requested pages
         pinned_chunks = []
         if target_pages:
-            print(f"[INFO] Explicit page request detected: {target_pages}", flush=True)
+            print(f"[INFO] Explicit page request detected dynamically: {target_pages}", flush=True)
             # 1. Search in CHUNKS_DATA
             for c in CHUNKS_DATA:
-                if c.get("source") == source_file and c.get("page") in target_pages:
+                c_page = c.get("page")
+                c_source = c.get("source")
+                if (c_source == source_file or not c_source) and (c_page in target_pages or str(c_page) in [str(p) for p in target_pages]):
                     chunk_id = c.get("id") or str(uuid.uuid4())
                     pinned_chunks.append(TempPoint(id=chunk_id, payload=c, score=1000.0))
             
             # 2. If missing or partial, query Qdrant directly
             found_pages = {p.payload.get("page") for p in pinned_chunks}
             for tp in target_pages:
-                if tp not in found_pages:
+                if tp not in found_pages and str(tp) not in [str(x) for x in found_pages]:
                     try:
+                        # Try integer match with source
                         p_filter = Filter(
                             must=[
                                 FieldCondition(key="source", match=MatchValue(value=source_file)),
@@ -1822,6 +1870,33 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
                             limit=10,
                             with_payload=True
                         )
+                        # Try string match with source
+                        if not q_pts:
+                            p_filter_str = Filter(
+                                must=[
+                                    FieldCondition(key="source", match=MatchValue(value=source_file)),
+                                    FieldCondition(key="page", match=MatchValue(value=str(tp)))
+                                ]
+                            )
+                            q_pts, _ = vector_db.scroll(
+                                collection_name=COLLECTION_NAME,
+                                scroll_filter=p_filter_str,
+                                limit=10,
+                                with_payload=True
+                            )
+                        # Fallback without source filter if still empty
+                        if not q_pts:
+                            p_filter_nosource = Filter(
+                                must=[
+                                    FieldCondition(key="page", match=MatchValue(value=tp))
+                                ]
+                            )
+                            q_pts, _ = vector_db.scroll(
+                                collection_name=COLLECTION_NAME,
+                                scroll_filter=p_filter_nosource,
+                                limit=10,
+                                with_payload=True
+                            )
                         for pt in q_pts:
                             if pt.payload:
                                 pinned_chunks.append(TempPoint(id=str(pt.id), payload=pt.payload, score=1000.0))
