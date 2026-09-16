@@ -16,6 +16,13 @@ class Client extends Model
         'client_id',
         'client_alias',
         'notes',
+        'ai_summary',
+        'summary_updated_at',
+    ];
+
+    protected $casts = [
+        'ai_summary' => 'array',
+        'summary_updated_at' => 'datetime',
     ];
 
     public function user()

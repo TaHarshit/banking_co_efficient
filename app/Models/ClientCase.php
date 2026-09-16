@@ -18,6 +18,7 @@ class ClientCase extends Model
         'case_details',
         'ai_analysis',
         'action_plan',
+        'client_summary',
         'user_question',
         'plan_rating',
     ];
@@ -26,6 +27,7 @@ class ClientCase extends Model
         'case_details' => 'array',
         'ai_analysis' => 'array',
         'action_plan' => 'array',
+        'client_summary' => 'array',
     ];
 
     protected $appends = [
@@ -36,6 +38,12 @@ class ClientCase extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class, 'client_id', 'client_id')
+            ->where('user_id', $this->user_id);
     }
 
     public function aiJobs()

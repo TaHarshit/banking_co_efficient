@@ -1199,6 +1199,10 @@ SUMMARIZE_CASES_RESPONSE_FORMAT = {
                     "type": "array",
                     "items": {"type": "string"}
                 },
+                "client_red_flags": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
                 "proven_strategies_and_successes": {
                     "type": "array",
                     "items": {"type": "string"}
@@ -1218,6 +1222,7 @@ SUMMARIZE_CASES_RESPONSE_FORMAT = {
                 "total_cases_analyzed",
                 "cases_overview",
                 "recurring_patterns_and_objections",
+                "client_red_flags",
                 "proven_strategies_and_successes",
                 "pitfalls_and_lessons_learned",
                 "strategic_recommendations_for_future"
@@ -1961,6 +1966,7 @@ def summarize_client_cases(request: ClientCasesSummaryRequest, accept_language: 
                 "total_cases_analyzed": 0,
                 "cases_overview": [],
                 "recurring_patterns_and_objections": [],
+                "client_red_flags": [],
                 "proven_strategies_and_successes": [],
                 "pitfalls_and_lessons_learned": [],
                 "strategic_recommendations_for_future": []
@@ -2059,11 +2065,15 @@ Total Cases in History: {len(request.cases)}
 2. In 'client_profile_and_evolution', describe the client's decision-making style, key sensitivities, leverage points, and how their behavior has changed over time.
 3. In 'cases_overview', create an entry for EACH case provided in the history. Summarize the situation, core challenges, action plan summary, key techniques applied, and rating/outcome.
 4. In 'recurring_patterns_and_objections', list the recurring pushbacks, objections, or behavioral patterns that appear repeatedly.
-5. In 'proven_strategies_and_successes', detail specific tactics, framing methods, and action plan steps that worked best (especially cases with high ratings).
-6. In 'pitfalls_and_lessons_learned', highlight what caused friction, failed, or must be avoided when negotiating with this client.
-7. In 'strategic_recommendations_for_future', deliver 3 to 6 actionable, concrete rules and tactics for the banker's next interaction with this client.
-8. Set 'total_cases_analyzed' to {len(request.cases)}.
-9. Return ONLY valid JSON strictly matching the schema. No markdown outside JSON.
+5. In 'client_red_flags', list the critical negative tendencies, vulnerability triggers, and friction points of this client. Specifically explain:
+   - In which situations or scenarios the client fails to perform, becomes uncooperative, stalls, or resists progress.
+   - Which negotiation methods, banker tactics, or approaches backfire with this client (e.g. pressure tactics, aggressive anchoring, talking over them).
+   - Core trust obstacles, unexpressed skepticism, or deal-breaker sensitivities.
+6. In 'proven_strategies_and_successes', detail specific tactics, framing methods, and action plan steps that worked best (especially cases with high ratings).
+7. In 'pitfalls_and_lessons_learned', highlight what caused friction, failed, or must be avoided when negotiating with this client.
+8. In 'strategic_recommendations_for_future', deliver 3 to 6 actionable, concrete rules and tactics for the banker's next interaction with this client.
+9. Set 'total_cases_analyzed' to {len(request.cases)}.
+10. Return ONLY valid JSON strictly matching the schema. No markdown outside JSON.
 """
 
         messages = [
@@ -2089,6 +2099,7 @@ Total Cases in History: {len(request.cases)}
             "total_cases_analyzed",
             "cases_overview",
             "recurring_patterns_and_objections",
+            "client_red_flags",
             "proven_strategies_and_successes",
             "pitfalls_and_lessons_learned",
             "strategic_recommendations_for_future"
@@ -2111,6 +2122,10 @@ Total Cases in History: {len(request.cases)}
     }
   ],
   "recurring_patterns_and_objections": ["Pattern 1"],
+  "client_red_flags": [
+    "High resistance to sudden deadlines or high-pressure closes",
+    "Backfires if banker counters fee objections immediately without acknowledging value"
+  ],
   "proven_strategies_and_successes": ["Strategy 1"],
   "pitfalls_and_lessons_learned": ["Pitfall 1"],
   "strategic_recommendations_for_future": ["Recommendation 1"]

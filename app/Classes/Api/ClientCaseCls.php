@@ -6,6 +6,7 @@ use App\General\General;
 use App\General\Validate;
 use App\Jobs\AnalyzeCaseJob;
 use App\Jobs\GeneratePlanJob;
+use App\Jobs\SummarizeCasesJob;
 use App\Models\AiJob;
 use App\Repositories\Api\CaseStudyQuestionRepository;
 use App\Repositories\Api\ClientCaseRepository;
@@ -128,6 +129,17 @@ class ClientCaseCls
             $response         = General::setResponse('SUCCESS', 'Cases retrieved successfully.');
             $response['data'] = $cases;
 
+            // If filtered by client_id, include the client summary at the top-level of response
+            if (! empty($clientId)) {
+                $client = $this->clientRepository->FindByClientId(Auth::id(), $clientId);
+                $firstCase = $cases->first();
+                $response['client_summary'] = $client?->ai_summary 
+                    ?? $firstCase?->client_summary 
+                    ?? null;
+                $response['client_id'] = $clientId;
+                $response['client_alias'] = $client?->client_alias ?? $firstCase?->client_alias ?? null;
+            }
+
             return $response;
         } catch (Exception $e) {
             return General::setResponse('OTHER_ERROR', $e->getMessage());
@@ -141,6 +153,14 @@ class ClientCaseCls
 
             if (! $case) {
                 return General::setResponse('VALIDATION_ERROR', 'Case not found.');
+            }
+
+            // Ensure client_summary is loaded (fallback to client table if not on case row)
+            if (empty($case->client_summary) && ! empty($case->client_id)) {
+                $client = $this->clientRepository->FindByClientId(Auth::id(), $case->client_id);
+                if (! empty($client?->ai_summary)) {
+                    $case->client_summary = $client->ai_summary;
+                }
             }
 
             $response         = General::setResponse('SUCCESS', 'Case details retrieved successfully.');
@@ -354,8 +374,9 @@ class ClientCaseCls
             $response['job_id'] = $aiJob->id;
             $response['status'] = $aiJob->status;
             $response['job_type'] = $aiJob->job_type;
-            $response['case_id']  = $aiJob->case_id;
-            $response['attempts'] = $aiJob->attempts;
+            $response['case_id']   = $aiJob->case_id;
+            $response['client_id'] = $aiJob->client_id;
+            $response['attempts']  = $aiJob->attempts;
 
             if ($aiJob->isCompleted()) {
                 $response['data'] = $aiJob->result;
@@ -669,6 +690,7 @@ class ClientCaseCls
                     'total_cases_analyzed'                => 0,
                     'cases_overview'                       => [],
                     'recurring_patterns_and_objections'   => [],
+                    'client_red_flags'                     => [],
                     'proven_strategies_and_successes'      => [],
                     'pitfalls_and_lessons_learned'         => [],
                     'strategic_recommendations_for_future' => [],
@@ -682,6 +704,45 @@ class ClientCaseCls
                     'cases_count'  => 0,
                     'lang'         => $locale,
                 ];
+
+                return $response;
+            }
+
+            // Check if synchronous execution requested (default is asynchronous queue)
+            $isSync = filter_var($postData['sync'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+            if (! $isSync) {
+                // Async Queue Mode (matching analyze-case and generate-plan)
+                $aiJob = AiJob::create([
+                    'user_id'   => $user->id,
+                    'case_id'   => $caseId,
+                    'client_id' => $clientId,
+                    'job_type'  => 'summarize_cases',
+                    'status'    => 'pending',
+                    'attempts'  => 0,
+                ]);
+
+                SummarizeCasesJob::dispatch(
+                    $aiJob->id,
+                    $user->id,
+                    $clientId,
+                    $caseId,
+                    $clientAlias,
+                    $locale,
+                    $focus,
+                    $limit
+                );
+
+                // Auto-trigger background queue worker
+                $this->spawnQueueWorker();
+
+                $response              = General::setResponse('SUCCESS', 'Client cases summary queued. You will be notified when complete.');
+                $response['job_id']    = $aiJob->id;
+                $response['job_type']  = 'summarize_cases';
+                $response['status']    = 'pending';
+                $response['client_id'] = $clientId;
+                $response['case_id']   = $caseId;
+                $response['cases_count'] = $cases->count();
 
                 return $response;
             }
@@ -742,7 +803,7 @@ class ClientCaseCls
                 'focus'        => $focus,
             ];
 
-            Log::info('[ClientCaseCls] Requesting client cases summary from AI', [
+            Log::info('[ClientCaseCls] Requesting client cases summary from AI (sync)', [
                 'user_id'      => $user->id,
                 'client_id'    => $resolvedClientId,
                 'client_alias' => $resolvedClientAlias,
@@ -750,7 +811,7 @@ class ClientCaseCls
                 'endpoint'     => $endpoint,
             ]);
 
-            $httpResponse = Http::timeout(180)->withHeaders([
+            $httpResponse = Http::timeout(240)->withHeaders([
                 'Accept-Language' => $locale,
                 'Content-Type'    => 'application/json',
             ])->post($endpoint, $payload);
@@ -769,6 +830,31 @@ class ClientCaseCls
             if (isset($summaryData['error'])) {
                 Log::error('[ClientCaseCls] AI service returned error', ['error' => $summaryData['error']]);
                 return General::setResponse('OTHER_ERROR', $summaryData['error']);
+            }
+
+            // Persist client summary to clients and client_cases tables
+            if (! empty($resolvedClientId)) {
+                DB::table('clients')
+                    ->where('user_id', $user->id)
+                    ->where('client_id', $resolvedClientId)
+                    ->update([
+                        'ai_summary'         => json_encode($summaryData),
+                        'summary_updated_at' => now(),
+                    ]);
+
+                DB::table('client_cases')
+                    ->where('user_id', $user->id)
+                    ->where('client_id', $resolvedClientId)
+                    ->update([
+                        'client_summary' => json_encode($summaryData),
+                    ]);
+            } elseif (! empty($caseId)) {
+                DB::table('client_cases')
+                    ->where('user_id', $user->id)
+                    ->where('id', $caseId)
+                    ->update([
+                        'client_summary' => json_encode($summaryData),
+                    ]);
             }
 
             $response         = General::setResponse('SUCCESS', 'Client cases summarized successfully.');

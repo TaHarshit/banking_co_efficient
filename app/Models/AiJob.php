@@ -12,6 +12,7 @@ class AiJob extends Model
     protected $fillable = [
         'user_id',
         'case_id',
+        'client_id',
         'job_type',
         'status',
         'attempts',
