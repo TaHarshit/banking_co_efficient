@@ -626,6 +626,35 @@ class ClientCaseCls
                 $locale = 'en';
             }
 
+            // Validate client_id if provided: ensure it belongs strictly to this user's account
+            if (! empty($clientId)) {
+                $userClient = $this->clientRepository->FindByClientId($user->id, $clientId)
+                    ?? $this->clientCaseRepository->checkClientIdExists($user->id, $clientId);
+
+                if (! $userClient) {
+                    return General::setResponse('VALIDATION_ERROR', 'Client not found or does not belong to your account.');
+                }
+
+                if (empty($clientAlias) && ! empty($userClient->client_alias)) {
+                    $clientAlias = $userClient->client_alias;
+                }
+            }
+
+            // Validate case_id if provided: ensure it belongs strictly to this user's account
+            if (! empty($caseId)) {
+                $userCase = $this->clientCaseRepository->GetCaseDetails($caseId, $user->id);
+                if (! $userCase) {
+                    return General::setResponse('VALIDATION_ERROR', 'Case not found or does not belong to your account.');
+                }
+
+                if (empty($clientId) && ! empty($userCase->client_id)) {
+                    $clientId = $userCase->client_id;
+                }
+                if (empty($clientAlias) && ! empty($userCase->client_alias)) {
+                    $clientAlias = $userCase->client_alias;
+                }
+            }
+
             // Retrieve cases ordered chronologically for evolutionary analysis
             $cases = $this->clientCaseRepository->getCasesForSummary($user->id, $clientId, $caseId, $clientAlias, $limit);
 
