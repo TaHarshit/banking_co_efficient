@@ -115,15 +115,21 @@
                                         <div class="col-12">
                                             <label for="password"
                                                 class="form-label">{{ __('messages.password') }}</label>
-                                            <input type="password" name="password"
-                                                class="form-control {{ $errors->has('password') ? 'is-invalid' : '' }}"
-                                                id="password" required>
-                                            @if ($errors->has('password'))
-                                                <div class="invalid-feedback">{{ $errors->first('password') }}</div>
-                                            @else
-                                                <div class="invalid-feedback">
-                                                    {{ __('messages.please_enter_password') }}</div>
-                                            @endif
+                                            <div class="input-group has-validation">
+                                                <input type="password" name="password"
+                                                    class="form-control {{ $errors->has('password') ? 'is-invalid' : '' }}"
+                                                    id="password" required>
+                                                <button class="btn btn-outline-secondary" type="button" style="z-index: 5;"
+                                                    onclick="togglePasswordVisibility('password', 'passwordToggleIcon')">
+                                                    <i class="bi bi-eye-slash" id="passwordToggleIcon"></i>
+                                                </button>
+                                                @if ($errors->has('password'))
+                                                    <div class="invalid-feedback">{{ $errors->first('password') }}</div>
+                                                @else
+                                                    <div class="invalid-feedback">
+                                                        {{ __('messages.please_enter_password') }}</div>
+                                                @endif
+                                            </div>
                                         </div>
                                         <div class="col-6">
                                             <div class="form-check">
@@ -171,6 +177,22 @@
     </main>
     <script src="{{ url('assets/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url('assets/js/main.js') }}"></script>
+    <script type="text/javascript">
+        function togglePasswordVisibility(inputId, iconId) {
+            var input = document.getElementById(inputId);
+            var icon = document.getElementById(iconId);
+            if (!input || !icon) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            }
+        }
+    </script>
 </body>
 
 </html>
