@@ -49,6 +49,9 @@
                                         <select name="question_type" id="question_type"
                                             class="form-select @error('question_type') is-invalid @enderror" required>
                                             @foreach ($typeOptions as $key => $value)
+                                                @if ($key === 'open_text' && (!isset($data) || ($data->question_type ?? '') !== 'open_text'))
+                                                    @continue
+                                                @endif
                                                 <option value="{{ $key }}"
                                                     {{ old('question_type', $data->question_type ?? '') == $key ? 'selected' : '' }}>
                                                     {{ $value }}</option>

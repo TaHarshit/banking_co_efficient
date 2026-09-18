@@ -214,6 +214,9 @@
                                         class="form-select {{ $errors->has('question_type') ? 'is-invalid' : '' }}"
                                         required>
                                         @foreach ($questionTypes as $value => $label)
+                                            @if ($value === 'open_text' && (!isset($data) || $data->question_type !== 'open_text'))
+                                                @continue
+                                            @endif
                                             <option value="{{ $value }}"
                                                 {{ isset($data) && $data->question_type == $value ? 'selected' : '' }}>
                                                 {{ $label }}
