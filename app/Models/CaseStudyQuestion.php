@@ -10,12 +10,18 @@ class CaseStudyQuestion extends Model
     use HasFactory;
 
     protected $fillable = [
+        'business_id',
         'section_name',
         'section_name_en',
         'section_name_fr',
         'question_en',
         'question_fr',
     ];
+
+    public function business()
+    {
+        return $this->belongsTo(Business::class);
+    }
 
     public function options()
     {

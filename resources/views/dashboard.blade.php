@@ -273,11 +273,13 @@
                             </div>
                         </div><!-- End Exam Questions Card -->
 
-                        <!-- Case Study Questions Card -->
+                        {{-- 
+                        <!-- Business Policies / Case Study Questions Card (Hidden from Super Admin dashboard; managed in Business Admin Panel) -->
+                        <!-- To restore in Super Admin dashboard, simply uncomment the block below:
                         <div class="col-xxl-4 col-md-6">
                             <div class="card info-card revenue-card">
                                 <div class="card-body">
-                                    <h5 class="card-title">{{ __('messages.case_study_questions') }}</h5>
+                                    <h5 class="card-title">{{ __('messages.business_policies') }}</h5>
                                     <div class="d-flex align-items-center">
                                         <div
                                             class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -290,7 +292,9 @@
                                     </div>
                                 </div>
                             </div>
-                        </div><!-- End Case Study Questions Card -->
+                        </div>
+                        -->
+                        --}}
 
                         <!-- Contacts Card -->
                         <div class="col-xxl-4 col-md-6">

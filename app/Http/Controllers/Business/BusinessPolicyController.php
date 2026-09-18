@@ -1,45 +1,61 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Business;
 
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\CaseStudyQuestion;
 use App\Models\CaseStudyQuestionOption;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
-class CaseStudyQuestionController extends Controller
+class BusinessPolicyController extends Controller
 {
-    public function index(Request $request)
+    private function getBusiness(): Business
     {
-        $query = CaseStudyQuestion::with(['options', 'business'])->orderBy('section_name');
+        /** @var Business $business */
+        $business = Auth::guard('business')->user();
+        return $business;
+    }
 
-        if ($request->filled('business_id')) {
-            if ($request->business_id === 'global') {
-                $query->whereNull('business_id');
-            } else {
-                $query->where('business_id', $request->business_id);
-            }
-        }
+    public function index()
+    {
+        $business = $this->getBusiness();
+        $questions = CaseStudyQuestion::with('options')
+            ->where('business_id', $business->id)
+            ->orderBy('section_name')
+            ->paginate(20);
 
-        $questions = $query->paginate(20)->withQueryString();
-        $businesses = Business::orderBy('name')->get();
-        $selectedBusiness = $request->query('business_id');
+        $hasCustomQuestions = $questions->total() > 0;
+        $globalQuestionsCount = CaseStudyQuestion::whereNull('business_id')->count();
 
-        return view('admin.case_study_questions.index', compact('questions', 'businesses', 'selectedBusiness'));
+        return view('business.policies.index', compact('business', 'questions', 'hasCustomQuestions', 'globalQuestionsCount'));
+    }
+
+    public function updateMessage(Request $request)
+    {
+        $request->validate([
+            'business_policies_message' => 'nullable|string|max:5000',
+        ]);
+
+        $business = $this->getBusiness();
+        $business->update([
+            'business_policies_message' => $request->business_policies_message,
+        ]);
+
+        return redirect()->route('business.policies.index')
+            ->with('success', __('messages.message_updated_successfully'));
     }
 
     public function create()
     {
-        $businesses = Business::orderBy('name')->get();
-        return view('admin.case_study_questions.create', compact('businesses'));
+        return view('business.policies.create');
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'business_id' => 'nullable|exists:businesses,id',
             'section_name_en' => 'required|string|max:255',
             'section_name_fr' => 'required|string|max:255',
             'question_en' => 'required|string',
@@ -50,8 +66,10 @@ class CaseStudyQuestionController extends Controller
             'options.*.is_correct' => 'sometimes|boolean'
         ]);
 
+        $business = $this->getBusiness();
+
         $question = CaseStudyQuestion::create([
-            'business_id' => $request->filled('business_id') ? $request->business_id : null,
+            'business_id' => $business->id,
             'section_name' => $request->section_name_en,
             'section_name_en' => $request->section_name_en,
             'section_name_fr' => $request->section_name_fr,
@@ -67,22 +85,29 @@ class CaseStudyQuestionController extends Controller
             ]);
         }
 
-        logAdminActivity('Business Policies', 'Add', $question->id, "Added new policy question in section: {$request->section_name_en}", $request->all());
-
-        return redirect()->route('admin.case_study_questions.index')->with('success', 'Question created successfully.');
+        return redirect()->route('business.policies.index')
+            ->with('success', __('messages.policy_question_created'));
     }
 
-    public function edit(CaseStudyQuestion $question)
+    public function edit($id)
     {
-        $question->load(['options', 'business']);
-        $businesses = Business::orderBy('name')->get();
-        return view('admin.case_study_questions.edit', compact('question', 'businesses'));
+        $business = $this->getBusiness();
+        $question = CaseStudyQuestion::with('options')
+            ->where('id', $id)
+            ->where('business_id', $business->id)
+            ->firstOrFail();
+
+        return view('business.policies.edit', compact('question'));
     }
 
-    public function update(Request $request, CaseStudyQuestion $question)
+    public function update(Request $request, $id)
     {
+        $business = $this->getBusiness();
+        $question = CaseStudyQuestion::where('id', $id)
+            ->where('business_id', $business->id)
+            ->firstOrFail();
+
         $request->validate([
-            'business_id' => 'nullable|exists:businesses,id',
             'section_name_en' => 'required|string|max:255',
             'section_name_fr' => 'required|string|max:255',
             'question_en' => 'required|string',
@@ -94,7 +119,6 @@ class CaseStudyQuestionController extends Controller
         ]);
 
         $question->update([
-            'business_id' => $request->filled('business_id') ? $request->business_id : null,
             'section_name' => $request->section_name_en,
             'section_name_en' => $request->section_name_en,
             'section_name_fr' => $request->section_name_fr,
@@ -112,43 +136,45 @@ class CaseStudyQuestionController extends Controller
             ]);
         }
 
-        logAdminActivity('Business Policies', 'Update', $question->id, "Updated policy question in section: {$request->section_name_en}", $request->all());
-
-        return redirect()->route('admin.case_study_questions.index')->with('success', 'Question updated successfully.');
+        return redirect()->route('business.policies.index')
+            ->with('success', __('messages.policy_question_updated'));
     }
 
-    public function destroy(CaseStudyQuestion $question)
+    public function destroy($id)
     {
-        $id = $question->id;
-        $section = $question->section_name_en ?: $question->section_name;
+        $business = $this->getBusiness();
+        $question = CaseStudyQuestion::where('id', $id)
+            ->where('business_id', $business->id)
+            ->firstOrFail();
+
         $question->delete();
-        logAdminActivity('Business Policies', 'Delete', $id, "Deleted policy question from section: $section");
-        return redirect()->route('admin.case_study_questions.index')->with('success', 'Question deleted successfully.');
+
+        return redirect()->route('business.policies.index')
+            ->with('success', __('messages.policy_question_deleted'));
     }
 
     public function import(Request $request)
     {
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv|max:10240',
-            'business_id' => 'nullable|exists:businesses,id',
         ]);
 
+        $business = $this->getBusiness();
         $file = $request->file('file');
-        $businessId = $request->filled('business_id') ? $request->business_id : null;
-        
+
         try {
             $spreadsheet = IOFactory::load($file->getPathname());
             $worksheet = $spreadsheet->getActiveSheet();
             $rows = $worksheet->toArray();
-            
-            // Remove header
+
+            // Remove header row
             array_shift($rows);
 
             foreach ($rows as $row) {
-                if (empty($row[0])) continue; // skip if section name is empty
+                if (empty($row[0])) continue;
 
                 $question = CaseStudyQuestion::create([
-                    'business_id' => $businessId,
+                    'business_id' => $business->id,
                     'section_name' => $row[0],
                     'section_name_en' => $row[0],
                     'section_name_fr' => $row[0],
@@ -193,11 +219,11 @@ class CaseStudyQuestionController extends Controller
                 }
             }
 
-            logAdminActivity('Business Policies', 'Import', null, "Imported policy questions from file: " . $file->getClientOriginalName());
-
-            return redirect()->route('admin.case_study_questions.index')->with('success', 'Import successful!');
+            return redirect()->route('business.policies.index')
+                ->with('success', __('messages.import') . ' successful!');
         } catch (\Exception $e) {
-            return redirect()->route('admin.case_study_questions.index')->with('error', 'Error during import: ' . $e->getMessage());
+            return redirect()->route('business.policies.index')
+                ->with('error', 'Error during import: ' . $e->getMessage());
         }
     }
 }

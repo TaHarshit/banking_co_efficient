@@ -25,6 +25,7 @@ class Business extends Authenticatable
         'address',
         'status',
         'business_code',
+        'business_policies_message',
     ];
 
     /**
@@ -102,6 +103,22 @@ class Business extends Authenticatable
     public function questions()
     {
         return $this->hasMany(Question::class);
+    }
+
+    /**
+     * Get case study questions / business policies belonging to this business
+     */
+    public function caseStudyQuestions()
+    {
+        return $this->hasMany(CaseStudyQuestion::class);
+    }
+
+    /**
+     * Alias for caseStudyQuestions
+     */
+    public function businessPolicies()
+    {
+        return $this->hasMany(CaseStudyQuestion::class);
     }
 
     /**

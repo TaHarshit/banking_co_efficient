@@ -192,12 +192,18 @@ class ClientCaseCls
         }
     }
 
-    public function GetCaseStudySections($locale = 'en')
+    public function GetCaseStudySections($locale = 'en', $businessId = null)
     {
         try {
             app()->setLocale($locale);
 
-            $questions = $this->caseStudyQuestionRepository->getAllSectionsWithQuestions();
+            $policyMessage = null;
+            if ($businessId) {
+                $business = \App\Models\Business::find($businessId);
+                $policyMessage = $business?->business_policies_message;
+            }
+
+            $questions = $this->caseStudyQuestionRepository->getAllSectionsWithQuestions($businessId);
 
             $grouped = $questions->groupBy('section_name')->map(function ($sectionQuestions, $sectionName) use ($locale) {
                 return [
@@ -219,8 +225,9 @@ class ClientCaseCls
                 ];
             })->values();
 
-            $response         = General::setResponse('SUCCESS', 'Case study sections retrieved successfully.');
-            $response['data'] = $grouped;
+            $response                  = General::setResponse('SUCCESS', 'Case study sections retrieved successfully.');
+            $response['policy_message'] = $policyMessage;
+            $response['data']          = $grouped;
 
             return $response;
         } catch (Exception $e) {

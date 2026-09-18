@@ -57,11 +57,11 @@
     
     <main id="main" class="main">
         <div class="pagetitle mb-4">
-            <h1>Edit Case Study Question</h1>
+            <h1>Edit {{ __('messages.business_policies') }} Question</h1>
             <nav>
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">{{ __('messages.dashboard') }}</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('admin.case_study_questions.index') }}">Case Study Questions</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('admin.case_study_questions.index') }}">{{ __('messages.business_policies') }}</a></li>
                     <li class="breadcrumb-item active">Edit Question</li>
                 </ol>
             </nav>
@@ -72,7 +72,7 @@
                 <div class="col-lg-11">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Edit Case Study Question</h5>
+                            <h5 class="card-title">Edit {{ __('messages.business_policies') }} Question</h5>
 
                             @if ($errors->any())
                                 <div class="alert alert-danger">
@@ -87,6 +87,17 @@
                             <form class="row g-3" action="{{ route('admin.case_study_questions.update', $question->id) }}" method="POST">
                                 @csrf
                                 
+                                <div class="col-md-12">
+                                    <label class="form-label">{{ __('messages.bank_or_business') }}</label>
+                                    <select name="business_id" class="form-select">
+                                        <option value="">{{ __('messages.global_default') }}</option>
+                                        @foreach ($businesses as $b)
+                                            <option value="{{ $b->id }}" {{ old('business_id', $question->business_id) == $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <div class="form-text">Assign to a specific business or leave as Global (Default).</div>
+                                </div>
+
                                 <div class="col-md-6">
                                     <label class="form-label">🇬🇧 Section Name (EN) <span class="text-danger">*</span></label>
                                     <input type="text" name="section_name_en" class="form-control" value="{{ old('section_name_en', $question->section_name_en) }}" required>

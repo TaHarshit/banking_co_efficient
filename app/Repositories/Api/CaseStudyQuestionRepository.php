@@ -17,11 +17,24 @@ class CaseStudyQuestionRepository extends BaseRepository
     }
 
     /**
-     * Get all sections with their questions and options
+     * Get all sections with their questions and options.
+     * If $businessId is provided and the business has custom questions, return those.
+     * Otherwise fallback to global/default questions (where business_id IS NULL).
      */
-    public function getAllSectionsWithQuestions(): Collection
+    public function getAllSectionsWithQuestions(?int $businessId = null): Collection
     {
+        if ($businessId) {
+            $hasCustom = $this->model->where('business_id', $businessId)->exists();
+            if ($hasCustom) {
+                return $this->model->with(['options'])
+                    ->where('business_id', $businessId)
+                    ->orderBy('section_name')
+                    ->get();
+            }
+        }
+
         return $this->model->with(['options'])
+            ->whereNull('business_id')
             ->orderBy('section_name')
             ->get();
     }

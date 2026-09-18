@@ -92,7 +92,8 @@ class ClientCaseController extends Controller
             $locale = 'en';
         }
 
-        $data = $this->clientCaseCls->GetCaseStudySections($locale);
+        $businessId = $request->user()?->business_id;
+        $data = $this->clientCaseCls->GetCaseStudySections($locale, $businessId);
         return get_response($request, $data);
     }
 

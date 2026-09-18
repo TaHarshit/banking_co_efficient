@@ -138,4 +138,16 @@ Route::middleware(['business.auth'])->group(function () {
         Route::POST('/contacts/reply/{id}', 'Reply')->name('business.contacts.reply');
         Route::GET('/contacts/delete/{id}', 'Delete')->name('business.contacts.delete');
     });
+
+    // Business Policies
+    Route::controller(\App\Http\Controllers\Business\BusinessPolicyController::class)->group(function () {
+        Route::GET('/policies', 'index')->name('business.policies.index');
+        Route::POST('/policies/message', 'updateMessage')->name('business.policies.message.update');
+        Route::GET('/policies/create', 'create')->name('business.policies.create');
+        Route::POST('/policies/store', 'store')->name('business.policies.store');
+        Route::GET('/policies/edit/{id}', 'edit')->name('business.policies.edit');
+        Route::POST('/policies/update/{id}', 'update')->name('business.policies.update');
+        Route::GET('/policies/delete/{id}', 'destroy')->name('business.policies.destroy');
+        Route::POST('/policies/import', 'import')->name('business.policies.import');
+    });
 });

@@ -184,6 +184,14 @@
             </li>
 
             <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('business.policies*') ? '' : 'collapsed' }}"
+                    href="{{ route('business.policies.index') }}">
+                    <i class="bi bi-shield-check"></i>
+                    <span>{{ __('messages.business_policies') }}</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('business.skill-assessment*') ? '' : 'collapsed' }}"
                     data-bs-target="#skill-assessment-nav" data-bs-toggle="collapse" href="#">
                     <i class="bi bi-clipboard-check"></i>

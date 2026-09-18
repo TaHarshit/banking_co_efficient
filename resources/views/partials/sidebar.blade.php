@@ -28,12 +28,16 @@
             </a>
         </li>
 
-        <li class="nav-item">
-            <a class="nav-link {{ request()->routeIs('admin.case_study_questions.*') ? 'active' : 'collapsed' }}" href="{{ route('admin.case_study_questions.index') }}">
-                <i class="bi bi-journal-text"></i>
-                <span>{{ __('messages.case_study_questions') }}</span>
-            </a>
-        </li>
+        {{-- 
+            Business Policies / Case Study Questions (Hidden from Super Admin as per request; managed in Business Admin Panel)
+            To restore in Super Admin panel, simply uncomment the block below:
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.case_study_questions.*') ? 'active' : 'collapsed' }}" href="{{ route('admin.case_study_questions.index') }}">
+                    <i class="bi bi-journal-text"></i>
+                    <span>{{ __('messages.business_policies') }}</span>
+                </a>
+            </li>
+        --}}
 
         <li class="nav-item">
             @php
