@@ -686,6 +686,72 @@ class ClientCaseCls
             // Retrieve cases ordered chronologically for evolutionary analysis
             $cases = $this->clientCaseRepository->getCasesForSummary($user->id, $clientId, $caseId, $clientAlias, $limit);
 
+            // Check if client requested a forced re-generation (e.g. ?regenerate=true, ?refresh=1, ?force=1)
+            $forceRegenerate = filter_var($postData['regenerate'] ?? $postData['refresh'] ?? $postData['force'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+            if (! $forceRegenerate) {
+                $storedSummary = null;
+
+                // 1. Check clients table if clientId is available
+                if (! empty($clientId)) {
+                    $clientRecord = DB::table('clients')
+                        ->where('user_id', $user->id)
+                        ->where('client_id', $clientId)
+                        ->first();
+
+                    if ($clientRecord && ! empty($clientRecord->ai_summary)) {
+                        $storedSummary = is_string($clientRecord->ai_summary)
+                            ? json_decode($clientRecord->ai_summary, true)
+                            : $clientRecord->ai_summary;
+                    }
+                }
+
+                // 2. Check client_cases table if not found in clients table
+                if (empty($storedSummary)) {
+                    if (! empty($caseId)) {
+                        $caseRecord = DB::table('client_cases')
+                            ->where('user_id', $user->id)
+                            ->where('id', $caseId)
+                            ->first();
+
+                        if ($caseRecord && ! empty($caseRecord->client_summary)) {
+                            $storedSummary = is_string($caseRecord->client_summary)
+                                ? json_decode($caseRecord->client_summary, true)
+                                : $caseRecord->client_summary;
+                        }
+                    }
+
+                    if (empty($storedSummary) && $cases->isNotEmpty()) {
+                        $caseWithSummary = $cases->first(fn($c) => ! empty($c->client_summary));
+                        if ($caseWithSummary) {
+                            $storedSummary = is_string($caseWithSummary->client_summary)
+                                ? json_decode($caseWithSummary->client_summary, true)
+                                : $caseWithSummary->client_summary;
+                        }
+                    }
+                }
+
+                // If stored summary exists, return it immediately without calling AI
+                if (! empty($storedSummary)) {
+                    $response         = General::setResponse('SUCCESS', 'Client cases summary retrieved successfully.');
+                    $response['data'] = $storedSummary;
+                    $response['meta'] = [
+                        'client_id'    => $clientId,
+                        'client_alias' => $clientAlias,
+                        'cases_count'  => $cases->count(),
+                        'lang'         => $locale,
+                        'is_stored'    => true,
+                    ];
+
+                    return $response;
+                }
+            }
+
+            // If user only requested stored summary and none exists
+            if (filter_var($postData['stored_only'] ?? $postData['only_stored'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                return General::setResponse('VALIDATION_ERROR', 'No stored summary found for this client.');
+            }
+
             if ($cases->isEmpty()) {
                 $emptyMsg = $locale === 'fr' 
                     ? 'Aucun cas précédent trouvé pour ce client.' 
