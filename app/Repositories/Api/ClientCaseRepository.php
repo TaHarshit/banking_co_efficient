@@ -4,6 +4,7 @@ namespace App\Repositories\Api;
 
 use App\Models\ClientCase;
 use App\Repositories\BaseRepository;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class ClientCaseRepository extends BaseRepository
@@ -18,25 +19,89 @@ class ClientCaseRepository extends BaseRepository
         return $this->model->create($data);
     }
 
-    public function GetUserCases($userId, $search = null, $rating = null, $clientId = null)
+    public function GetUserCases($userId, $search = null, $rating = null, $clientId = null, array $filters = [])
     {
         $query = $this->model->where('user_id', $userId);
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
+            $trimmedSearch = trim($search);
+            $query->where(function ($q) use ($search, $trimmedSearch) {
                 $q->where('case_reference', 'LIKE', "%{$search}%")
                     ->orWhere('client_alias', 'LIKE', "%{$search}%")
                     ->orWhere('client_id', 'LIKE', "%{$search}%")
                     ->orWhere('context_overview', 'LIKE', "%{$search}%");
+
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $trimmedSearch)) {
+                    try {
+                        $dateStart = Carbon::createFromFormat('Y-m-d', $trimmedSearch)->startOfDay();
+                        $dateEnd   = Carbon::createFromFormat('Y-m-d', $trimmedSearch)->endOfDay();
+                        $q->orWhereBetween('created_at', [$dateStart, $dateEnd]);
+                    } catch (\Exception $e) {
+                        // Ignore invalid date format
+                    }
+                }
             });
         }
 
-        if ($rating !== null && $rating !== '') {
-            $query->where('plan_rating', $rating);
+        // Rating filtering (range or exact match fallback)
+        $ratingFrom = $filters['rating_from'] ?? null;
+        $ratingTo   = $filters['rating_to'] ?? null;
+
+        if ($ratingFrom !== null && $ratingFrom !== '') {
+            $query->where('plan_rating', '>=', (int) $ratingFrom);
+        }
+
+        if ($ratingTo !== null && $ratingTo !== '') {
+            $query->where('plan_rating', '<=', (int) $ratingTo);
+        }
+
+        if (($ratingFrom === null || $ratingFrom === '') && ($ratingTo === null || $ratingTo === '')) {
+            if ($rating !== null && $rating !== '') {
+                $query->where('plan_rating', $rating);
+            }
         }
 
         if (! empty($clientId)) {
             $query->where('client_id', $clientId);
+        }
+
+        // Date filtering on created_at (single date matching only that day)
+        $date = $filters['date'] ?? null;
+        if (! empty($date)) {
+            try {
+                $trimmedDate = trim($date);
+                $start = Carbon::hasFormat($trimmedDate, 'Y-m-d')
+                    ? Carbon::createFromFormat('Y-m-d', $trimmedDate)->startOfDay()
+                    : Carbon::parse($trimmedDate)->startOfDay();
+                $end = Carbon::hasFormat($trimmedDate, 'Y-m-d')
+                    ? Carbon::createFromFormat('Y-m-d', $trimmedDate)->endOfDay()
+                    : Carbon::parse($trimmedDate)->endOfDay();
+
+                $query->whereBetween('created_at', [$start, $end]);
+            } catch (\Exception $e) {
+                // Ignore invalid date format
+            }
+        } else {
+            $fromDate = $filters['from_date'] ?? null;
+            $toDate   = $filters['to_date'] ?? null;
+
+            if (! empty($fromDate)) {
+                try {
+                    $start = Carbon::parse($fromDate)->startOfDay();
+                    $query->where('created_at', '>=', $start);
+                } catch (\Exception $e) {
+                    // Ignore invalid date format
+                }
+            }
+
+            if (! empty($toDate)) {
+                try {
+                    $end = Carbon::parse($toDate)->endOfDay();
+                    $query->where('created_at', '<=', $end);
+                } catch (\Exception $e) {
+                    // Ignore invalid date format
+                }
+            }
         }
 
         return $query->orderBy('created_at', 'desc')->paginate(10);
@@ -65,17 +130,44 @@ class ClientCaseRepository extends BaseRepository
             ->get();
     }
 
-    public function getDistinctClients($userId, $search = null)
+    public function getDistinctClients($userId, $search = null, $date = null)
     {
         $query = $this->model->where('user_id', $userId)
             ->whereNotNull('client_id')
             ->where('client_id', '!=', '');
 
         if (! empty($search)) {
-            $query->where(function ($q) use ($search) {
+            $trimmedSearch = trim($search);
+            $query->where(function ($q) use ($search, $trimmedSearch) {
                 $q->where('client_id', 'LIKE', "%{$search}%")
                     ->orWhere('client_alias', 'LIKE', "%{$search}%");
+
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $trimmedSearch)) {
+                    try {
+                        $dateStart = Carbon::createFromFormat('Y-m-d', $trimmedSearch)->startOfDay();
+                        $dateEnd   = Carbon::createFromFormat('Y-m-d', $trimmedSearch)->endOfDay();
+                        $q->orWhereBetween('created_at', [$dateStart, $dateEnd]);
+                    } catch (\Exception $e) {
+                        // Ignore invalid date format
+                    }
+                }
             });
+        }
+
+        if (! empty($date)) {
+            try {
+                $trimmedDate = trim($date);
+                $start = Carbon::hasFormat($trimmedDate, 'Y-m-d')
+                    ? Carbon::createFromFormat('Y-m-d', $trimmedDate)->startOfDay()
+                    : Carbon::parse($trimmedDate)->startOfDay();
+                $end = Carbon::hasFormat($trimmedDate, 'Y-m-d')
+                    ? Carbon::createFromFormat('Y-m-d', $trimmedDate)->endOfDay()
+                    : Carbon::parse($trimmedDate)->endOfDay();
+
+                $query->whereBetween('created_at', [$start, $end]);
+            } catch (\Exception $e) {
+                // Ignore invalid date format
+            }
         }
 
         return $query->select(

@@ -306,4 +306,235 @@ class ClientCaseClientIdTest extends TestCase
             return $property->getValue($job) === $userQuestion;
         });
     }
+
+    /** @test */
+    public function it_can_filter_cases_by_rating_range()
+    {
+        ClientCase::create([
+            'user_id'      => $this->user->id,
+            'client_alias' => 'Case 2 stars',
+            'plan_rating'  => 2,
+        ]);
+        ClientCase::create([
+            'user_id'      => $this->user->id,
+            'client_alias' => 'Case 4 stars',
+            'plan_rating'  => 4,
+        ]);
+        ClientCase::create([
+            'user_id'      => $this->user->id,
+            'client_alias' => 'Case 5 stars',
+            'plan_rating'  => 5,
+        ]);
+
+        // Range 3 to 5 should match 4 and 5
+        $response = $this->actingAs($this->user, 'api')
+            ->getJson('/api/client-cases?rating_from=3&rating_to=5', [
+                'api-key'  => 'BANKING-CO-EFFICIENT',
+                'platform' => 'WEB',
+            ]);
+
+        $response->assertStatus(200);
+        $data = $response->json('data.data');
+        $this->assertCount(2, $data);
+        $ratings = array_column($data, 'plan_rating');
+        $this->assertContains(4, $ratings);
+        $this->assertContains(5, $ratings);
+        $this->assertNotContains(2, $ratings);
+    }
+
+    /** @test */
+    public function it_can_filter_cases_by_minimum_rating()
+    {
+        ClientCase::create([
+            'user_id'      => $this->user->id,
+            'client_alias' => 'Case 1 star',
+            'plan_rating'  => 1,
+        ]);
+        ClientCase::create([
+            'user_id'      => $this->user->id,
+            'client_alias' => 'Case 4 stars',
+            'plan_rating'  => 4,
+        ]);
+
+        $response = $this->actingAs($this->user, 'api')
+            ->getJson('/api/client-cases?rating_from=4', [
+                'api-key'  => 'BANKING-CO-EFFICIENT',
+                'platform' => 'WEB',
+            ]);
+
+        $response->assertStatus(200);
+        $data = $response->json('data.data');
+        $this->assertCount(1, $data);
+        $this->assertEquals(4, $data[0]['plan_rating']);
+    }
+
+    /** @test */
+    public function it_preserves_exact_rating_filter_when_no_range_provided()
+    {
+        ClientCase::create([
+            'user_id'      => $this->user->id,
+            'client_alias' => 'Case 3 stars',
+            'plan_rating'  => 3,
+        ]);
+        ClientCase::create([
+            'user_id'      => $this->user->id,
+            'client_alias' => 'Case 4 stars',
+            'plan_rating'  => 4,
+        ]);
+
+        $response = $this->actingAs($this->user, 'api')
+            ->getJson('/api/client-cases?rating=4', [
+                'api-key'  => 'BANKING-CO-EFFICIENT',
+                'platform' => 'WEB',
+            ]);
+
+        $response->assertStatus(200);
+        $data = $response->json('data.data');
+        $this->assertCount(1, $data);
+        $this->assertEquals(4, $data[0]['plan_rating']);
+    }
+
+    /** @test */
+    public function it_can_filter_cases_by_date_range()
+    {
+        $oldCase = new ClientCase();
+        $oldCase->user_id = $this->user->id;
+        $oldCase->client_alias = 'Old Case';
+        $oldCase->created_at = '2026-01-10 12:00:00';
+        $oldCase->save();
+
+        $targetCase = new ClientCase();
+        $targetCase->user_id = $this->user->id;
+        $targetCase->client_alias = 'Target Case';
+        $targetCase->created_at = '2026-06-15 10:30:00';
+        $targetCase->save();
+
+        $response = $this->actingAs($this->user, 'api')
+            ->getJson('/api/client-cases?from_date=2026-06-01&to_date=2026-06-30', [
+                'api-key'  => 'BANKING-CO-EFFICIENT',
+                'platform' => 'WEB',
+            ]);
+
+        $response->assertStatus(200);
+        $data = $response->json('data.data');
+        $this->assertCount(1, $data);
+        $this->assertEquals('Target Case', $data[0]['client_alias']);
+    }
+
+    /** @test */
+    public function it_can_filter_cases_by_single_date()
+    {
+        $case1 = new ClientCase();
+        $case1->user_id = $this->user->id;
+        $case1->client_alias = 'Case on June 1';
+        $case1->created_at = '2026-06-01 12:00:00';
+        $case1->save();
+
+        $case2 = new ClientCase();
+        $case2->user_id = $this->user->id;
+        $case2->client_alias = 'Case on June 15';
+        $case2->created_at = '2026-06-15 15:30:00';
+        $case2->save();
+
+        $response = $this->actingAs($this->user, 'api')
+            ->getJson('/api/client-cases?date=2026-06-15', [
+                'api-key'  => 'BANKING-CO-EFFICIENT',
+                'platform' => 'WEB',
+            ]);
+
+        $response->assertStatus(200);
+        $data = $response->json('data.data');
+        $this->assertCount(1, $data);
+        $this->assertEquals('Case on June 15', $data[0]['client_alias']);
+    }
+
+    /** @test */
+    public function it_can_filter_clients_by_single_date()
+    {
+        $client1 = new \App\Models\Client();
+        $client1->user_id = $this->user->id;
+        $client1->client_id = 'CLI-DATE-1';
+        $client1->client_alias = 'Client June 1';
+        $client1->created_at = '2026-06-01 09:00:00';
+        $client1->updated_at = '2026-06-01 09:00:00';
+        $client1->save();
+
+        $client2 = new \App\Models\Client();
+        $client2->user_id = $this->user->id;
+        $client2->client_id = 'CLI-DATE-2';
+        $client2->client_alias = 'Client June 20';
+        $client2->created_at = '2026-06-20 11:00:00';
+        $client2->updated_at = '2026-06-20 11:00:00';
+        $client2->save();
+
+        $response = $this->actingAs($this->user, 'api')
+            ->getJson('/api/clients?date=2026-06-20', [
+                'api-key'  => 'BANKING-CO-EFFICIENT',
+                'platform' => 'WEB',
+            ]);
+
+        $response->assertStatus(200);
+        $data = $response->json('data.data');
+        $this->assertCount(1, $data);
+        $this->assertEquals('Client June 20', $data[0]['client_alias']);
+    }
+
+    /** @test */
+    public function it_can_search_cases_by_date_in_search_parameter()
+    {
+        $case1 = new ClientCase();
+        $case1->user_id = $this->user->id;
+        $case1->client_alias = 'Case for Day 1';
+        $case1->created_at = '2026-08-01 10:00:00';
+        $case1->save();
+
+        $case2 = new ClientCase();
+        $case2->user_id = $this->user->id;
+        $case2->client_alias = 'Case for Day 2';
+        $case2->created_at = '2026-08-15 14:00:00';
+        $case2->save();
+
+        $response = $this->actingAs($this->user, 'api')
+            ->getJson('/api/client-cases?search=2026-08-15', [
+                'api-key'  => 'BANKING-CO-EFFICIENT',
+                'platform' => 'WEB',
+            ]);
+
+        $response->assertStatus(200);
+        $data = $response->json('data.data');
+        $this->assertCount(1, $data);
+        $this->assertEquals('Case for Day 2', $data[0]['client_alias']);
+    }
+
+    /** @test */
+    public function it_can_search_clients_by_date_in_search_parameter()
+    {
+        $client1 = new \App\Models\Client();
+        $client1->user_id = $this->user->id;
+        $client1->client_id = 'SRCH-1';
+        $client1->client_alias = 'Client Day 1';
+        $client1->created_at = '2026-08-01 10:00:00';
+        $client1->updated_at = '2026-08-01 10:00:00';
+        $client1->save();
+
+        $client2 = new \App\Models\Client();
+        $client2->user_id = $this->user->id;
+        $client2->client_id = 'SRCH-2';
+        $client2->client_alias = 'Client Day 2';
+        $client2->created_at = '2026-08-15 14:00:00';
+        $client2->updated_at = '2026-08-15 14:00:00';
+        $client2->save();
+
+        $response = $this->actingAs($this->user, 'api')
+            ->getJson('/api/clients?search=2026-08-15', [
+                'api-key'  => 'BANKING-CO-EFFICIENT',
+                'platform' => 'WEB',
+            ]);
+
+        $response->assertStatus(200);
+        $data = $response->json('data.data');
+        $this->assertCount(1, $data);
+        $this->assertEquals('Client Day 2', $data[0]['client_alias']);
+    }
 }
+

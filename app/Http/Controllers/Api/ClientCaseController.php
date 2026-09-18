@@ -29,14 +29,25 @@ class ClientCaseController extends Controller
         $search   = $request->query('search');
         $rating   = $request->query('rating');
         $clientId = $request->query('client_id');
-        $data     = $this->clientCaseCls->GetCases($search, $rating, $clientId);
+        $date     = $request->query('date');
+
+        $filters = [
+            'date'        => $date,
+            'rating_from' => $request->query('rating_from') ?? $request->query('from_rating') ?? $request->query('min_rating'),
+            'rating_to'   => $request->query('rating_to') ?? $request->query('to_rating') ?? $request->query('max_rating'),
+            'from_date'   => $request->query('from_date') ?? $request->query('date_from') ?? $request->query('start_date'),
+            'to_date'     => $request->query('to_date') ?? $request->query('date_to') ?? $request->query('end_date'),
+        ];
+
+        $data     = $this->clientCaseCls->GetCases($search, $rating, $clientId, $filters);
         return get_response($request, $data);
     }
 
     public function clients(Request $request)
     {
         $search = $request->query('search');
-        $data   = $this->clientCaseCls->GetClientsDropdown($search);
+        $date   = $request->query('date');
+        $data   = $this->clientCaseCls->GetClientsDropdown($search, $date);
         return get_response($request, $data);
     }
 
@@ -44,7 +55,8 @@ class ClientCaseController extends Controller
     {
         $search  = $request->query('search');
         $perPage = (int) ($request->query('per_page', 10));
-        $data    = $this->clientCaseCls->GetPaginatedClientsList($search, $perPage);
+        $date    = $request->query('date');
+        $data    = $this->clientCaseCls->GetPaginatedClientsList($search, $perPage, $date);
         return get_response($request, $data);
     }
 

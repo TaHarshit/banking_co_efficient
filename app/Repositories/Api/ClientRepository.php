@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\ClientCase;
 use App\Models\AiJob;
 use App\Repositories\BaseRepository;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ClientRepository extends BaseRepository
@@ -44,16 +45,43 @@ class ClientRepository extends BaseRepository
         );
     }
 
-    public function GetPaginatedClients($userId, $search = null, $perPage = 10)
+    public function GetPaginatedClients($userId, $search = null, $perPage = 10, $date = null)
     {
         $query = $this->model->where('clients.user_id', $userId);
 
         if (! empty($search)) {
-            $query->where(function ($q) use ($search) {
+            $trimmedSearch = trim($search);
+            $query->where(function ($q) use ($search, $trimmedSearch) {
                 $q->where('clients.client_id', 'LIKE', "%{$search}%")
                   ->orWhere('clients.client_alias', 'LIKE', "%{$search}%")
                   ->orWhere('clients.notes', 'LIKE', "%{$search}%");
+
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $trimmedSearch)) {
+                    try {
+                        $dateStart = Carbon::createFromFormat('Y-m-d', $trimmedSearch)->startOfDay();
+                        $dateEnd   = Carbon::createFromFormat('Y-m-d', $trimmedSearch)->endOfDay();
+                        $q->orWhereBetween('clients.created_at', [$dateStart, $dateEnd]);
+                    } catch (\Exception $e) {
+                        // Ignore invalid date format
+                    }
+                }
             });
+        }
+
+        if (! empty($date)) {
+            try {
+                $trimmedDate = trim($date);
+                $start = Carbon::hasFormat($trimmedDate, 'Y-m-d')
+                    ? Carbon::createFromFormat('Y-m-d', $trimmedDate)->startOfDay()
+                    : Carbon::parse($trimmedDate)->startOfDay();
+                $end = Carbon::hasFormat($trimmedDate, 'Y-m-d')
+                    ? Carbon::createFromFormat('Y-m-d', $trimmedDate)->endOfDay()
+                    : Carbon::parse($trimmedDate)->endOfDay();
+
+                $query->whereBetween('clients.created_at', [$start, $end]);
+            } catch (\Exception $e) {
+                // Ignore invalid date format
+            }
         }
 
         // Select client records and aggregate metrics from client_cases
@@ -68,7 +96,7 @@ class ClientRepository extends BaseRepository
             ->groupBy('client_id', 'user_id');
 
         $paginator = $query->leftJoinSub($casesSubquery, 'case_stats', function ($join) {
-                $join->on('clients.client_id', '=', 'case_stats.client_id')
+                $join->whereRaw('clients.client_id = case_stats.client_id COLLATE utf8mb4_unicode_ci')
                      ->on('clients.user_id', '=', 'case_stats.user_id');
             })
             ->select(

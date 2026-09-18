@@ -122,10 +122,10 @@ class ClientCaseCls
         }
     }
 
-    public function GetCases($search = null, $rating = null, $clientId = null)
+    public function GetCases($search = null, $rating = null, $clientId = null, array $filters = [])
     {
         try {
-            $cases            = $this->clientCaseRepository->GetUserCases(Auth::id(), $search, $rating, $clientId);
+            $cases            = $this->clientCaseRepository->GetUserCases(Auth::id(), $search, $rating, $clientId, $filters);
             $response         = General::setResponse('SUCCESS', 'Cases retrieved successfully.');
             $response['data'] = $cases;
 
@@ -491,10 +491,10 @@ class ClientCaseCls
     /**
      * Get distinct clients dropdown list for the authenticated user.
      */
-    public function GetClientsDropdown($search = null)
+    public function GetClientsDropdown($search = null, $date = null)
     {
         try {
-            $clients = $this->clientCaseRepository->getDistinctClients(Auth::id(), $search);
+            $clients = $this->clientCaseRepository->getDistinctClients(Auth::id(), $search, $date);
             $response = General::setResponse('SUCCESS', 'Clients retrieved successfully.');
             $response['data'] = $clients;
 
@@ -553,12 +553,12 @@ class ClientCaseCls
     }
 
     /**
-     * Get paginated clients list with search.
+     * Get paginated clients list with search and date filter.
      */
-    public function GetPaginatedClientsList($search = null, $perPage = 10)
+    public function GetPaginatedClientsList($search = null, $perPage = 10, $date = null)
     {
         try {
-            $clients  = $this->clientRepository->GetPaginatedClients(Auth::id(), $search, $perPage);
+            $clients  = $this->clientRepository->GetPaginatedClients(Auth::id(), $search, $perPage, $date);
             $response = General::setResponse('SUCCESS', 'Clients retrieved successfully.');
             $response['data'] = $clients;
 
