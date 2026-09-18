@@ -81,7 +81,7 @@
                 lowercase: (val) => /[a-z]/.test(val),
                 uppercase: (val) => /[A-Z]/.test(val),
                 number: (val) => /[0-9]/.test(val),
-                special: (val) => /[#?!@$%^&*-]/.test(val)
+                special: (val) => /[#?!@$%^&*.,_\/()+="`~:;<>[\]{}|\\'-]/.test(val) || /[^\w\s]|_/.test(val)
             };
 
             function updateUIElement(element, isValid, isEmpty) {
@@ -239,7 +239,7 @@
                                                 <span class="input-group-text" id="inputGroupPrepend"><i
                                                         class="bi bi-envelope"></i></span>
                                                 <input type="email" name="email" class="form-control" id="email"
-                                                    placeholder="name@example.com" required>
+                                                    placeholder="name@example.com" value="{{ request('email') }}" required>
                                                 <div class="invalid-feedback">Please enter a valid email address.</div>
                                             </div>
                                         </div>
@@ -270,7 +270,7 @@
                                                 <li id="rule-number" class="text-muted"><i class="bi bi-circle text-muted"></i> At least one number
                                                     (0-9)</li>
                                                 <li id="rule-special" class="text-muted"><i class="bi bi-circle text-muted"></i> At least one
-                                                    special symbol (#?!@$%^&*-)</li>
+                                                    special symbol (? . , _ / ( ) &amp; % ! + &quot; ^ = # @ $ * -)</li>
                                             </ul>
                                         </div>
 

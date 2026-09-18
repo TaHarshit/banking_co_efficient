@@ -29,7 +29,11 @@ class General extends \Exception
                 if (is_array($value)) {
                     $data[$key] = self::stripRequest($value);
                 } else {
-                    $data[$key] = trim(strip_tags($value));
+                    if (in_array(strtolower((string)$key), ['password', 'password_confirmation', 'new_password', 'old_password'])) {
+                        $data[$key] = $value;
+                    } else {
+                        $data[$key] = is_string($value) ? trim(strip_tags($value)) : $value;
+                    }
                 }
             }
         }
