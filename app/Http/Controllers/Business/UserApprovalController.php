@@ -49,6 +49,14 @@ class UserApprovalController extends Controller
     public function Approve($id)
     {
         $business = Auth::guard('business')->user();
+
+        // Check if subscription is active
+        if (!$business->isSubscriptionActive()) {
+            Session::flash('message', 'Cannot approve user: Your business subscription is not active or has expired. Please contact admin.');
+            Session::flash('icon', 'error');
+            return redirect()->route('business.users.pending');
+        }
+
         $user = User::where('id', $id)
             ->where('business_id', $business->id)
             ->first();
@@ -59,7 +67,18 @@ class UserApprovalController extends Controller
             return redirect()->route('business.users.pending');
         }
 
-        $user->status = 1;
+        // If user is not already an employee, check remaining quota
+        $isExistingEmployee = \App\Models\Employee::where('business_id', $business->id)
+            ->where('email', strtolower($user->email))
+            ->exists();
+
+        if (!$isExistingEmployee && $business->getRemainingQuota() <= 0) {
+            Session::flash('message', 'Cannot approve user: Quota limit of ' . ($business->user_quota ?? 0) . ' seats reached. Please contact admin to increase quota.');
+            Session::flash('icon', 'error');
+            return redirect()->route('business.users.pending');
+        }
+
+        $user->status = 'active'; // active status
         $user->save();
 
         Session::flash('message', 'User approved successfully');

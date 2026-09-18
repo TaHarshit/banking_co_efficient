@@ -98,39 +98,9 @@ class UserRepository extends BaseRepository
 
     public function UpdateSubscription($plan_id)
     {
-        $post_count = 0;
-        $post_spotlight_count = 0;
-        $apply_count = 0;
-        $apply_spotlight_count = 0;
-        if ($plan_id == 1) {
-            $post_count = 12;
-            $post_spotlight_count = 12;
-            $apply_count = 21;
-            $apply_spotlight_count = 12;
-        } elseif ($plan_id == 3) {
-            $post_count = 12;
-            $post_spotlight_count = 12;
-            $apply_count = 21;
-            $apply_spotlight_count = 12;
-        } elseif ($plan_id == "com.meekle.app.spotlight") {
-            $post_count = 0;
-            $post_spotlight_count = 0;
-            $apply_count = 0;
-            $apply_spotlight_count = 1;
-        } elseif ($plan_id == "com.meekle.app.post.spotlight") {
-            $post_count = 0;
-            $post_spotlight_count = 1;
-            $apply_count = 0;
-            $apply_spotlight_count = 0;
-        }
-
-        $getUser = $this->model->find(auth()->id());
-        return $getUser->update([
-            'post_count' => ($getUser->post_count + $post_count),
-            'post_spotlight_count' => ($getUser->post_spotlight_count + $post_spotlight_count),
-            'apply_count' => ($getUser->apply_count + $apply_count),
-            'apply_spotlight_count' => ($getUser->apply_spotlight_count + $apply_spotlight_count)
-        ]);
+        // In banking_co_efficient, subscriptions are tracked via user_subscriptions / plans.
+        // There are no post_count / spotlight columns on the users table.
+        return true;
     }
 
     public function UpdateUsage($post_count, $post_spotlight_count, $apply_count, $apply_spotlight_count)

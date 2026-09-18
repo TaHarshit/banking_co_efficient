@@ -12,9 +12,23 @@ class Plans extends Model
 
     protected $fillable = [
         'name',
+        'description',
         'price',
         'validity',
-        'status'
+        'validity_type',
+        'type',
+        'user_quota',
+        'ios_product_id',
+        'android_product_id',
+        'status',
+    ];
+
+    protected $casts = [
+        'price' => 'decimal:2',
+        'validity' => 'integer',
+        'type' => 'integer',
+        'user_quota' => 'integer',
+        'status' => 'integer',
     ];
 
     protected $hidden = [
@@ -22,5 +36,14 @@ class Plans extends Model
         'updated_at',
         'deleted_at',
     ];
-    
+
+    public function isBusinessPlan(): bool
+    {
+        return $this->type === 1;
+    }
+
+    public function isIndividualPlan(): bool
+    {
+        return $this->type === 0;
+    }
 }

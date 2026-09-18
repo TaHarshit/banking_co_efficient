@@ -12,15 +12,28 @@ class UserSubscriptions extends Model
 
     protected $fillable = [
         'user_id',
+        'business_id',
         'user_name',
         'user_email',
         'plan_id',
         'receipt_id',
+        'purchase_token',
+        'purchase_from',
         'subscription_start_date',
         'subscription_end_date',
-        'purchase_from',
-        'purchase_token',
-        'status'
+        'user_quota',
+        'amount',
+        'payment_status',
+        'status',
+        'notes',
+    ];
+
+    protected $casts = [
+        'subscription_start_date' => 'datetime',
+        'subscription_end_date' => 'datetime',
+        'amount' => 'decimal:2',
+        'user_quota' => 'integer',
+        'status' => 'integer',
     ];
 
     protected $hidden = [
@@ -30,10 +43,14 @@ class UserSubscriptions extends Model
     ];
     
     public function plan(){
-        return $this->hasOne(Plans::class, 'id', 'plan_id');
+        return $this->belongsTo(Plans::class, 'plan_id', 'id');
     }
     
     public function user(){
-        return $this->hasOne(User::class, 'id', 'user_id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function business(){
+        return $this->belongsTo(Business::class, 'business_id', 'id');
     }
 }

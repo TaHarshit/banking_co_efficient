@@ -160,7 +160,7 @@ Route::middleware(['basicFilter'])->group(function () {
         Route::controller(UserSubscriptionsController::class)->group(function () {
             Route::POST('transactions/init-payment', 'InitPayment'); 
             Route::POST('transactions/complete-payment', 'CompletePayment'); 
-            Route::POST('transactions/get_user_current_plan', 'GetUserCurrentPlan'); 
+            Route::match(['get', 'post'], 'transactions/get_user_current_plan', 'GetUserCurrentPlan'); 
         });
 
         // Secure Book PDF Access & Watermark Metadata

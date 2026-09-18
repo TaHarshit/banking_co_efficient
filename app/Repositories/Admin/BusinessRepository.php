@@ -38,13 +38,33 @@ class BusinessRepository extends BaseRepository
             ->first();
     }
 
-    public function StoreBusiness($name, $email, $logo, $address, $status, $id)
+    public function StoreBusiness($name, $email, $logo, $address, $status, $id, $subscriptionData = [])
     {
         $data = [];
         $data['name'] = $name;
         $data['email'] = $email;
         $data['address'] = $address;
         $data['status'] = $status;
+
+        // Subscription & Quota fields
+        if (array_key_exists('plan_id', $subscriptionData)) {
+            $data['plan_id'] = !empty($subscriptionData['plan_id']) ? $subscriptionData['plan_id'] : null;
+        }
+        if (array_key_exists('subscription_start_date', $subscriptionData)) {
+            $data['subscription_start_date'] = !empty($subscriptionData['subscription_start_date']) ? $subscriptionData['subscription_start_date'] : null;
+        }
+        if (array_key_exists('subscription_end_date', $subscriptionData)) {
+            $data['subscription_end_date'] = !empty($subscriptionData['subscription_end_date']) ? $subscriptionData['subscription_end_date'] : null;
+        }
+        if (array_key_exists('user_quota', $subscriptionData)) {
+            $data['user_quota'] = isset($subscriptionData['user_quota']) ? (int)$subscriptionData['user_quota'] : 0;
+        }
+        if (array_key_exists('payment_mode', $subscriptionData)) {
+            $data['payment_mode'] = !empty($subscriptionData['payment_mode']) ? $subscriptionData['payment_mode'] : 'cash';
+        }
+        if (array_key_exists('payment_notes', $subscriptionData)) {
+            $data['payment_notes'] = $subscriptionData['payment_notes'] ?? null;
+        }
 
         // Handle logo upload
         if (!empty($logo)) {
@@ -61,7 +81,7 @@ class BusinessRepository extends BaseRepository
         } else {
             if ($id > 0) {
                 $businessObj = $this->GetBusiness($id);
-                $data['logo'] = $businessObj->logo;
+                $data['logo'] = $businessObj->logo ?? null;
             }
         }
 
@@ -69,12 +89,44 @@ class BusinessRepository extends BaseRepository
             $update = $this->model->where('id', $id)->update($data);
             if ($update) {
                 logAdminActivity('Business', 'Update', $id, "Updated business: $name", $data);
+
+                // Record subscription history if plan and dates provided
+                if (!empty($data['plan_id']) && !empty($data['subscription_end_date'])) {
+                    \App\Models\UserSubscriptions::create([
+                        'business_id'             => $id,
+                        'user_name'               => $data['name'],
+                        'user_email'              => $data['email'],
+                        'plan_id'                 => $data['plan_id'],
+                        'purchase_from'           => $data['payment_mode'] ?? 'cash',
+                        'subscription_start_date' => $data['subscription_start_date'] ?? now(),
+                        'subscription_end_date'   => $data['subscription_end_date'],
+                        'user_quota'              => $data['user_quota'] ?? 0,
+                        'status'                  => 1,
+                        'notes'                   => $data['payment_notes'] ?? null,
+                    ]);
+                }
             }
             return $update;
         } else {
             $business = $this->model->create($data);
             if ($business) {
                 logAdminActivity('Business', 'Add', $business->id, "Added new business: $name", $data);
+
+                // Record subscription history if plan and dates provided
+                if (!empty($data['plan_id']) && !empty($data['subscription_end_date'])) {
+                    \App\Models\UserSubscriptions::create([
+                        'business_id'             => $business->id,
+                        'user_name'               => $data['name'],
+                        'user_email'              => $data['email'],
+                        'plan_id'                 => $data['plan_id'],
+                        'purchase_from'           => $data['payment_mode'] ?? 'cash',
+                        'subscription_start_date' => $data['subscription_start_date'] ?? now(),
+                        'subscription_end_date'   => $data['subscription_end_date'],
+                        'user_quota'              => $data['user_quota'] ?? 0,
+                        'status'                  => 1,
+                        'notes'                   => $data['payment_notes'] ?? null,
+                    ]);
+                }
             }
             return $business;
         }

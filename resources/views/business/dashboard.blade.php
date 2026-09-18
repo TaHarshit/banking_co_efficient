@@ -33,6 +33,24 @@
                                 <small class="text-muted">{{ __('messages.business_code') }}:
                                     <strong>{{ $business->business_code }}</strong></small>
                             </div>
+                            <div class="ms-auto text-end">
+                                <div class="d-flex align-items-center gap-2 justify-content-end mb-1">
+                                    <span class="badge bg-primary fs-6">{{ $plan ? $plan->name : 'Business Account' }}</span>
+                                    @php
+                                        $badgeClass = $subscriptionStatusText === 'Active' ? 'bg-success' : ($subscriptionStatusText === 'Expired' ? 'bg-danger' : 'bg-warning text-dark');
+                                    @endphp
+                                    <span class="badge {{ $badgeClass }}">{{ $subscriptionStatusText }}</span>
+                                </div>
+                                @if($business->subscription_end_date)
+                                    <small class="text-muted d-block">
+                                        <i class="bi bi-calendar-check me-1"></i>Valid until: <strong>{{ \Carbon\Carbon::parse($business->subscription_end_date)->format('M d, Y') }}</strong>
+                                    </small>
+                                @endif
+                                <small class="text-muted">
+                                    <i class="bi bi-people me-1"></i>Quota: <strong>{{ $usedSeats }} / {{ $totalSeats }} Seats</strong>
+                                    ({{ $seatsRemaining }} remaining)
+                                </small>
+                            </div>
                         </div>
                     </div>
                 </div>

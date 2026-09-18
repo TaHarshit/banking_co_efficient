@@ -62,6 +62,9 @@
                                                     <th>{{ __('messages.business_code') }}</th>
                                                     <th>{{ __('messages.email') }}</th>
                                                     <th>{{ __('messages.address') }}</th>
+                                                    <th>Plan / Status</th>
+                                                    <th>Validity Period</th>
+                                                    <th>Quota (Seats)</th>
                                                     <th>{{ __('messages.status') }}</th>
                                                     <th>{{ __('messages.action') }}</th>
                                                 </tr>
@@ -85,13 +88,42 @@
                                                                 </div>
                                                             @endif
                                                         </td>
-                                                        <td>{{ $val->name }}</td>
+                                                        <td><strong>{{ $val->name }}</strong></td>
                                                         <td>
                                                             <code
                                                                 class="text-primary">{{ $val->business_code ?? __('messages.na') }}</code>
                                                         </td>
                                                         <td>{{ $val->email }}</td>
                                                         <td>{{ $val->address ?? __('messages.na') }}</td>
+                                                        <td>
+                                                            @if($val->plan)
+                                                                <span class="badge bg-primary mb-1">{{ $val->plan->name }}</span><br>
+                                                            @endif
+                                                            @php
+                                                                $statusText = $val->getSubscriptionStatusText();
+                                                                $badgeClass = $statusText === 'Active' ? 'bg-success' : ($statusText === 'Expired' ? 'bg-danger' : 'bg-secondary');
+                                                            @endphp
+                                                            <span class="badge {{ $badgeClass }}">{{ $statusText }}</span>
+                                                        </td>
+                                                        <td>
+                                                            @if($val->subscription_start_date && $val->subscription_end_date)
+                                                                <small class="d-block text-muted">
+                                                                    {{ \Carbon\Carbon::parse($val->subscription_start_date)->format('M d, Y') }} -
+                                                                    {{ \Carbon\Carbon::parse($val->subscription_end_date)->format('M d, Y') }}
+                                                                </small>
+                                                            @else
+                                                                <span class="text-muted small">Not Set</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            @php
+                                                                $usedQuota = $val->getUsedQuota();
+                                                                $totalQuota = (int)($val->user_quota ?? 0);
+                                                            @endphp
+                                                            <span class="badge {{ $usedQuota >= $totalQuota && $totalQuota > 0 ? 'bg-warning text-dark' : 'bg-info text-dark' }}">
+                                                                {{ $usedQuota }} / {{ $totalQuota }} Seats
+                                                            </span>
+                                                        </td>
                                                         <td>
                                                             <div class="form-check form-switch">
                                                                 <input class="form-check-input"

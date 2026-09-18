@@ -49,10 +49,10 @@ class BusinessCls
         }
     }
 
-    public function StoreBusiness($name, $email, $logo, $address, $status, $id)
+    public function StoreBusiness($name, $email, $logo, $address, $status, $id, $subscriptionData = [])
     {
         try {
-            $response = $this->BusinessRep->StoreBusiness($name, $email, $logo, $address, $status, $id);
+            $response = $this->BusinessRep->StoreBusiness($name, $email, $logo, $address, $status, $id, $subscriptionData);
 
             // If new business, generate token and send invitation email
             if ($id <= 0 && $response) {

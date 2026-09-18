@@ -111,6 +111,37 @@ class User extends Authenticatable
     }
 
     /**
+     * Get subscriptions for this user
+     */
+    public function subscriptions()
+    {
+        return $this->hasMany(UserSubscriptions::class, 'user_id')->orderBy('id', 'desc');
+    }
+
+    /**
+     * Check if user is associated with a business
+     */
+    public function isUnderBusiness(): bool
+    {
+        return !empty($this->business_id);
+    }
+
+    /**
+     * Check if user has an active subscription (either directly or through their business)
+     */
+    public function isSubscriptionActive(): bool
+    {
+        if ($this->isUnderBusiness()) {
+            return $this->business ? $this->business->isSubscriptionActive() : false;
+        }
+
+        return $this->subscriptions()
+            ->where('status', 1)
+            ->where('subscription_end_date', '>=', now())
+            ->exists();
+    }
+
+    /**
      * Send the password reset notification.
      *
      * @param  string  $token

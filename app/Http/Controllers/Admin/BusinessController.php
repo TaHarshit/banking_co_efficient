@@ -24,13 +24,15 @@ class BusinessController extends Controller
 
     public function CreateBusiness()
     {
-        return view('businesses.addedit', ['page_name' => 'Add Business']);
+        $plans = \App\Models\Plans::where('status', 1)->get();
+        return view('businesses.addedit', ['plans' => $plans, 'page_name' => 'Add Business']);
     }
 
     public function UpdateBusiness($id)
     {
         $data = $this->BusinessCls->GetBusiness($id);
-        return view('businesses.addedit', ['data' => $data, 'page_name' => 'Edit Business']);
+        $plans = \App\Models\Plans::where('status', 1)->get();
+        return view('businesses.addedit', ['data' => $data, 'plans' => $plans, 'page_name' => 'Edit Business']);
     }
 
     public function DeleteBusiness($id)
@@ -41,20 +43,36 @@ class BusinessController extends Controller
     public function StoreBusiness(Request $request)
     {
         $validatedData = $request->validate([
-            'name' => 'required|max:255',
-            'email' => 'required|email|max:255|unique:businesses,email' . ($request->id ? ",$request->id,id" : ',NULL,id'),
-            'logo' => $request->hasFile('logo') ? 'image|mimes:jpg,jpeg,png|max:2048' : '',
-            'address' => 'nullable|max:1000',
+            'name'                    => 'required|max:255',
+            'email'                   => 'required|email|max:255|unique:businesses,email' . ($request->id ? ",$request->id,id" : ',NULL,id'),
+            'logo'                    => $request->hasFile('logo') ? 'image|mimes:jpg,jpeg,png|max:2048' : '',
+            'address'                 => 'nullable|max:1000',
+            'plan_id'                 => 'nullable|exists:plans,id',
+            'subscription_start_date' => 'nullable|date',
+            'subscription_end_date'   => 'nullable|date|after_or_equal:subscription_start_date',
+            'user_quota'              => 'nullable|integer|min:0',
+            'payment_mode'            => 'nullable|string|max:50',
+            'payment_notes'           => 'nullable|string|max:2000',
         ]);
 
         $logo = $request->file('logo');
+        $subscriptionData = [
+            'plan_id'                 => $request->plan_id,
+            'subscription_start_date' => $request->subscription_start_date,
+            'subscription_end_date'   => $request->subscription_end_date,
+            'user_quota'              => $request->user_quota,
+            'payment_mode'            => $request->payment_mode ?? 'cash',
+            'payment_notes'           => $request->payment_notes,
+        ];
+
         return $this->BusinessCls->StoreBusiness(
             $request->name,
             $request->email,
             $logo,
             $request->address,
             $request->status ?? 1,
-            $request->id ?? 0
+            $request->id ?? 0,
+            $subscriptionData
         );
     }
 

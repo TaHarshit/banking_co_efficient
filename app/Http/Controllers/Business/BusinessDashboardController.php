@@ -31,9 +31,13 @@ class BusinessDashboardController extends Controller
         $pendingUsers = $business->users()->whereIn('status', [2, '2', 'pending'])->count();
         $recentUsers = $business->users()->latest()->take(5)->get();
 
-        // Dummy seat values (to be configured after pricing model is decided)
-        $totalSeats = 50;
-        $seatsRemaining = $totalSeats - $totalUsers;
+        // Dynamic seat values from business subscription & quota
+        $totalSeats = (int)($business->user_quota ?? 0);
+        $usedSeats = $business->getUsedQuota();
+        $seatsRemaining = $business->getRemainingQuota();
+        $isSubscriptionActive = $business->isSubscriptionActive();
+        $subscriptionStatusText = $business->getSubscriptionStatusText();
+        $plan = $business->plan;
 
         // Get exam templates and exam types for this business dashboard
         $selected_exam_type = $request->query('exam_type');
@@ -80,7 +84,11 @@ class BusinessDashboardController extends Controller
             'pendingUsers' => $pendingUsers,
             'recentUsers' => $recentUsers,
             'totalSeats' => $totalSeats,
+            'usedSeats' => $usedSeats,
             'seatsRemaining' => $seatsRemaining,
+            'isSubscriptionActive' => $isSubscriptionActive,
+            'subscriptionStatusText' => $subscriptionStatusText,
+            'plan' => $plan,
             'exam_stats' => $exam_stats,
             'exam_templates' => $exam_templates,
             'exam_types' => $exam_types,

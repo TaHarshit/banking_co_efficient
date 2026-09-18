@@ -57,6 +57,20 @@ class EmployeeController extends Controller
 
         $business = Auth::guard('business')->user();
 
+        // Check if subscription is active
+        if (!$business->isSubscriptionActive()) {
+            Session::flash('message', 'Cannot add employee: Your business subscription is not active or has expired. Please contact admin.');
+            Session::flash('icon', 'error');
+            return back()->withInput();
+        }
+
+        // Check if employee quota has been reached
+        if ($business->getRemainingQuota() <= 0) {
+            Session::flash('message', 'Cannot add employee: Quota limit of ' . ($business->user_quota ?? 0) . ' employees reached. Please contact admin to upgrade your quota.');
+            Session::flash('icon', 'error');
+            return back()->withInput();
+        }
+
         // Check if email already exists
         if ($this->EmployeeRep->IsEmployee($business->id, $request->email)) {
             Session::flash('message', 'This email is already registered as an employee');
@@ -183,6 +197,19 @@ class EmployeeController extends Controller
 
         $business = Auth::guard('business')->user();
 
+        if (!$business->isSubscriptionActive()) {
+            Session::flash('message', 'Cannot import employees: Your business subscription is not active or has expired. Please contact admin.');
+            Session::flash('icon', 'error');
+            return back();
+        }
+
+        $remainingSeats = $business->getRemainingQuota();
+        if ($remainingSeats <= 0) {
+            Session::flash('message', 'Cannot import employees: Quota limit of ' . ($business->user_quota ?? 0) . ' employees reached. Please contact admin.');
+            Session::flash('icon', 'error');
+            return back();
+        }
+
         try {
             $file = $request->file('file');
             $spreadsheet = IOFactory::load($file->getPathname());
@@ -206,12 +233,21 @@ class EmployeeController extends Controller
 
             $employees = [];
             foreach ($rows as $row) {
+                if (empty($row[$nameIndex]) && empty($row[$emailIndex])) {
+                    continue;
+                }
                 $employees[] = [
                     'name' => $row[$nameIndex] ?? '',
                     'email' => $row[$emailIndex] ?? '',
                     'department' => $departmentIndex !== false ? ($row[$departmentIndex] ?? '') : '',
                     'phone' => $phoneIndex !== false ? ($row[$phoneIndex] ?? '') : '',
                 ];
+            }
+
+            if (count($employees) > $remainingSeats) {
+                Session::flash('message', "Cannot import " . count($employees) . " employees. Only {$remainingSeats} seat(s) remaining in your quota.");
+                Session::flash('icon', 'error');
+                return back();
             }
 
             $result = $this->EmployeeRep->BulkImport($business->id, $employees);

@@ -26,6 +26,12 @@ class Business extends Authenticatable
         'status',
         'business_code',
         'business_policies_message',
+        'plan_id',
+        'subscription_start_date',
+        'subscription_end_date',
+        'user_quota',
+        'payment_mode',
+        'payment_notes',
     ];
 
     /**
@@ -48,6 +54,10 @@ class Business extends Authenticatable
     {
         return [
             'password_setup_token_expires_at' => 'datetime',
+            'subscription_start_date' => 'datetime',
+            'subscription_end_date' => 'datetime',
+            'user_quota' => 'integer',
+            'status' => 'integer',
         ];
     }
 
@@ -119,6 +129,97 @@ class Business extends Authenticatable
     public function businessPolicies()
     {
         return $this->hasMany(CaseStudyQuestion::class);
+    }
+
+    /**
+     * Get the subscription plan assigned to this business
+     */
+    public function plan()
+    {
+        return $this->belongsTo(Plans::class, 'plan_id');
+    }
+
+    /**
+     * Get all subscription history records for this business
+     */
+    public function subscriptions()
+    {
+        return $this->hasMany(UserSubscriptions::class, 'business_id')->orderBy('id', 'desc');
+    }
+
+    /**
+     * Check if the business subscription is currently active
+     */
+    public function isSubscriptionActive(): bool
+    {
+        if ($this->status != 1 || empty($this->subscription_start_date) || empty($this->subscription_end_date)) {
+            return false;
+        }
+
+        $now = \Carbon\Carbon::now();
+        $start = \Carbon\Carbon::parse($this->subscription_start_date);
+        $end = \Carbon\Carbon::parse($this->subscription_end_date)->endOfDay();
+
+        return $now->between($start, $end);
+    }
+
+    /**
+     * Get current status text of the subscription
+     */
+    public function getSubscriptionStatusText(): string
+    {
+        if (empty($this->subscription_start_date) || empty($this->subscription_end_date)) {
+            return 'No Plan Assigned';
+        }
+
+        if ($this->status != 1) {
+            return 'Business Inactive';
+        }
+
+        $now = \Carbon\Carbon::now();
+        $start = \Carbon\Carbon::parse($this->subscription_start_date);
+        $end = \Carbon\Carbon::parse($this->subscription_end_date)->endOfDay();
+
+        if ($now->gt($end)) {
+            return 'Expired';
+        } elseif ($now->lt($start)) {
+            return 'Scheduled';
+        } else {
+            return 'Active';
+        }
+    }
+
+    /**
+     * Calculate how many seats are currently in use (unique emails across employees and active users)
+     */
+    public function getUsedQuota(): int
+    {
+        $employeeEmails = $this->employees()->pluck('email')->filter()->map(function ($e) {
+            return strtolower(trim($e));
+        })->toArray();
+
+        $userEmails = $this->users()->whereIn('status', [1, '1', 'active'])->pluck('email')->filter()->map(function ($e) {
+            return strtolower(trim($e));
+        })->toArray();
+
+        return count(array_unique(array_merge($employeeEmails, $userEmails)));
+    }
+
+    /**
+     * Calculate remaining seats based on quota
+     */
+    public function getRemainingQuota(): int
+    {
+        $quota = (int)($this->user_quota ?? 0);
+        return max(0, $quota - $this->getUsedQuota());
+    }
+
+    /**
+     * Check if business has active subscription and quota available to add an employee
+     */
+    public function canAddEmployee(): bool
+    {
+        return $this->isSubscriptionActive() && $this->getRemainingQuota() > 0;
     }
 
     /**

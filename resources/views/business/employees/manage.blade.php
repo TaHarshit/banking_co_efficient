@@ -21,8 +21,24 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="card-title mb-0">{{ __('messages.employee_list') }}</h5>
                             <div>
+                                <h5 class="card-title mb-0 d-inline-block me-3">{{ __('messages.employee_list') }}</h5>
+                                @php
+                                    $usedQ = $business->getUsedQuota();
+                                    $totQ = (int)($business->user_quota ?? 0);
+                                    $remQ = $business->getRemainingQuota();
+                                    $isSubActive = $business->isSubscriptionActive();
+                                @endphp
+                                <span class="badge {{ $remQ > 0 ? 'bg-primary' : 'bg-danger' }}">
+                                    <i class="bi bi-people me-1"></i>Seats: {{ $usedQ }} / {{ $totQ }} used ({{ $remQ }} available)
+                                </span>
+                            </div>
+                            <div>
+                                @if(!$isSubActive)
+                                    <span class="badge bg-danger me-2"><i class="bi bi-exclamation-octagon me-1"></i>Subscription Inactive / Expired</span>
+                                @elseif($remQ <= 0)
+                                    <span class="badge bg-warning text-dark me-2"><i class="bi bi-exclamation-triangle me-1"></i>Quota Full</span>
+                                @endif
                                 <a href="{{ route('business.employees.import') }}" class="btn btn-success btn-sm">
                                     <i class="bi bi-file-earmark-excel"></i> {{ __('messages.import_excel') }}
                                 </a>
@@ -31,6 +47,18 @@
                                 </a>
                             </div>
                         </div>
+
+                        @if(!$isSubActive)
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Your business subscription is not active or has expired. Adding new employees or approving users is currently disabled. Please contact your system administrator.
+                            </div>
+                        @elseif($remQ <= 0)
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                You have used all <strong>{{ $totQ }}</strong> employee seats in your quota. To add more employees, please contact administrator to upgrade your plan.
+                            </div>
+                        @endif
 
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i>
