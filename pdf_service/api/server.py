@@ -96,6 +96,7 @@ def filter_valid_reference_pages(pages):
 # --- Initialize AI Models (Local & Free) ---
 print("Loading Embedding Model (paraphrase-multilingual-MiniLM-L12-v2)...", flush=True)
 embed_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+embed_model.max_seq_length = 512  # Ensure full chunk text is embedded (default 128 truncates half the chunk)
 
 print("Loading Re-ranker Model (mmarco-mMiniLMv2-L12-H384-v1)...", flush=True)
 rerank_model = CrossEncoder('cross-encoder/mmarco-mMiniLMv2-L12-H384-v1')
@@ -767,6 +768,60 @@ def fetch_page_chunks_direct_from_pdf(source_file: str, page_num: int) -> list[d
     return results
 
 
+# --- Stop words for keyword matching (English + French) ---
+HYBRID_STOP_WORDS = {
+    "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
+    "have", "has", "had", "do", "does", "did", "will", "would", "could",
+    "should", "may", "might", "shall", "can", "need", "must",
+    "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them",
+    "my", "your", "his", "its", "our", "their", "this", "that", "these", "those",
+    "what", "which", "who", "whom", "when", "where", "how", "why",
+    "in", "on", "at", "to", "for", "with", "from", "by", "of", "about",
+    "into", "through", "during", "before", "after", "above", "below",
+    "and", "but", "or", "nor", "not", "so", "yet", "both", "either", "neither",
+    "if", "then", "than", "as", "like", "such", "very", "just", "also",
+    "le", "la", "les", "un", "une", "des", "du", "de", "et", "ou", "est",
+    "que", "qui", "dans", "sur", "pour", "avec", "par", "en", "au", "aux",
+    "tell", "explain", "show", "give", "find", "please", "more", "detail",
+}
+
+
+def is_anaphoric_follow_up(query: str) -> bool:
+    """
+    Returns True only if the query is genuinely referring to a previous
+    answer (e.g. "tell me more about that", "why?", "which page was that on?")
+    rather than introducing a new standalone topic.
+    """
+    q = query.strip().lower()
+
+    # Very short queries that are clearly follow-ups (1-3 words)
+    short_followups = [
+        "why", "why?", "how?", "more", "explain more", "tell me more",
+        "go on", "continue", "and?", "so?", "meaning?", "details",
+        "elaborate", "can you elaborate", "more details", "more info",
+        "pourquoi", "pourquoi?", "plus", "encore", "continue",
+    ]
+    if q in short_followups:
+        return True
+
+    # Pronominal references: "that", "this", "it", "those", etc.
+    anaphoric_patterns = [
+        r'\b(?:about|regarding|on)\s+(?:that|this|it|those|these|the above)\b',
+        r'\b(?:tell|give|show|explain)\s+(?:me\s+)?(?:more|further|details?)\b',
+        r'\b(?:what|where|which|how)\s+(?:about|was|is|did)\s+(?:that|this|it)\b',
+        r'\bwhat\s+do\s+you\s+mean\b',
+        r'\bcan\s+you\s+(?:explain|elaborate|clarify)\b',
+        r'\b(?:which|what)\s+page\s+(?:was|is)\s+(?:that|this|it)\b',
+        r'\b(?:on\s+)?which\s+page\b',
+        r'\b(?:the\s+)?same\s+(?:topic|thing|subject)\b',
+    ]
+    for pat in anaphoric_patterns:
+        if re.search(pat, q, re.IGNORECASE):
+            return True
+
+    return False
+
+
 class TempPoint:
     def __init__(self, id, payload, score=1.0):
         self.id = id
@@ -914,6 +969,27 @@ def hybrid_search(query: str, target_lang: str | None, limit: int = 15) -> list:
                 
                 if match_primary or match_alt:
                     add_chunk(c, 1.8)
+
+    # --- E2. Keyword / Term Overlap Matching ---
+    # Tokenize query into meaningful terms, score chunks by multi-term overlap
+    query_tokens = [
+        t for t in re.findall(r'\b\w{3,}\b', query_lower)
+        if t not in HYBRID_STOP_WORDS
+    ]
+    if query_tokens and len(query_tokens) >= 2:
+        print(f"[HYBRID] Keyword search tokens: {query_tokens}", flush=True)
+        for c in CHUNKS_DATA:
+            if c.get("source") != source_file:
+                continue
+            chunk_text_lower = c.get("text", "").lower()
+            # Count how many query tokens appear in this chunk
+            matched = sum(1 for t in query_tokens if t in chunk_text_lower)
+            # Require at least 2 matching tokens (or all tokens if query has only 2)
+            min_matches = min(2, len(query_tokens))
+            if matched >= min_matches:
+                # Score proportional to coverage
+                coverage_score = 2.0 + (matched / len(query_tokens))
+                add_chunk(c, coverage_score)
 
     # --- F. Dense Vector Search ---
     # Fetch from Qdrant using vector embeddings to get semantic matches
@@ -2273,12 +2349,12 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
                     break
 
         search_query = query
-        ref_keywords = ["page", "reference", "cite", "where", "which page", "chapter", "source", "book", "explain", "more", "why", "detail"]
-        is_short_or_ref = len(query.split()) <= 10 or any(re.search(rf'\b{kw}\b', query, re.IGNORECASE) for kw in ref_keywords)
-        
-        if last_user_query and is_short_or_ref and last_user_query.lower() not in query.lower():
+        # Only expand with previous context if query is a genuine anaphoric follow-up
+        # (e.g. "tell me more about that", "why?", "which page was that on?")
+        # Do NOT expand when the user introduces a new standalone topic
+        if last_user_query and is_anaphoric_follow_up(query):
             search_query = f"{last_user_query} {query}"
-            print(f"[INFO] Expanded follow-up search query: '{search_query}'", flush=True)
+            print(f"[INFO] Expanded anaphoric follow-up: '{search_query}'", flush=True)
 
         # Dynamically extract ANY page number entered by user (e.g., page 5, page no 417, pg 259, etc.)
         target_pages = extract_page_numbers_from_query(query)
@@ -2360,7 +2436,7 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
 
         # 1. Hybrid Search (combines heuristics and vector embeddings)
         t0 = time.time()
-        search_result = hybrid_search(search_query, output_lang, limit=15)
+        search_result = hybrid_search(search_query, output_lang, limit=35)
         print(f"[PERF] /ask - Hybrid Search ({len(search_result)} results): {time.time()-t0:.3f}s", flush=True)
 
         # 3. Re-ranking — rerank candidate search results
@@ -2368,7 +2444,7 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
             t0 = time.time()
             print(f"[INFO] Re-ranking {len(search_result)} candidates...", flush=True)
 
-            pairs  = [[search_query, res.payload["text"]] for res in search_result]
+            pairs  = [[query, res.payload["text"]] for res in search_result]
             scores = rerank_model.predict(pairs)
 
             for i, score in enumerate(scores):

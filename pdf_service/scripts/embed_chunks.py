@@ -8,6 +8,7 @@ from pathlib import Path
 # Load models (Free & Local)
 print("Loading embedding model (paraphrase-multilingual-MiniLM-L12-v2)...")
 model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+model.max_seq_length = 512  # Embed full chunk text (default 128 truncates half the chunk)
 
 # Qdrant Configuration
 # When running inside docker, host should be "qdrant". 
