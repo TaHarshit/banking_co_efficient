@@ -154,6 +154,14 @@ class ClientCaseController extends Controller
      */
     public function exportSummaryPdf(Request $request)
     {
+        $user = Auth::user();
+        if ($user && ! $user->canExportSummaryPdf()) {
+            $resp = General::setResponse('VALIDATION_ERROR', 'Strategic client summary PDF export is available exclusively to Negomaster Pro subscribers. Please upgrade your subscription.');
+            $resp['code'] = 403;
+            $resp['error_code'] = 'FEATURE_LOCKED';
+            return get_response($request, $resp);
+        }
+
         $params = General::stripRequest($request->all());
         if ($request->isMethod('get')) {
             $params = array_merge($request->query(), $params);
@@ -213,6 +221,15 @@ class ClientCaseController extends Controller
         }
 
         $case = $response['data'];
+
+        $user = Auth::user();
+        if ($user && ! $user->canExportCasePdf($case)) {
+            $resp = General::setResponse('VALIDATION_ERROR', 'PDF export is not available on the free tier. Please upgrade to Negomaster Pro or purchase a Single Analysis to export your negotiation plan.');
+            $resp['code'] = 403;
+            $resp['error_code'] = 'FEATURE_LOCKED';
+            return get_response($request, $resp);
+        }
+
         $plan = $case->action_plan;
 
         if (is_string($plan)) {

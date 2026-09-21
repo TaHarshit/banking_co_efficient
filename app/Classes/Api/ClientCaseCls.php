@@ -252,6 +252,37 @@ class ClientCaseCls
                 return General::setResponse('VALIDATION_ERROR', 'Case not found.');
             }
 
+            // Quota / Entitlement enforcement
+            if (! $user->canRunAnalysis()) {
+                $response = General::setResponse('VALIDATION_ERROR', 'You have used all 3 free analyses. Please upgrade to Negomaster Pro or purchase a Single Analysis to continue.');
+                $response['code'] = 403;
+                $response['error_code'] = 'QUOTA_EXCEEDED';
+                $response['free_analyses_used'] = (int)$user->free_analyses_used;
+                $response['paid_credits_remaining'] = $user->getPaidCredits();
+                return $response;
+            }
+
+            // Determine quota usage and entitlements
+            $canExportPdf = false;
+            $isFullProfile = false;
+
+            if ($user->isUnlimited()) {
+                $canExportPdf = true;
+                $isFullProfile = true;
+            } elseif ($user->paid_analyses_credits > 0) {
+                $user->decrement('paid_analyses_credits');
+                $canExportPdf = true;
+                $isFullProfile = true;
+            } else {
+                $user->increment('free_analyses_used');
+                $canExportPdf = false;
+                $isFullProfile = false;
+            }
+
+            $clientCase->can_export_pdf = $canExportPdf;
+            $clientCase->is_full_profile = $isFullProfile;
+            $clientCase->save();
+
             // Create a tracking record in ai_jobs
             $aiJob = AiJob::create([
                 'user_id'  => $user->id,
@@ -267,8 +298,8 @@ class ClientCaseCls
             } else {
                 $locale = 'en';
             }
-            // Dispatch job to queue
-            AnalyzeCaseJob::dispatch($aiJob->id, $clientCase->id, $user->id, $locale);
+            // Dispatch job to queue with profiling flag
+            AnalyzeCaseJob::dispatch($aiJob->id, $clientCase->id, $user->id, $locale, $isFullProfile);
 
             // Auto-trigger background queue worker (no separate worker process needed)
             $this->spawnQueueWorker();
@@ -277,6 +308,11 @@ class ClientCaseCls
             $response['job_id'] = $aiJob->id;
             $response['case_id'] = $clientCase->id;
             $response['status'] = 'pending';
+            $response['can_export_pdf'] = $canExportPdf;
+            $response['is_full_profile'] = $isFullProfile;
+            $response['free_analyses_remaining'] = $user->getRemainingFreeAnalyses();
+            $response['paid_credits_remaining'] = $user->getPaidCredits();
+            $response['total_analyses_remaining'] = $user->getTotalAvailableAnalyses();
 
             return $response;
         } catch (Exception $e) {

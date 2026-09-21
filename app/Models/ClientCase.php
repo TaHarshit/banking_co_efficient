@@ -21,6 +21,8 @@ class ClientCase extends Model
         'client_summary',
         'user_question',
         'plan_rating',
+        'can_export_pdf',
+        'is_full_profile',
     ];
 
     protected $casts = [
@@ -28,6 +30,8 @@ class ClientCase extends Model
         'ai_analysis' => 'array',
         'action_plan' => 'array',
         'client_summary' => 'array',
+        'can_export_pdf' => 'boolean',
+        'is_full_profile' => 'boolean',
     ];
 
     protected $appends = [

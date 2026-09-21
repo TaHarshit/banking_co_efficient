@@ -37,7 +37,8 @@ class AnalyzeCaseJob implements ShouldQueue
         protected $aiJobId,
         protected $caseId,
         protected $userId,
-        protected $locale = 'en'
+        protected $locale = 'en',
+        protected bool $isFullProfile = true
     ) {}
 
     public function handle(NotificationsRepository $notificationsRepo): void
@@ -59,20 +60,12 @@ class AnalyzeCaseJob implements ShouldQueue
          Log::info("user id is ".$this->userId);
          Log::info("case id is ".$this->caseId);
 
-
-        // \App\General\General::sendNotificationV1(
-        //     $this->userId,
-        //     'AI Analysis Started',
-        //     "Your negotiation analysis has started."
-        //     // ['case_id' => $this->caseId]
-        // );
-
         $pythonUrl = config('services.pdf_service.base_url');
         $endpoint  = rtrim($pythonUrl, '/') . '/analyze-case';
 
-        // Build user profile from the user model
+        // Build user profile if full profiling is enabled
         $user        = $clientCase->user;
-        $userProfile = $user ? $user->getAiBehaviorProfile() : '';
+        $userProfile = ($this->isFullProfile && $user) ? $user->getAiBehaviorProfile() : '';
 
         // Retrieve historical cases for this client if client_id exists
         $clientHistory = [];
@@ -194,6 +187,21 @@ class AnalyzeCaseJob implements ShouldQueue
             'status'        => 'failed',
             'error_message' => $error,
         ]);
+
+        // Refund analysis quota/credit if job failed
+        try {
+            $clientCase = ClientCase::find($this->caseId);
+            $user = \App\Models\User::find($this->userId);
+            if ($user && $clientCase) {
+                if ($clientCase->can_export_pdf && !$user->isUnlimited()) {
+                    $user->increment('paid_analyses_credits');
+                } elseif (!$clientCase->can_export_pdf && (int)$user->free_analyses_used > 0) {
+                    $user->decrement('free_analyses_used');
+                }
+            }
+        } catch (\Exception $refEx) {
+            Log::warning("[AnalyzeCaseJob] Failed to refund quota on failure: " . $refEx->getMessage());
+        }
 
         $caseLabel = $alias ? "for case \"{$alias}\"" : '';
         \App\General\General::sendNotificationV1(

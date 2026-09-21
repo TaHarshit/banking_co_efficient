@@ -35,6 +35,8 @@ class User extends Authenticatable
         'department',
         'year_of_experience',
         'subscribe_newsletter',
+        'free_analyses_used',
+        'paid_analyses_credits',
     ];
 
     /**
@@ -59,6 +61,8 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'free_analyses_used' => 'integer',
+            'paid_analyses_credits' => 'integer',
             // 'password' => 'hashed',
         ];
     }
@@ -139,6 +143,131 @@ class User extends Authenticatable
             ->where('status', 1)
             ->where('subscription_end_date', '>=', now())
             ->exists();
+    }
+
+    /**
+     * Get client cases for this user
+     */
+    public function cases()
+    {
+        return $this->hasMany(ClientCase::class, 'user_id');
+    }
+
+    /**
+     * Get the active individual paid subscription (Pro monthly / annual)
+     */
+    public function getActiveIndividualSubscription(): ?UserSubscriptions
+    {
+        return $this->subscriptions()
+            ->where('status', 1)
+            ->where('subscription_end_date', '>=', now())
+            ->latest('id')
+            ->first();
+    }
+
+    /**
+     * Get the active plan model for this user
+     */
+    public function getActivePlan(): ?Plans
+    {
+        // 1. Business plan inheritance
+        if ($this->isUnderBusiness() && $this->business && $this->business->isSubscriptionActive()) {
+            return $this->business->plan;
+        }
+
+        // 2. Active individual paid recurring subscription (Pro)
+        $activeSub = $this->getActiveIndividualSubscription();
+        if ($activeSub && $activeSub->plan) {
+            return $activeSub->plan;
+        }
+
+        // 3. User with paid single analysis credits
+        if ($this->paid_analyses_credits > 0) {
+            return Plans::where('validity_type', 'one-time')->where('status', 1)->first()
+                ?? Plans::where('name', 'like', '%Single%')->first();
+        }
+
+        // 4. Default Explorer (Free) plan
+        return Plans::where('validity_type', 'lifetime')->where('status', 1)->first()
+            ?? Plans::where('price', 0)->first();
+    }
+
+    /**
+     * Number of remaining free analyses (out of 3 lifetime)
+     */
+    public function getRemainingFreeAnalyses(): int
+    {
+        return max(0, 3 - (int)$this->free_analyses_used);
+    }
+
+    /**
+     * Number of remaining paid consumable analysis credits
+     */
+    public function getPaidCredits(): int
+    {
+        return max(0, (int)$this->paid_analyses_credits);
+    }
+
+    /**
+     * Check if user has unlimited analysis generation (Pro or Business)
+     */
+    public function isUnlimited(): bool
+    {
+        if ($this->isUnderBusiness() && $this->business && $this->business->isSubscriptionActive()) {
+            return true;
+        }
+
+        return $this->getActiveIndividualSubscription() !== null;
+    }
+
+    /**
+     * Total available analyses (null if unlimited)
+     */
+    public function getTotalAvailableAnalyses(): ?int
+    {
+        if ($this->isUnlimited()) {
+            return null; // Unlimited
+        }
+
+        return $this->getRemainingFreeAnalyses() + $this->getPaidCredits();
+    }
+
+    /**
+     * Check if user is entitled to run a new analysis
+     */
+    public function canRunAnalysis(): bool
+    {
+        if ($this->isUnlimited()) {
+            return true;
+        }
+
+        return ($this->getRemainingFreeAnalyses() > 0) || ($this->getPaidCredits() > 0);
+    }
+
+    /**
+     * Check if user can export PDF for a specific case
+     */
+    public function canExportCasePdf(?ClientCase $case = null): bool
+    {
+        // Pro & Business subscribers have unlimited export on all cases
+        if ($this->isUnlimited()) {
+            return true;
+        }
+
+        // Cases analyzed using Single Analysis credit have permanent export rights
+        if ($case && $case->can_export_pdf) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if user can export multi-case summary PDF
+     */
+    public function canExportSummaryPdf(): bool
+    {
+        return $this->isUnlimited();
     }
 
     /**

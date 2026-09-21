@@ -129,6 +129,26 @@ class UserSubscriptionsCls {
                 return General::setResponse('UNAUTHORIZED', 'User not authenticated.');
             }
 
+            // Direct Explorer (Free) tier enrollment without receipts
+            if (!empty($postData['plan_id'])) {
+                $checkPlan = Plans::find($postData['plan_id']);
+                if ($checkPlan && $checkPlan->isFree()) {
+                    $data = General::setResponse('SUCCESS', "Explorer plan enrolled successfully.");
+                    $data['data'] = [
+                        'plan_id'                  => $checkPlan->id,
+                        'plan_name'                => $checkPlan->name,
+                        'free_analyses_used'       => (int)$user->free_analyses_used,
+                        'free_analyses_remaining'  => $user->getRemainingFreeAnalyses(),
+                        'paid_credits_remaining'   => $user->getPaidCredits(),
+                        'total_analyses_remaining' => $user->getTotalAvailableAnalyses(),
+                        'is_unlimited'             => false,
+                        'can_export_pdf'           => false,
+                        'full_profiling'           => false,
+                    ];
+                    return $data;
+                }
+            }
+
             // ANDROID IN-APP PURCHASE FLOW
             if(isset($postData['purchase_token']) && !empty($postData['purchase_token'])){
 
@@ -192,7 +212,36 @@ class UserSubscriptionsCls {
                     return General::setResponse('VALIDATION_ERROR', "Plan not found for Android product ID: " . ($productId ?? 'unknown'));
                 }
 
-                // Ensure valid dates
+                // Handle Single Analysis Consumable Credit
+                if ($planObj->isSingle()) {
+                    $user->increment('paid_analyses_credits');
+                    
+                    $this->UserSubscriptionsRep->AndroidAddEditUserSubscription(
+                        $planObj->id, 
+                        $postData['purchase_token'], 
+                        Carbon::now()->format('Y-m-d H:i:s'), 
+                        null, 
+                        1, 
+                        0 // Always log as new entry for consumable
+                    );
+
+                    $user->refresh();
+                    $data = General::setResponse('SUCCESS', "Single analysis credit added successfully.");
+                    $data['data'] = [
+                        'plan_id'                  => $planObj->id,
+                        'plan_name'                => $planObj->name,
+                        'free_analyses_used'       => (int)$user->free_analyses_used,
+                        'free_analyses_remaining'  => $user->getRemainingFreeAnalyses(),
+                        'paid_credits_remaining'   => $user->getPaidCredits(),
+                        'total_analyses_remaining' => $user->getTotalAvailableAnalyses(),
+                        'is_unlimited'             => false,
+                        'can_export_pdf'           => true,
+                        'full_profiling'           => true,
+                    ];
+                    return $data;
+                }
+
+                // Ensure valid dates for recurring subscriptions
                 if (empty($startDate)) {
                     $startDate = Carbon::now()->format('Y-m-d H:i:s');
                 }
@@ -208,7 +257,6 @@ class UserSubscriptionsCls {
                 $CurrentPlan    = $this->UserSubscriptionsRep->GetUserPlan();
                 $CurrentPlanID  = (!empty($CurrentPlan)) ? $CurrentPlan->id : 0;
 
-                // Fixed typo: use purchase_token instead of purchse_token
                 $response = $this->UserSubscriptionsRep->AndroidAddEditUserSubscription(
                     $planObj->id, 
                     $postData['purchase_token'], 
@@ -227,6 +275,10 @@ class UserSubscriptionsCls {
                     'subscription_start_date' => $startDate,
                     'subscription_end_date'   => $endDate,
                     'status'                  => $status,
+                    'is_unlimited'            => true,
+                    'can_export_pdf'          => true,
+                    'full_profiling'          => true,
+                    'total_analyses_remaining'=> null,
                 ];
                 return $data;
 
@@ -356,6 +408,35 @@ class UserSubscriptionsCls {
                     }
                 }
 
+                // Handle Single Analysis Consumable Credit
+                if ($PlanObj->isSingle()) {
+                    $user->increment('paid_analyses_credits');
+
+                    $this->UserSubscriptionsRep->AddEditUserSubscription(
+                        $PlanObj->id, 
+                        $postData['receipt_id'], 
+                        Carbon::now()->format('Y-m-d H:i:s'), 
+                        null, 
+                        0, // Always log as new entry for consumable
+                        $ReceiptRes->body()
+                    );
+
+                    $user->refresh();
+                    $data = General::setResponse('SUCCESS', "Single analysis credit added successfully.");
+                    $data['data'] = [
+                        'plan_id'                  => $PlanObj->id,
+                        'plan_name'                => $PlanObj->name,
+                        'free_analyses_used'       => (int)$user->free_analyses_used,
+                        'free_analyses_remaining'  => $user->getRemainingFreeAnalyses(),
+                        'paid_credits_remaining'   => $user->getPaidCredits(),
+                        'total_analyses_remaining' => $user->getTotalAvailableAnalyses(),
+                        'is_unlimited'             => false,
+                        'can_export_pdf'           => true,
+                        'full_profiling'           => true,
+                    ];
+                    return $data;
+                }
+
                 $CurrentPlan    = $this->UserSubscriptionsRep->GetUserPlan();
                 $CurrentPlanID  = (!empty($CurrentPlan)) ? $CurrentPlan->id : 0;
 
@@ -377,6 +458,10 @@ class UserSubscriptionsCls {
                     'subscription_start_date' => $StartDate,
                     'subscription_end_date'   => $EndDate,
                     'status'                  => 1,
+                    'is_unlimited'            => true,
+                    'can_export_pdf'          => true,
+                    'full_profiling'          => true,
+                    'total_analyses_remaining'=> null,
                 ];
                 return $data;
 
@@ -469,6 +554,13 @@ class UserSubscriptionsCls {
                     'business_code'           => $business->business_code,
                     'user_quota'              => (int)($business->user_quota ?? 0),
                     'used_quota'              => (int)$business->getUsedQuota(),
+                    'free_analyses_used'      => (int)$user->free_analyses_used,
+                    'free_analyses_remaining' => $user->getRemainingFreeAnalyses(),
+                    'paid_credits_remaining'  => $user->getPaidCredits(),
+                    'total_analyses_remaining'=> null,
+                    'is_unlimited'            => true,
+                    'can_export_pdf'          => true,
+                    'full_profiling'          => true,
                 ];
 
                 $data = General::setResponse('SUCCESS', 'Success.');
@@ -480,25 +572,8 @@ class UserSubscriptionsCls {
             // 2. Individual User (not associated with any business)
             $userSubPlan = $this->UserSubscriptionsRep->GetUserPlan($user->id);
 
-            if (empty($userSubPlan) || empty($userSubPlan->subscription_end_date)) {
-                $planData = [
-                    'user_id'           => $user->id,
-                    'user_name'         => $user->name,
-                    'user_email'        => $user->email,
-                    'is_subscribed'     => false,
-                    'subscription_type' => 'individual',
-                    'status'            => 0,
-                    'status_text'       => 'No Active Plan',
-                    'is_business_user'  => false,
-                ];
-                $data = General::setResponse('SUCCESS', 'No subscription plan found.');
-                $data['data'] = $this->formatCurrentPlanResponse($planData);
-                $data['plans'] = $availablePlans;
-                return $data;
-            }
-
             // Optional refresh for Apple iOS in-app receipts
-            if (($userSubPlan->purchase_from === '0' || $userSubPlan->purchase_from === 0 || $userSubPlan->purchase_from === 'ios') && !empty($userSubPlan->receipt_id)) {
+            if ($userSubPlan && ($userSubPlan->purchase_from === '0' || $userSubPlan->purchase_from === 0 || $userSubPlan->purchase_from === 'ios') && !empty($userSubPlan->receipt_id)) {
                 try {
                     $VerifyReceiptUrl = (env('APP_ENV') == 'production') ? env('LIVE_IN_APP_PURCHASE_VERIFY_RECEIPT_URL', env('SANBOX_IN_APP_PURCHASE_VERIFY_RECEIPT_URL')) : env('SANBOX_IN_APP_PURCHASE_VERIFY_RECEIPT_URL');
                     if ($VerifyReceiptUrl && env('IN_APP_PURCHASE_PASSWORD')) {
@@ -537,7 +612,7 @@ class UserSubscriptionsCls {
                 }
             }
             // Optional refresh for Google Android in-app receipts
-            elseif (($userSubPlan->purchase_from === '1' || $userSubPlan->purchase_from === 1 || $userSubPlan->purchase_from === 'android') && !empty($userSubPlan->purchase_token) && env('SUB_URL')) {
+            elseif ($userSubPlan && ($userSubPlan->purchase_from === '1' || $userSubPlan->purchase_from === 1 || $userSubPlan->purchase_from === 'android') && !empty($userSubPlan->purchase_token) && env('SUB_URL')) {
                 try {
                     $googleAuth = InAppAuthToken::where('identifier', 'google')->first();
                     if ($googleAuth) {
@@ -567,42 +642,147 @@ class UserSubscriptionsCls {
             }
 
             $now = Carbon::now();
-            $startDate = $userSubPlan->subscription_start_date ? Carbon::parse($userSubPlan->subscription_start_date) : null;
-            $endDate = $userSubPlan->subscription_end_date ? Carbon::parse($userSubPlan->subscription_end_date)->endOfDay() : null;
+            $startDate = ($userSubPlan && $userSubPlan->subscription_start_date) ? Carbon::parse($userSubPlan->subscription_start_date) : null;
+            $endDate = ($userSubPlan && $userSubPlan->subscription_end_date) ? Carbon::parse($userSubPlan->subscription_end_date)->endOfDay() : null;
 
             $isActive = false;
             $statusText = 'Expired';
 
-            if ($userSubPlan->status == 1 && $endDate && $now->lte($endDate)) {
+            if ($userSubPlan && $userSubPlan->status == 1 && $endDate && $now->lte($endDate)) {
                 $isActive = true;
                 $statusText = 'Active';
             }
 
-            $daysRemaining = ($isActive && $endDate) ? max(0, (int)$now->diffInDays($endDate, false)) : 0;
-            $planObj = $userSubPlan->plan ?? Plans::find($userSubPlan->plan_id);
+            // A. User has an active Pro Recurring Subscription
+            if ($isActive && $userSubPlan) {
+                $daysRemaining = max(0, (int)$now->diffInDays($endDate, false));
+                $planObj = $userSubPlan->plan ?? Plans::find($userSubPlan->plan_id);
 
+                $planData = [
+                    'id'                      => $userSubPlan->id,
+                    'user_id'                 => $user->id,
+                    'user_name'               => $user->name,
+                    'user_email'              => $user->email,
+                    'is_subscribed'           => true,
+                    'subscription_type'       => 'individual',
+                    'status'                  => 1,
+                    'status_text'             => $statusText,
+                    'plan_id'                 => $userSubPlan->plan_id,
+                    'plan_name'               => $planObj ? $planObj->name : 'Negomaster Pro',
+                    'price'                   => $planObj ? (string)$planObj->price : '19.00',
+                    'validity'                => $planObj ? $planObj->validity : null,
+                    'validity_type'           => $planObj ? $planObj->validity_type : 'month',
+                    'subscription_start_date' => $userSubPlan->subscription_start_date ? Carbon::parse($userSubPlan->subscription_start_date)->format('Y-m-d H:i:s') : null,
+                    'subscription_end_date'   => $userSubPlan->subscription_end_date ? Carbon::parse($userSubPlan->subscription_end_date)->format('Y-m-d H:i:s') : null,
+                    'days_remaining'          => $daysRemaining,
+                    'purchase_from'           => $this->mapPurchaseFrom($userSubPlan->purchase_from),
+                    'receipt_id'              => $userSubPlan->receipt_id,
+                    'purchase_token'          => $userSubPlan->purchase_token,
+                    'ios_product_id'          => $planObj ? $planObj->ios_product_id : null,
+                    'android_product_id'      => $planObj ? $planObj->android_product_id : null,
+                    'free_analyses_used'      => (int)$user->free_analyses_used,
+                    'free_analyses_remaining' => $user->getRemainingFreeAnalyses(),
+                    'paid_credits_remaining'  => $user->getPaidCredits(),
+                    'total_analyses_remaining'=> null,
+                    'is_unlimited'            => true,
+                    'can_export_pdf'          => true,
+                    'full_profiling'          => true,
+                    'is_business_user'        => false,
+                    'business_id'             => null,
+                    'business_name'           => null,
+                    'business_code'           => null,
+                    'user_quota'              => null,
+                    'used_quota'              => null,
+                ];
+
+                $data = General::setResponse('SUCCESS', 'Success.');
+                $data['data'] = $this->formatCurrentPlanResponse($planData);
+                $data['plans'] = $availablePlans;
+                return $data;
+            }
+
+            // B. User has Single Analysis Paid Consumable Credits
+            if ($user->paid_analyses_credits > 0) {
+                $singlePlan = Plans::where('validity_type', 'one-time')->where('status', 1)->first()
+                    ?? Plans::where('name', 'like', '%Single%')->first();
+
+                $planData = [
+                    'id'                      => null,
+                    'user_id'                 => $user->id,
+                    'user_name'               => $user->name,
+                    'user_email'              => $user->email,
+                    'is_subscribed'           => true,
+                    'subscription_type'       => 'individual',
+                    'status'                  => 1,
+                    'status_text'             => 'Credit Available',
+                    'plan_id'                 => $singlePlan ? $singlePlan->id : null,
+                    'plan_name'               => $singlePlan ? $singlePlan->name : 'Single Analysis',
+                    'price'                   => $singlePlan ? (string)$singlePlan->price : '9.00',
+                    'validity'                => 1,
+                    'validity_type'           => 'one-time',
+                    'subscription_start_date' => null,
+                    'subscription_end_date'   => null,
+                    'days_remaining'          => null,
+                    'purchase_from'           => null,
+                    'receipt_id'              => null,
+                    'purchase_token'          => null,
+                    'ios_product_id'          => $singlePlan ? $singlePlan->ios_product_id : 'com.negomaster.single',
+                    'android_product_id'      => $singlePlan ? $singlePlan->android_product_id : 'com.negomaster.single',
+                    'free_analyses_used'      => (int)$user->free_analyses_used,
+                    'free_analyses_remaining' => $user->getRemainingFreeAnalyses(),
+                    'paid_credits_remaining'  => $user->getPaidCredits(),
+                    'total_analyses_remaining'=> $user->getTotalAvailableAnalyses(),
+                    'is_unlimited'            => false,
+                    'can_export_pdf'          => true,
+                    'full_profiling'          => true,
+                    'is_business_user'        => false,
+                    'business_id'             => null,
+                    'business_name'           => null,
+                    'business_code'           => null,
+                    'user_quota'              => null,
+                    'used_quota'              => null,
+                ];
+
+                $data = General::setResponse('SUCCESS', 'Success.');
+                $data['data'] = $this->formatCurrentPlanResponse($planData);
+                $data['plans'] = $availablePlans;
+                return $data;
+            }
+
+            // C. Default Explorer Free Plan (Lifetime with 3 free analyses)
+            $explorerPlan = Plans::where('validity_type', 'lifetime')->where('status', 1)->first()
+                ?? Plans::where('price', 0)->first();
+
+            $hasFreeLeft = $user->getRemainingFreeAnalyses() > 0;
             $planData = [
-                'id'                      => $userSubPlan->id,
+                'id'                      => null,
                 'user_id'                 => $user->id,
                 'user_name'               => $user->name,
                 'user_email'              => $user->email,
-                'is_subscribed'           => $isActive,
+                'is_subscribed'           => true,
                 'subscription_type'       => 'individual',
-                'status'                  => $isActive ? 1 : 0,
-                'status_text'             => $statusText,
-                'plan_id'                 => $userSubPlan->plan_id,
-                'plan_name'               => $planObj ? $planObj->name : 'Individual Plan',
-                'price'                   => $planObj ? (string)$planObj->price : '0.00',
-                'validity'                => $planObj ? $planObj->validity : null,
-                'validity_type'           => $planObj ? $planObj->validity_type : 'month',
-                'subscription_start_date' => $userSubPlan->subscription_start_date ? Carbon::parse($userSubPlan->subscription_start_date)->format('Y-m-d H:i:s') : null,
-                'subscription_end_date'   => $userSubPlan->subscription_end_date ? Carbon::parse($userSubPlan->subscription_end_date)->format('Y-m-d H:i:s') : null,
-                'days_remaining'          => $daysRemaining,
-                'purchase_from'           => $this->mapPurchaseFrom($userSubPlan->purchase_from),
-                'receipt_id'              => $userSubPlan->receipt_id,
-                'purchase_token'          => $userSubPlan->purchase_token,
-                'ios_product_id'          => $planObj ? $planObj->ios_product_id : null,
-                'android_product_id'      => $planObj ? $planObj->android_product_id : null,
+                'status'                  => $hasFreeLeft ? 1 : 0,
+                'status_text'             => $hasFreeLeft ? 'Active Free Tier' : 'Free Quota Exhausted',
+                'plan_id'                 => $explorerPlan ? $explorerPlan->id : null,
+                'plan_name'               => $explorerPlan ? $explorerPlan->name : 'Explorer',
+                'price'                   => '0.00',
+                'validity'                => 1,
+                'validity_type'           => 'lifetime',
+                'subscription_start_date' => null,
+                'subscription_end_date'   => null,
+                'days_remaining'          => null,
+                'purchase_from'           => null,
+                'receipt_id'              => null,
+                'purchase_token'          => null,
+                'ios_product_id'          => null,
+                'android_product_id'      => null,
+                'free_analyses_used'      => (int)$user->free_analyses_used,
+                'free_analyses_remaining' => $user->getRemainingFreeAnalyses(),
+                'paid_credits_remaining'  => 0,
+                'total_analyses_remaining'=> $user->getRemainingFreeAnalyses(),
+                'is_unlimited'            => false,
+                'can_export_pdf'          => false,
+                'full_profiling'          => false,
                 'is_business_user'        => false,
                 'business_id'             => null,
                 'business_name'           => null,
@@ -648,6 +828,15 @@ class UserSubscriptionsCls {
             'purchase_token'          => $data['purchase_token'] ?? null,
             'ios_product_id'          => $data['ios_product_id'] ?? null,
             'android_product_id'      => $data['android_product_id'] ?? null,
+
+            // Quota and entitlement details
+            'free_analyses_used'      => isset($data['free_analyses_used']) ? (int)$data['free_analyses_used'] : 0,
+            'free_analyses_remaining' => isset($data['free_analyses_remaining']) ? (int)$data['free_analyses_remaining'] : 0,
+            'paid_credits_remaining'  => isset($data['paid_credits_remaining']) ? (int)$data['paid_credits_remaining'] : 0,
+            'total_analyses_remaining'=> $data['total_analyses_remaining'] ?? null,
+            'is_unlimited'            => (bool)($data['is_unlimited'] ?? false),
+            'can_export_pdf'          => (bool)($data['can_export_pdf'] ?? false),
+            'full_profiling'          => (bool)($data['full_profiling'] ?? false),
 
             // Business metadata (null for individual users)
             'is_business_user'        => (bool)($data['is_business_user'] ?? false),

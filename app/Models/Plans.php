@@ -46,4 +46,36 @@ class Plans extends Model
     {
         return $this->type === 0;
     }
+
+    public function isFree(): bool
+    {
+        return (float)$this->price == 0.00 || $this->validity_type === 'lifetime';
+    }
+
+    public function isSingle(): bool
+    {
+        return $this->validity_type === 'one-time';
+    }
+
+    public function isPro(): bool
+    {
+        return $this->isIndividualPlan() && (float)$this->price > 0 && $this->validity_type !== 'one-time';
+    }
+
+    public function isUnlimited(): bool
+    {
+        return $this->isPro() || $this->isBusinessPlan();
+    }
+
+    public function canExportPdf(): bool
+    {
+        // Free tier cannot export; Single analysis, Pro, and Business can export
+        return !$this->isFree();
+    }
+
+    public function hasFullProfiling(): bool
+    {
+        // Free tier gets basic profiling; Single, Pro, and Business get full behavioral profiling
+        return !$this->isFree();
+    }
 }
