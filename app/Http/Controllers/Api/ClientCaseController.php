@@ -29,7 +29,9 @@ class ClientCaseController extends Controller
         $search   = $request->query('search');
         $rating   = $request->query('rating');
         $clientId = $request->query('client_id');
-        $date     = $request->query('date');
+        
+        $date = $request->query('date');
+        if ($date === 'null' || $date === 'undefined') $date = null;
 
         $filters = [
             'date'        => $date,
@@ -38,6 +40,9 @@ class ClientCaseController extends Controller
             'from_date'   => $request->query('from_date') ?? $request->query('date_from') ?? $request->query('start_date'),
             'to_date'     => $request->query('to_date') ?? $request->query('date_to') ?? $request->query('end_date'),
         ];
+        
+        if ($filters['from_date'] === 'null' || $filters['from_date'] === 'undefined') $filters['from_date'] = null;
+        if ($filters['to_date'] === 'null' || $filters['to_date'] === 'undefined') $filters['to_date'] = null;
 
         $data     = $this->clientCaseCls->GetCases($search, $rating, $clientId, $filters);
         return get_response($request, $data);
@@ -55,8 +60,20 @@ class ClientCaseController extends Controller
     {
         $search  = $request->query('search');
         $perPage = (int) ($request->query('per_page', 10));
-        $date    = $request->query('date');
-        $data    = $this->clientCaseCls->GetPaginatedClientsList($search, $perPage, $date);
+        
+        $date = $request->query('date');
+        if ($date === 'null' || $date === 'undefined') $date = null;
+
+        $filters = [
+            'date'      => $date,
+            'from_date' => $request->query('from_date') ?? $request->query('date_from') ?? $request->query('start_date'),
+            'to_date'   => $request->query('to_date') ?? $request->query('date_to') ?? $request->query('end_date'),
+        ];
+
+        if ($filters['from_date'] === 'null' || $filters['from_date'] === 'undefined') $filters['from_date'] = null;
+        if ($filters['to_date'] === 'null' || $filters['to_date'] === 'undefined') $filters['to_date'] = null;
+
+        $data    = $this->clientCaseCls->GetPaginatedClientsList($search, $perPage, $filters);
         return get_response($request, $data);
     }
 

@@ -591,10 +591,10 @@ class ClientCaseCls
     /**
      * Get paginated clients list with search and date filter.
      */
-    public function GetPaginatedClientsList($search = null, $perPage = 10, $date = null)
+    public function GetPaginatedClientsList($search = null, $perPage = 10, $filters = [])
     {
         try {
-            $clients  = $this->clientRepository->GetPaginatedClients(Auth::id(), $search, $perPage, $date);
+            $clients  = $this->clientRepository->GetPaginatedClients(Auth::id(), $search, $perPage, $filters);
             $response = General::setResponse('SUCCESS', 'Clients retrieved successfully.');
             $response['data'] = $clients;
 

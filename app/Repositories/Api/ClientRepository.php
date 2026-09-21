@@ -45,7 +45,7 @@ class ClientRepository extends BaseRepository
         );
     }
 
-    public function GetPaginatedClients($userId, $search = null, $perPage = 10, $date = null)
+    public function GetPaginatedClients($userId, $search = null, $perPage = 10, $filters = [])
     {
         $query = $this->model->where('clients.user_id', $userId);
 
@@ -68,6 +68,7 @@ class ClientRepository extends BaseRepository
             });
         }
 
+        $date = $filters['date'] ?? null;
         if (! empty($date)) {
             try {
                 $trimmedDate = trim($date);
@@ -81,6 +82,23 @@ class ClientRepository extends BaseRepository
                 $query->whereBetween('clients.created_at', [$start, $end]);
             } catch (\Exception $e) {
                 // Ignore invalid date format
+            }
+        } else {
+            $fromDate = $filters['from_date'] ?? null;
+            $toDate   = $filters['to_date'] ?? null;
+
+            if (! empty($fromDate)) {
+                try {
+                    $start = Carbon::parse($fromDate)->startOfDay();
+                    $query->where('clients.created_at', '>=', $start);
+                } catch (\Exception $e) {}
+            }
+
+            if (! empty($toDate)) {
+                try {
+                    $end = Carbon::parse($toDate)->endOfDay();
+                    $query->where('clients.created_at', '<=', $end);
+                } catch (\Exception $e) {}
             }
         }
 
