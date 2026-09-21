@@ -2357,7 +2357,13 @@ def process_question(query: str, history: list = [], target_lang: str | None = N
             print(f"[INFO] Expanded anaphoric follow-up: '{search_query}'", flush=True)
 
         # Dynamically extract ANY page number entered by user (e.g., page 5, page no 417, pg 259, etc.)
-        target_pages = extract_page_numbers_from_query(query)
+        extracted_pages = extract_page_numbers_from_query(query)
+        # To avoid cut-offs when content spans multiple pages, also include the next page for each target page
+        expanded_target_pages = set(extracted_pages)
+        for tp in extracted_pages:
+            if tp + 1 <= 700:  # Assuming max pages
+                expanded_target_pages.add(tp + 1)
+        target_pages = sorted(list(expanded_target_pages))
 
         source_file, source_filter = get_pdf_source_filter(output_lang)
 
@@ -2522,7 +2528,7 @@ For greetings or conversational interactions (e.g., "Hi", "Hello", "How are you?
 [INSTRUCTIONS FOR ANSWERING]
 1. Answer the user's question using the Context and Table of Contents provided below.
 2. STRICT GROUNDING: Answer ONLY using facts and information present in the Context and Table of Contents. NEVER invent or hallucinate principles, methods, or details from outside knowledge. If the answer is not in the document, clearly say "I cannot find the answer to that in the document."
-3. SPECIFIC PAGE LOOKUP: If the user asks about a specific page (e.g. "Look at page 259", "What is on page X?", "Page no 417"), focus directly on the context provided for that page and explain what it covers, citing the page number clearly (e.g., p.259 or p.417). If both physical PDF page and book printed page numbers are shown in the headers, explain the content clearly and mention both numbers for clarity.
+3. SPECIFIC PAGE LOOKUP: If the user asks about a specific page (e.g. "Look at page 259", "What is on page X?", "Page no 417"), focus directly on the context provided for that page and explain what it covers, citing the page number clearly (e.g., p.259 or p.417). If a concept, list, or sentence continues onto the next page, read the context for the next page as well to provide a complete answer. If both physical PDF page and book printed page numbers are shown in the headers, explain the content clearly and mention both numbers for clarity.
 4. Be flexible with wording. If the user searches for a chapter using only a few words or partial names, match it to the closest chapter in the Context or Table of Contents.
 5. For structural questions (e.g., "What are the subsections of Chapter X?", "What is the name of Chapter 2?", "What chapters are there?"), use the [BOOK TABLE OF CONTENTS] above AND the [Chapter] and [Section] metadata tags in the Context to give a complete answer.
 6. INLINE CITATIONS: When referencing specific information from the document, include inline citations in the format (Chapter Name, p.XX) or (p.XX) ONLY IF XX is a valid, specific page number greater than 1 (e.g., p.2, p.5). NEVER cite page 1, p.1, or (p.1). If the page number is 1, missing, or unknown, do NOT include any page citation in your answer.
