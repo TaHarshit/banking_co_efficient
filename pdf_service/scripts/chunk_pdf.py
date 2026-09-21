@@ -5,8 +5,8 @@ INPUT = "data/extracted.json"
 IMAGE_MAP = "data/image_map.json"
 OUTPUT = "data/chunks.json"
 
-CHUNK_SIZE = 1500
-OVERLAP = 200
+CHUNK_SIZE = 2500
+OVERLAP = 500
 
 # --- Heading Detection Patterns ---
 # pymupdf4llm doesn't always generate # headings for all chapters.
