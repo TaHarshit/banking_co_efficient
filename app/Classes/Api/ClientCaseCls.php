@@ -253,14 +253,14 @@ class ClientCaseCls
             }
 
             // Quota / Entitlement enforcement
-            if (! $user->canRunAnalysis()) {
-                $response = General::setResponse('VALIDATION_ERROR', 'You have used all 3 free analyses. Please upgrade to Negomaster Pro or purchase a Single Analysis to continue.');
-                $response['code'] = 403;
-                $response['error_code'] = 'QUOTA_EXCEEDED';
-                $response['free_analyses_used'] = (int)$user->free_analyses_used;
-                $response['paid_credits_remaining'] = $user->getPaidCredits();
-                return $response;
-            }
+            // if (! $user->canRunAnalysis()) {
+            //     $response = General::setResponse('VALIDATION_ERROR', 'You have used all 3 free analyses. Please upgrade to Negomaster Pro or purchase a Single Analysis to continue.');
+            //     $response['code'] = 403;
+            //     $response['error_code'] = 'QUOTA_EXCEEDED';
+            //     $response['free_analyses_used'] = (int)$user->free_analyses_used;
+            //     $response['paid_credits_remaining'] = $user->getPaidCredits();
+            //     return $response;
+            // }
 
             // Determine quota usage and entitlements
             $canExportPdf = false;
