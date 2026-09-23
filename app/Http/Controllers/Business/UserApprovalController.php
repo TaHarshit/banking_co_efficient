@@ -102,6 +102,11 @@ class UserApprovalController extends Controller
             return redirect()->route('business.users.pending');
         }
 
+        // Also remove the employee record if it exists
+        \App\Models\Employee::where('business_id', $business->id)
+            ->where('email', strtolower($user->email))
+            ->delete();
+
         $user->status = 2;
         $user->business_id = null;
         $user->save();
@@ -126,6 +131,11 @@ class UserApprovalController extends Controller
             Session::flash('icon', 'error');
             return redirect()->route('business.users');
         }
+
+        // Also remove the employee record if it exists
+        \App\Models\Employee::where('business_id', $business->id)
+            ->where('email', strtolower($user->email))
+            ->delete();
 
         $user->business_id = null;
         $user->status = 1;

@@ -82,6 +82,11 @@ class UserCls
                     ->where('email', strtolower($postData['email']))
                     ->exists();
 
+                // Restrict signup if not an employee and quota is full
+                if (!$isEmployee && $business->getRemainingQuota() <= 0) {
+                    return General::setResponse('VALIDATION_ERROR', 'Business quota is full. Please contact the business owner.');
+                }
+
                 // Set status based on employee check: 'active'=active, 'pending'=pending
                 $userStatus = $isEmployee ? 'active' : 'pending';
             }
@@ -478,12 +483,21 @@ class UserCls
 
             $user = auth()->user();
 
+            // Remove the associated employee record to free up the business quota
+            if ($user->business_id) {
+                \App\Models\Employee::where('business_id', $user->business_id)
+                    ->where('email', strtolower($user->email))
+                    ->delete();
+            }
+
             $delete = [
                 'name' => 'deleted_user',
                 'email' => $user->email . '-user_deleted',
                 'profile_image' => $user->name,
                 'device_token' => null,
-                'api_token' => null
+                'api_token' => null,
+                'business_id' => null,
+                'status' => 'deleted'
             ];
 
             $res = $this->UserRep->DeleteAccount($delete);

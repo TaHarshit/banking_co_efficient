@@ -57,6 +57,11 @@ class EmployeeRepository
     {
         $employee = $this->GetEmployee($id, $businessId);
         if ($employee) {
+            // Also detach the user from the business to free up the quota completely
+            \App\Models\User::where('business_id', $businessId)
+                ->where('email', strtolower($employee->email))
+                ->update(['business_id' => null, 'status' => '1']); // Set to default inactive/unassociated status
+
             return $employee->delete();
         }
         return false;
