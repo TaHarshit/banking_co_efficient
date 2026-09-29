@@ -45,7 +45,7 @@ class BusinessController extends Controller
         $validatedData = $request->validate([
             'name'                    => 'required|max:255',
             'email'                   => 'required|email|max:255|unique:businesses,email' . ($request->id ? ",$request->id,id" : ',NULL,id'),
-            'logo'                    => $request->hasFile('logo') ? 'image|mimes:jpg,jpeg,png|max:2048' : '',
+            'logo'                    => $request->hasFile('logo') ? 'image|mimes:jpg,jpeg,png|dimensions:width=200,height=200|max:2048' : '',
             'address'                 => 'nullable|max:1000',
             'plan_id'                 => 'nullable|exists:plans,id',
             'subscription_start_date' => 'nullable|date',
@@ -53,6 +53,8 @@ class BusinessController extends Controller
             'user_quota'              => 'nullable|integer|min:0',
             'payment_mode'            => 'nullable|string|max:50',
             'payment_notes'           => 'nullable|string|max:2000',
+        ], [
+            'logo.dimensions' => 'The logo must be exactly 200x200 pixels.',
         ]);
 
         $logo = $request->file('logo');

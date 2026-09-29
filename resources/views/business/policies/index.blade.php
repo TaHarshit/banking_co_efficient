@@ -25,7 +25,7 @@
                             <h5 class="card-title m-0 p-0 text-primary">
                                 <i class="bi bi-chat-square-quote me-2"></i>{{ __('messages.internal_business_policies_message') }}
                             </h5>
-                            <span class="badge bg-light text-secondary border">Optional</span>
+                            <span class="badge text-secondary">Optional</span>
                         </div>
                         <p class="text-muted small mb-3">
                             {{ __('messages.business_policies_message_hint') }}

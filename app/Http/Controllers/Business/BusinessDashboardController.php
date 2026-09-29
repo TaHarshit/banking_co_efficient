@@ -107,8 +107,10 @@ class BusinessDashboardController extends Controller
     {
         $request->validate([
             'name' => 'required|max:255',
-            'logo' => $request->hasFile('logo') ? 'image|mimes:jpg,jpeg,png|max:2048' : '',
+            'logo' => $request->hasFile('logo') ? 'image|mimes:jpg,jpeg,png|dimensions:width=200,height=200|max:2048' : '',
             'address' => 'nullable|max:1000',
+        ], [
+            'logo.dimensions' => __('messages.logo_dimensions'),
         ]);
 
         $business = Auth::guard('business')->user();

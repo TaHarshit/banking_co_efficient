@@ -194,7 +194,8 @@ return [
     'copy' => 'Copier',
     'share_code_hint' => 'Partagez ce code avec les utilisateurs qui souhaitent s\'inscrire sous votre entreprise.',
     'logo' => 'Logo',
-    'recommended_size' => 'Taille recommandée: 200x200px (JPG, PNG)',
+    'recommended_size' => 'Taille requise: 200x200px (JPG, PNG)',
+    'logo_dimensions' => 'Le logo doit mesurer exactement 200x200 pixels.',
     'address' => 'Adresse',
     'save_changes' => 'Enregistrer les modifications',
 

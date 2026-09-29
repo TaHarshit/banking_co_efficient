@@ -9,6 +9,29 @@
     <script type="text/javascript">
         $('.dropify').dropify();
 
+        $('#logo').on('change', function() {
+            if (this.files && this.files[0]) {
+                var file = this.files[0];
+                if (file.type.match('image.*')) {
+                    var img = new Image();
+                    img.src = window.URL.createObjectURL(file);
+                    img.onload = function() {
+                        var width = this.naturalWidth;
+                        var height = this.naturalHeight;
+                        window.URL.revokeObjectURL(this.src);
+                        if (width !== 200 || height !== 200) {
+                            alert('The logo must be exactly 200x200 pixels.');
+                            var dropifyInstance = $('#logo').data('dropify');
+                            if (dropifyInstance) {
+                                dropifyInstance.resetPreview();
+                                dropifyInstance.clearElement();
+                            }
+                        }
+                    };
+                }
+            }
+        });
+
         // Auto-fill quota and end date when plan is selected
         $('#plan_id').on('change', function() {
             var selected = $(this).find(':selected');
@@ -96,12 +119,13 @@
                                     <div class="{{ $errors->has('logo') ? 'is-invalid' : '' }}">
                                         <input type="file" name="logo"
                                             class="dropify {{ $errors->has('logo') ? 'is-invalid' : '' }}" id="logo"
+                                            accept="image/png,image/jpeg,image/jpg"
                                             data-default-file="{{ isset($data) && $data->logo && Storage::exists('public/business_logos/' . $data->logo) ? asset('storage/business_logos/' . $data->logo) : '' }}">
                                     </div>
-                                    <label class="pl-1 mt-1 col-md-12 col-lg-12">Recommended size: 200x200px (JPG,
+                                    <label class="pl-1 mt-1 col-md-12 col-lg-12">Required size: 200x200px (JPG,
                                         PNG)</label>
                                     @if ($errors->has('logo'))
-                                        <div class="invalid-feedback">{{ $errors->first('logo') }}</div>
+                                        <div class="invalid-feedback d-block">{{ $errors->first('logo') }}</div>
                                     @endif
                                 </div>
 

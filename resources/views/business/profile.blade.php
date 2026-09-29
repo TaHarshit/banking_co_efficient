@@ -14,6 +14,29 @@
     <script type="text/javascript">
         $('.dropify').dropify();
 
+        $('#logo').on('change', function() {
+            if (this.files && this.files[0]) {
+                var file = this.files[0];
+                if (file.type.match('image.*')) {
+                    var img = new Image();
+                    img.src = window.URL.createObjectURL(file);
+                    img.onload = function() {
+                        var width = this.naturalWidth;
+                        var height = this.naturalHeight;
+                        window.URL.revokeObjectURL(this.src);
+                        if (width !== 200 || height !== 200) {
+                            alert('{{ __('messages.logo_dimensions') }}');
+                            var dropifyInstance = $('#logo').data('dropify');
+                            if (dropifyInstance) {
+                                dropifyInstance.resetPreview();
+                                dropifyInstance.clearElement();
+                            }
+                        }
+                    };
+                }
+            }
+        });
+
         function copyToClipboard() {
             var copyText = document.getElementById("business_code");
             copyText.select();
@@ -84,11 +107,12 @@
                                 <div class="{{ $errors->has('logo') ? 'is-invalid' : '' }}">
                                     <input type="file" name="logo"
                                         class="dropify {{ $errors->has('logo') ? 'is-invalid' : '' }}" id="logo"
+                                        accept="image/png,image/jpeg,image/jpg"
                                         data-default-file="{{ $business->logo && Storage::exists('public/business_logos/' . $business->logo) ? asset('storage/business_logos/' . $business->logo) : '' }}">
                                 </div>
                                 <label class="pl-1 mt-1 col-md-12 col-lg-12">{{ __('messages.recommended_size') }}</label>
                                 @if ($errors->has('logo'))
-                                    <div class="invalid-feedback">{{ $errors->first('logo') }}</div>
+                                    <div class="invalid-feedback d-block">{{ $errors->first('logo') }}</div>
                                 @endif
                             </div>
 

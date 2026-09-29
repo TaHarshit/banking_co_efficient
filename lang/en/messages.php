@@ -194,7 +194,8 @@ return [
     'copy' => 'Copy',
     'share_code_hint' => 'Share this code with users who want to register under your business.',
     'logo' => 'Logo',
-    'recommended_size' => 'Recommended size: 200x200px (JPG, PNG)',
+    'recommended_size' => 'Required size: 200x200px (JPG, PNG)',
+    'logo_dimensions' => 'The logo must be exactly 200x200 pixels.',
     'address' => 'Address',
     'save_changes' => 'Save Changes',
 
