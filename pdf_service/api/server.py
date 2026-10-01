@@ -602,7 +602,280 @@ def normalize_suggested_readings(readings: list, output_lang: str | None) -> lis
     return normalized
 
 
+
+
+def normalize_action_plan_readings(parsed_content: dict, output_lang: str | None) -> dict:
+    """
+    Post-process action plan phase readings to guarantee every string starts with
+    one of two fixed, parseable reference tags:
+
+    Format A — chapter + page (app navigates to chapter AND page):
+        "[CH:7|PG:258] Top 50 High-Potential Prospects List — build your pre-meeting pipeline"
+
+    Format B — page only (app navigates directly to that page):
+        "[PG:403] The IAR Technique — master objection handling and price defense"
+
+    App dev parsing:
+        starts with [CH:N|PG:N]  -> extract chapter=N, page=N -> make clickable link
+        starts with [PG:N]        -> extract page=N only       -> make clickable link
+        strip the tag before displaying text to user
+
+    Validates/corrects PG values > 2 against BOOK_TOC_CATALOGUE.
+    Strings already correctly tagged are passed through unchanged.
+    Malformed or untagged strings are reformatted using catalogue lookup.
+    """
+    TAG_A = re.compile(r'^\[CH:(\d+(?:bis)?)\|PG:(\d+)\]', re.IGNORECASE)
+    TAG_B = re.compile(r'^\[PG:(\d+)\]', re.IGNORECASE)
+
+    is_french = bool(output_lang and str(output_lang).lower().startswith("fr"))
+    source_file = "Vente_et_negociation_bancaire_png_fr.pdf" if is_french else "Sales_and_negociation_OK-2.pdf"
+    catalogue = BOOK_TOC_CATALOGUE.get(source_file, BOOK_TOC_CATALOGUE["Sales_and_negociation_OK-2.pdf"])
+
+    def lookup_catalogue(search_text: str):
+        """Return (chapter_num_str, page_int) from catalogue. Returns (None, None) if not found."""
+        ch_num_match = re.search(r'\b(?:chapter|chapitre)\s*(11\s*bis|\d+)\b', search_text, re.IGNORECASE)
+        best_page = None
+        best_ch_num = None
+
+        if ch_num_match:
+            num_str = re.sub(r'\s+', ' ', ch_num_match.group(1).lower().strip())
+            for cat_ch_name, cat_data in catalogue.items():
+                if num_str in ["11 bis", "11bis"] and "11 bis" in cat_ch_name.lower():
+                    best_page = cat_data["start_page"]
+                    best_ch_num = "11bis"
+                    break
+                elif num_str not in ["11 bis", "11bis"] and (
+                    f" {num_str}:" in cat_ch_name.lower()
+                    or f" {num_str} " in cat_ch_name.lower()
+                    or cat_ch_name.lower().endswith(f" {num_str}")
+                ):
+                    best_page = cat_data["start_page"]
+                    best_ch_num = num_str
+                    break
+
+        if best_page is None:
+            max_score = 0
+            for cat_ch_name, cat_data in catalogue.items():
+                score = sum(1 for kw in cat_data.get("keywords", []) if kw in search_text)
+                score += sum(2 for sec in cat_data.get("sections", {}) if sec.lower() in search_text)
+                if score > max_score:
+                    max_score = score
+                    best_page = cat_data["start_page"]
+                    m = re.search(r'(?:chapter|chapitre)\s*(\d+(?:\s*bis)?)', cat_ch_name, re.IGNORECASE)
+                    best_ch_num = re.sub(r'\s+', '', m.group(1).lower()) if m else None
+
+        return best_ch_num, best_page
+
+    def reformat_string(text: str):
+        text = text.strip()
+        if not text:
+            return None
+
+        # Already tagged Format A — validate PG value
+        m_a = TAG_A.match(text)
+        if m_a:
+            pg = int(m_a.group(2))
+            if pg > 2:
+                return text
+            ch_num, cat_page = lookup_catalogue(text.lower())
+            if cat_page and cat_page > 2:
+                tag = f"[CH:{ch_num}|PG:{cat_page}]" if ch_num else f"[PG:{cat_page}]"
+                body = TAG_A.sub("", text).strip(" \u2014-")
+                return f"{tag} {body}"
+            return None
+
+        # Already tagged Format B — validate PG value
+        m_b = TAG_B.match(text)
+        if m_b:
+            pg = int(m_b.group(1))
+            if pg > 2:
+                return text
+            ch_num, cat_page = lookup_catalogue(text.lower())
+            if cat_page and cat_page > 2:
+                tag = f"[CH:{ch_num}|PG:{cat_page}]" if ch_num else f"[PG:{cat_page}]"
+                body = TAG_B.sub("", text).strip(" \u2014-")
+                return f"{tag} {body}"
+            return None
+
+        # Untagged string — extract chapter/page from plain text
+        ch_match = re.search(r'\b(?:chapter|chapitre)\s*(\d+(?:\s*bis)?)\b', text, re.IGNORECASE)
+        pg_match = re.search(r'\bpag?e?\s*[.:#-]?\s*(\d{2,3})\b', text, re.IGNORECASE)
+
+        pg_val = int(pg_match.group(1)) if pg_match else None
+        ch_num_raw = re.sub(r'\s+', '', ch_match.group(1).lower()) if ch_match else None
+
+        if pg_val and pg_val > 2:
+            body = re.sub(
+                r'\[?(?:chapter|chapitre)\s*\d+(?:\s*bis)?\s*[/,|]?\s*(?:p(?:age|g)?\.?\s*)?\d+\]?\s*[\u2014:/-]?\s*',
+                '', text, flags=re.IGNORECASE
+            ).strip(" \u2014:-")
+            if not body:
+                body = text[:80].strip()
+            if ch_num_raw:
+                return f"[CH:{ch_num_raw}|PG:{pg_val}] {body}"
+            return f"[PG:{pg_val}] {body}"
+
+        # No inline page — lookup via catalogue
+        ch_num, cat_page = lookup_catalogue(text.lower())
+        if cat_page and cat_page > 2:
+            tag = f"[CH:{ch_num}|PG:{cat_page}]" if ch_num else f"[PG:{cat_page}]"
+            return f"{tag} {text}"
+
+        return None  # Cannot determine page — skip
+
+    action_plan = parsed_content.get("action_plan", {})
+    if not isinstance(action_plan, dict):
+        return parsed_content
+
+    for phase_key in ["phase_1_before", "phase_2_during", "phase_3_after"]:
+        phase = action_plan.get(phase_key)
+        if not isinstance(phase, dict):
+            continue
+
+        raw_readings = phase.get("readings", [])
+        if not isinstance(raw_readings, list):
+            phase["readings"] = []
+            continue
+
+        cleaned = []
+        for item in raw_readings:
+            if not isinstance(item, str):
+                continue
+            result = reformat_string(item)
+            if result:
+                cleaned.append(result)
+
+        phase["readings"] = cleaned
+
+    return parsed_content
+
+
+def normalize_steps_inline_references(parsed_content: dict, output_lang: str | None) -> dict:
+    """
+    Scan all step/recommendation/objective text strings in the action plan and convert
+    any free-text chapter/page citations into standardized inline tags:
+
+        [CH:11|PG:403]  — chapter + page both known
+        [PG:258]         — page only
+
+    This lets the app detect the tag, strip it from display text, and wrap the
+    preceding technique name as a tappable link to that page.
+
+    Handles patterns like:
+        (Chapter 11, page 403)    → [CH:11|PG:403]
+        (Ch. 7, p. 258)           → [CH:7|PG:258]
+        (page 403)                → [PG:403]
+        (p. 258)                  → [PG:258]
+        Chapter 11 / Page 403     → [CH:11|PG:403]
+        Chapter 11, p.403         → [CH:11|PG:403]
+
+    Strings that already contain a correctly formatted tag are left unchanged.
+    """
+    # Patterns that are already correctly tagged — skip them
+    ALREADY_TAGGED = re.compile(r'\[CH:\w+\|PG:\d+\]|\[PG:\d+\]', re.IGNORECASE)
+
+    # Pattern: (Chapter N[bis], page|p. M)  or  Chapter N / Page M  (parenthesised or not)
+    FULL_REF = re.compile(
+        r'\(?\s*(?:ch(?:apter|ap)?\.?\s*)?(\d+(?:\s*bis)?)\s*[,/|]\s*p(?:age|g)?\.?\s*(\d{2,3})\s*\)?',
+        re.IGNORECASE
+    )
+    # Pattern: (page N)  or  (p. N)  or  p. N  — page only, no chapter
+    PAGE_ONLY = re.compile(
+        r'\(\s*p(?:age|g)?\.?\s*(\d{2,3})\s*\)',
+        re.IGNORECASE
+    )
+    # Pattern: explicit "Chapter N" followed anywhere within 60 chars by "page N"
+    CHAPTER_THEN_PAGE = re.compile(
+        r'\b(?:chapter|chapitre)\s*(\d+(?:\s*bis)?)\b.{0,60}?\bp(?:age|g)?\.?\s*(\d{2,3})\b',
+        re.IGNORECASE
+    )
+
+    def fix_text(text: str) -> str:
+        if not isinstance(text, str) or not text.strip():
+            return text
+
+        # If the string already has any tag, pass through
+        if ALREADY_TAGGED.search(text):
+            return text
+
+        # Replace full ref patterns: (Chapter N, page M) → [CH:N|PG:M]
+        def replace_full(m):
+            ch = re.sub(r'\s+', '', m.group(1).lower())   # e.g. "11bis"
+            pg = int(m.group(2))
+            if pg <= 2:
+                return m.group(0)
+            return f"[CH:{ch}|PG:{pg}]"
+
+        result = FULL_REF.sub(replace_full, text)
+
+        # Replace "Chapter N ... page M" spans if not already converted
+        if not ALREADY_TAGGED.search(result):
+            def replace_ch_pg(m):
+                ch = re.sub(r'\s+', '', m.group(1).lower())
+                pg = int(m.group(2))
+                if pg <= 2:
+                    return m.group(0)
+                # Replace the whole match with just the tag (keeps surrounding text intact)
+                return re.sub(
+                    r'\bp(?:age|g)?\.?\s*\d{2,3}\b',
+                    f"[CH:{ch}|PG:{pg}]",
+                    m.group(0),
+                    count=1,
+                    flags=re.IGNORECASE
+                )
+            result = CHAPTER_THEN_PAGE.sub(replace_ch_pg, result)
+
+        # Replace (page N) / (p. N) patterns — page only
+        def replace_page_only(m):
+            pg = int(m.group(1))
+            if pg <= 2:
+                return m.group(0)
+            return f"[PG:{pg}]"
+
+        result = PAGE_ONLY.sub(replace_page_only, result)
+
+        return result
+
+    def walk_and_fix(obj):
+        """Recursively walk the action plan dict and fix all string values."""
+        if isinstance(obj, str):
+            return fix_text(obj)
+        if isinstance(obj, list):
+            return [walk_and_fix(item) for item in obj]
+        if isinstance(obj, dict):
+            return {k: walk_and_fix(v) for k, v in obj.items()}
+        return obj
+
+    # Fix steps in each action plan phase
+    action_plan = parsed_content.get("action_plan", {})
+    if isinstance(action_plan, dict):
+        for phase_key in ["phase_1_before", "phase_2_during", "phase_3_after"]:
+            phase = action_plan.get(phase_key)
+            if isinstance(phase, dict):
+                steps = phase.get("steps", [])
+                if isinstance(steps, list):
+                    phase["steps"] = [fix_text(s) for s in steps]
+
+    # Also fix other top-level text arrays that may cite pages
+    for field in ["strategic_recommendations", "critical_success_factors", "plan_b", "meeting_objectives"]:
+        val = parsed_content.get(field)
+        if isinstance(val, list):
+            parsed_content[field] = [fix_text(s) for s in val]
+
+    # Fix executive_summary
+    if isinstance(parsed_content.get("executive_summary"), str):
+        parsed_content["executive_summary"] = fix_text(parsed_content["executive_summary"])
+
+    # Fix user_question_answer.answer
+    uqa = parsed_content.get("user_question_answer")
+    if isinstance(uqa, dict) and isinstance(uqa.get("answer"), str):
+        uqa["answer"] = fix_text(uqa["answer"])
+
+    return parsed_content
+
+
 # Roman numeral utility for matching
+
 ROMAN_TO_NUM = {
     "i": "1", "ii": "2", "iii": "3", "iv": "4", "v": "5", "vi": "6", "vii": "7", "viii": "8", "ix": "9", "x": "10",
     "xi": "11", "xii": "12", "xiii": "13", "xiv": "14", "xv": "15"
@@ -1859,11 +2132,19 @@ No user question was submitted. Set "question" to "" and "answer" to "" in the "
 1. Think carefully about each phase before writing.
 2. Tailor every step to address the user's behavioral strengths and weaknesses.
 3. If previous client case history is provided, build on prior outcomes and ensure cohesive tactical progression.
-4. Include specific negotiation techniques from the book by name, citing real content pages (> Page 2) and chapter names. NEVER cite "Page 1" or book cover pages.
+4. When citing a book technique, chapter, or page number inside a step, you MUST embed a reference tag directly in the text using one of two fixed formats so the app can make it a tappable link:
+   - Format A (chapter + page known): place [CH:7|PG:258] immediately after the technique name
+   - Format B (page only known):      place [PG:403] immediately after the technique name
+   Example step: "Apply the IAR technique [CH:11|PG:403] — Isolate the objection, Agree with empathy, then Return with a counter-offer to defend your fee."
+   Example step: "Build your Top 50 prospect list [PG:258] by ranking contacts by potential AUM and relationship warmth."
+   Rules: CH = chapter number integer (e.g. 7, 11, 11bis), PG = page integer > 2. NEVER cite page 1 or page 2. The tag must appear inline right after the technique/concept it references.
 5. CRITICAL IMAGE RULE: ONLY cite an image URL if an exact technique diagram (> Page 2) is explicitly provided in the [BOOK TECHNIQUES] context. If [Images] is None or no specific diagram exists, DO NOT include any image URL or placeholder. If no diagram applies, omit images completely.
 6. Each phase must have at least 3 detailed, actionable steps (not vague advice).
 7. Phases should flow logically: Before meeting → During meeting → After meeting.
-8. In action_plan.*.readings, reference actual technique chapters and topics from the book (never "Page 1").
+8. In action_plan.*.readings, every string MUST start with one of these two fixed reference tags so the app can parse and deep-link to the correct page:
+   - Format A (chapter + page): "[CH:7|PG:258] The Technique or Section Title — brief description"
+   - Format B (page only):      "[PG:403] The Technique or Section Title — brief description"
+   Rules: CH value = chapter number (integer only, e.g. 7, 11, 11bis), PG value = page number integer > 2. NEVER use page 1 or page 2. NEVER omit the tag. NEVER write a plain string without the tag.
 9. YOU MUST return ONLY a valid JSON object — no markdown, no explanation outside JSON.
 10. ALL fields including user_question_answer are required. Do not omit any field.
 11. CRITICAL: Do NOT return the structure or keys of a Case Analysis (do not use keys like "ai_recommendations", "suggested_readings", "ai_challenges", or "negotiation_style_tips"). You MUST return strictly the Action Plan structure below.
@@ -1884,7 +2165,10 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
         "Detailed step 2 — what to do and why",
         "Detailed step 3 — what to do and why"
       ],
-      "readings": ["Chapter X / Page Y: Title — read to master technique Z (Image ref if any)"]
+      "readings": [
+        "[CH:11|PG:403] The IAR Technique — master objection handling and price defense",
+        "[PG:258] Top 50 High-Potential Prospects List — build your pre-meeting pipeline"
+      ]
     }},
     "phase_2_during": {{
       "title": "In-Meeting Execution",
@@ -2006,6 +2290,12 @@ Required JSON structure (return ALL fields, keep steps detailed but concise):
 
         # Sanitize output of any cover images / fake page 1 references
         parsed_content = sanitize_ai_output_content(parsed_content)
+
+        # Normalize structured readings in each action plan phase
+        parsed_content = normalize_action_plan_readings(parsed_content, output_lang)
+
+        # Normalize inline page/chapter references within steps and other text fields
+        parsed_content = normalize_steps_inline_references(parsed_content, output_lang)
 
         total_time = time.time() - start_time
         print(f"[PERF] /generate-plan - SUCCESS. Total: {total_time:.3f}s", flush=True)
