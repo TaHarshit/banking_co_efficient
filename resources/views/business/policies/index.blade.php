@@ -290,7 +290,7 @@
                                                     @endforelse
                                                 </div>
 
-                                                <button type="button" class="btn btn-outline-{{ $meta['color'] }} btn-sm px-3 rounded-pill" onclick="addPoint({{ $i }}, '', '', '{{ $meta['color'] }}', '{{ $meta['point_placeholder_en'] }}', '{{ $meta['point_placeholder_fr'] }}')">
+                                                <button type="button" class="btn btn-outline-{{ $meta['color'] }} btn-sm px-3 rounded-pill" onclick="addPoint({{ $i }})">
                                                     <i class="bi bi-plus-circle me-1"></i> Add Point
                                                 </button>
                                             </div>
@@ -437,9 +437,35 @@
 
 @section('customjs')
     <script type="text/javascript">
-        function addPoint(secIndex, enText = '', frText = '', color = 'primary', placeholderEn = 'Point in English...', placeholderFr = 'Point en français...') {
+        const sectionMetaConfig = {
+            0: {
+                color: 'primary',
+                placeholderEn: 'e.g. Verify client identity and ensure mandatory KYC documentation is uploaded.',
+                placeholderFr: 'ex. Vérifier l\'identité du client et les documents KYC obligatoires.'
+            },
+            1: {
+                color: 'info',
+                placeholderEn: 'e.g. Cross-check client profile against AML/CFT risk criteria.',
+                placeholderFr: 'ex. Vérifier le profil client par rapport aux critères LBC/FT.'
+            },
+            2: {
+                color: 'success',
+                placeholderEn: 'e.g. Confirm all mandatory fields are completed before AI analysis.',
+                placeholderFr: 'ex. Confirmer tous les champs requis avant l\'analyse IA.'
+            }
+        };
+
+        function addPoint(secIndex, enText = '', frText = '') {
             const container = document.getElementById(`points-container-${secIndex}`);
             if (!container) return;
+            const meta = sectionMetaConfig[secIndex] || {
+                color: 'primary',
+                placeholderEn: 'Point in English...',
+                placeholderFr: 'Point en français...'
+            };
+            const color = meta.color;
+            const placeholderEn = meta.placeholderEn;
+            const placeholderFr = meta.placeholderFr;
             const currentCount = container.querySelectorAll('.point-item').length;
             const nextIdx = currentCount;
             const div = document.createElement('div');
