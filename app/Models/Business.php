@@ -26,6 +26,7 @@ class Business extends Authenticatable
         'status',
         'business_code',
         'business_policies_message',
+        'policy_sections',
         'plan_id',
         'subscription_start_date',
         'subscription_end_date',
@@ -58,6 +59,87 @@ class Business extends Authenticatable
             'subscription_end_date' => 'datetime',
             'user_quota' => 'integer',
             'status' => 'integer',
+            'policy_sections' => 'array',
+        ];
+    }
+
+    /**
+     * Get structured 3 policy sections with bilingual (EN/FR) support.
+     *
+     * @return array
+     */
+    public function getFormattedPolicySectionsAttribute(): array
+    {
+        if (!empty($this->policy_sections) && is_array($this->policy_sections)) {
+            $sections = $this->policy_sections;
+            while (count($sections) < 3) {
+                $nextId = count($sections) + 1;
+                $sections[] = [
+                    'id' => $nextId,
+                    'title_en' => '',
+                    'title_fr' => '',
+                    'points' => [],
+                ];
+            }
+
+            $normalized = [];
+            foreach (array_slice($sections, 0, 3) as $idx => $sec) {
+                $titleEn = $sec['title_en'] ?? ($sec['title'] ?? '');
+                $titleFr = $sec['title_fr'] ?? ($sec['title'] ?? '');
+                $points = [];
+                foreach ($sec['points'] ?? [] as $p) {
+                    if (is_array($p)) {
+                        $points[] = [
+                            'en' => (string)($p['en'] ?? ($p['fr'] ?? '')),
+                            'fr' => (string)($p['fr'] ?? ($p['en'] ?? '')),
+                        ];
+                    } else {
+                        $pStr = (string)$p;
+                        $points[] = [
+                            'en' => $pStr,
+                            'fr' => $pStr,
+                        ];
+                    }
+                }
+                $normalized[] = [
+                    'id' => $sec['id'] ?? ($idx + 1),
+                    'title_en' => $titleEn,
+                    'title_fr' => $titleFr,
+                    'points' => $points,
+                ];
+            }
+            return $normalized;
+        }
+
+        if (!empty($this->business_policies_message)) {
+            $lines = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string)$this->business_policies_message)), fn($l) => $l !== ''));
+            $pts = array_map(fn($line) => ['en' => $line, 'fr' => $line], $lines);
+            return [
+                [
+                    'id' => 1,
+                    'title_en' => 'Policy Guidelines',
+                    'title_fr' => 'Lignes directrices sur les politiques',
+                    'points' => $pts,
+                ],
+                [
+                    'id' => 2,
+                    'title_en' => '',
+                    'title_fr' => '',
+                    'points' => [],
+                ],
+                [
+                    'id' => 3,
+                    'title_en' => '',
+                    'title_fr' => '',
+                    'points' => [],
+                ],
+            ];
+        }
+
+        return [
+            ['id' => 1, 'title_en' => '', 'title_fr' => '', 'points' => []],
+            ['id' => 2, 'title_en' => '', 'title_fr' => '', 'points' => []],
+            ['id' => 3, 'title_en' => '', 'title_fr' => '', 'points' => []],
         ];
     }
 

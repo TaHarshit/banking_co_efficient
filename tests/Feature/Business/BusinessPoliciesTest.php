@@ -18,6 +18,7 @@ class BusinessPoliciesTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
 
         $this->business = Business::create([
             'name' => 'Bank Alpha',
@@ -238,5 +239,129 @@ class BusinessPoliciesTest extends TestCase
         $data = $response->json('data');
         $sectionNames = collect($data)->pluck('section_name')->all();
         $this->assertContains('Global Fallback Section', $sectionNames);
+    }
+
+    /** @test */
+    public function business_admin_can_update_three_policy_sections_with_point_messages()
+    {
+        $payload = [
+            'sections' => [
+                [
+                    'title' => 'KYC & Client Verification',
+                    'points' => [
+                        'Verify primary identity document',
+                        'Check address proof validity within 3 months',
+                    ],
+                ],
+                [
+                    'title' => 'Risk & Compliance Rules',
+                    'points' => [
+                        'Review source of wealth and funds',
+                    ],
+                ],
+                [
+                    'title' => 'Final Submission Checklist',
+                    'points' => [
+                        'Obtain branch manager sign-off',
+                    ],
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->business, 'business')
+            ->post(route('business.policies.message.update'), $payload);
+
+        $response->assertRedirect(route('business.policies.index'));
+        $this->business->refresh();
+
+        $this->assertIsArray($this->business->policy_sections);
+        $this->assertCount(3, $this->business->policy_sections);
+        $this->assertEquals('KYC & Client Verification', $this->business->policy_sections[0]['title']);
+        $this->assertCount(2, $this->business->policy_sections[0]['points']);
+        $this->assertStringContainsString('KYC & Client Verification', $this->business->business_policies_message);
+        $this->assertStringContainsString('Verify primary identity document', $this->business->business_policies_message);
+    }
+
+    /** @test */
+    public function api_returns_three_structured_policy_sections_for_business_user()
+    {
+        $this->business->update([
+            'policy_sections' => [
+                ['id' => 1, 'title' => 'Section 1 Guide', 'points' => ['Point 1A', 'Point 1B']],
+                ['id' => 2, 'title' => 'Section 2 Rules', 'points' => ['Point 2A']],
+                ['id' => 3, 'title' => 'Section 3 Checklist', 'points' => ['Point 3A']],
+            ],
+            'business_policies_message' => 'Formatted message summary',
+        ]);
+
+        $alphaUser = User::factory()->create([
+            'business_id' => $this->business->id,
+        ]);
+
+        $response = $this->actingAs($alphaUser, 'api')
+            ->getJson('/api/case-study-sections', [
+                'Accept-Language' => 'en',
+                'api-key' => 'BANKING-CO-EFFICIENT',
+                'platform' => 'WEB',
+            ]);
+
+        $response->assertStatus(200);
+        $sections = $response->json('policy_sections');
+        $this->assertIsArray($sections);
+        $this->assertCount(3, $sections);
+        $this->assertEquals('Section 1 Guide', $sections[0]['title']);
+        $this->assertEquals(['Point 1A', 'Point 1B'], $sections[0]['points']);
+    }
+
+    /** @test */
+    public function api_returns_localized_french_policy_sections_when_requested()
+    {
+        $this->business->update([
+            'policy_sections' => [
+                [
+                    'id' => 1,
+                    'title_en' => 'Section 1 Guide',
+                    'title_fr' => 'Guide de la section 1',
+                    'points' => [
+                        ['en' => 'Point 1A English', 'fr' => 'Point 1A Français'],
+                    ],
+                ],
+                [
+                    'id' => 2,
+                    'title_en' => 'Section 2 Rules',
+                    'title_fr' => 'Règles de la section 2',
+                    'points' => [
+                        ['en' => 'Point 2A English', 'fr' => 'Point 2A Français'],
+                    ],
+                ],
+                [
+                    'id' => 3,
+                    'title_en' => 'Section 3 Checklist',
+                    'title_fr' => 'Liste de la section 3',
+                    'points' => [
+                        ['en' => 'Point 3A English', 'fr' => 'Point 3A Français'],
+                    ],
+                ],
+            ],
+            'business_policies_message' => 'English summary message',
+        ]);
+
+        $alphaUser = User::factory()->create([
+            'business_id' => $this->business->id,
+        ]);
+
+        $response = $this->actingAs($alphaUser, 'api')
+            ->getJson('/api/case-study-sections?lang=fr', [
+                'Accept-Language' => 'fr',
+                'api-key' => 'BANKING-CO-EFFICIENT',
+                'platform' => 'WEB',
+            ]);
+
+        $response->assertStatus(200);
+        $sections = $response->json('policy_sections');
+        $this->assertIsArray($sections);
+        $this->assertCount(3, $sections);
+        $this->assertEquals('Guide de la section 1', $sections[0]['title']);
+        $this->assertEquals(['Point 1A Français'], $sections[0]['points']);
     }
 }

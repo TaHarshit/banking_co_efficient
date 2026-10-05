@@ -22,6 +22,7 @@ class BusinessPolicyController extends Controller
     public function index()
     {
         $business = $this->getBusiness();
+        $sections = $business->formatted_policy_sections;
         $questions = CaseStudyQuestion::with('options')
             ->where('business_id', $business->id)
             ->orderBy('section_name')
@@ -30,19 +31,108 @@ class BusinessPolicyController extends Controller
         $hasCustomQuestions = $questions->total() > 0;
         $globalQuestionsCount = CaseStudyQuestion::whereNull('business_id')->count();
 
-        return view('business.policies.index', compact('business', 'questions', 'hasCustomQuestions', 'globalQuestionsCount'));
+        return view('business.policies.index', compact('business', 'sections', 'questions', 'hasCustomQuestions', 'globalQuestionsCount'));
     }
 
     public function updateMessage(Request $request)
     {
-        $request->validate([
-            'business_policies_message' => 'nullable|string|max:5000',
-        ]);
-
         $business = $this->getBusiness();
-        $business->update([
-            'business_policies_message' => $request->business_policies_message,
-        ]);
+
+        if ($request->has('sections')) {
+            $request->validate([
+                'sections' => 'nullable|array|max:3',
+                'sections.*.title_en' => 'nullable|string|max:255',
+                'sections.*.title_fr' => 'nullable|string|max:255',
+                'sections.*.title' => 'nullable|string|max:255',
+                'sections.*.points' => 'nullable|array',
+            ]);
+
+            $cleanSections = [];
+            $summaryLines = [];
+            $hasAnyContent = false;
+
+            $inputSections = $request->input('sections', []);
+            for ($i = 0; $i < 3; $i++) {
+                $secData = $inputSections[$i] ?? [];
+                $titleEn = trim($secData['title_en'] ?? ($secData['title'] ?? ''));
+                $titleFr = trim($secData['title_fr'] ?? ($secData['title'] ?? ''));
+                $rawPoints = $secData['points'] ?? [];
+                $points = [];
+
+                if (is_array($rawPoints)) {
+                    foreach ($rawPoints as $pt) {
+                        if (is_array($pt)) {
+                            $en = trim((string)($pt['en'] ?? ''));
+                            $fr = trim((string)($pt['fr'] ?? ''));
+                            if ($en !== '' || $fr !== '') {
+                                $points[] = [
+                                    'en' => $en !== '' ? $en : $fr,
+                                    'fr' => $fr !== '' ? $fr : $en,
+                                ];
+                            }
+                        } else {
+                            $pStr = trim((string)$pt);
+                            if ($pStr !== '') {
+                                $points[] = [
+                                    'en' => $pStr,
+                                    'fr' => $pStr,
+                                ];
+                            }
+                        }
+                    }
+                }
+
+                if ($titleEn !== '' || $titleFr !== '' || !empty($points)) {
+                    $hasAnyContent = true;
+                }
+
+                $cleanSections[] = [
+                    'id' => $i + 1,
+                    'title' => $titleEn ?: $titleFr,
+                    'title_en' => $titleEn,
+                    'title_fr' => $titleFr,
+                    'points' => $points,
+                ];
+
+                if ($titleEn !== '' || !empty($points)) {
+                    if ($titleEn !== '') {
+                        $summaryLines[] = ($i + 1) . '. ' . $titleEn;
+                    }
+                    foreach ($points as $p) {
+                        $summaryLines[] = '  • ' . $p['en'];
+                    }
+                    $summaryLines[] = '';
+                }
+            }
+
+            $businessPoliciesMessage = $hasAnyContent ? trim(implode("\n", $summaryLines)) : null;
+
+            $business->update([
+                'policy_sections' => $hasAnyContent ? $cleanSections : null,
+                'business_policies_message' => $businessPoliciesMessage,
+            ]);
+        } else {
+            $request->validate([
+                'business_policies_message' => 'nullable|string|max:5000',
+            ]);
+
+            $message = $request->business_policies_message;
+            $cleanSections = null;
+            if (!empty($message)) {
+                $lines = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string)$message)), fn($l) => $l !== ''));
+                $cleanPoints = array_map(fn($line) => ['en' => $line, 'fr' => $line], $lines);
+                $cleanSections = [
+                    ['id' => 1, 'title' => 'Policy Guidelines', 'title_en' => 'Policy Guidelines', 'title_fr' => 'Lignes directrices sur les politiques', 'points' => $cleanPoints],
+                    ['id' => 2, 'title' => '', 'title_en' => '', 'title_fr' => '', 'points' => []],
+                    ['id' => 3, 'title' => '', 'title_en' => '', 'title_fr' => '', 'points' => []],
+                ];
+            }
+
+            $business->update([
+                'business_policies_message' => $message,
+                'policy_sections' => $cleanSections,
+            ]);
+        }
 
         return redirect()->route('business.policies.index')
             ->with('success', __('messages.message_updated_successfully'));
