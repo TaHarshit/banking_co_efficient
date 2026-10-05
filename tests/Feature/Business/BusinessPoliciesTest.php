@@ -212,6 +212,12 @@ class BusinessPoliciesTest extends TestCase
     /** @test */
     public function api_falls_back_to_global_questions_when_business_has_no_custom_questions()
     {
+        // Ensure settings has no global policy message for this test
+        $settings = \App\Models\Settings::first();
+        if ($settings) {
+            $settings->update(['policy_sections' => null, 'business_policies_message' => null]);
+        }
+
         // Business Beta has no custom questions and no policy message
         $betaUser = User::factory()->create([
             'business_id' => $this->otherBusiness->id,
@@ -363,5 +369,123 @@ class BusinessPoliciesTest extends TestCase
         $this->assertCount(3, $sections);
         $this->assertEquals('Guide de la section 1', $sections[0]['title']);
         $this->assertEquals(['Point 1A Français'], $sections[0]['points']);
+    }
+
+    /** @test */
+    public function individual_user_receives_global_default_policy_sections()
+    {
+        $settings = \App\Models\Settings::first() ?? \App\Models\Settings::create([]);
+        $settings->update([
+            'policy_sections' => [
+                [
+                    'id' => 1,
+                    'title_en' => 'Global Verification Policy',
+                    'title_fr' => 'Politique Globale de Vérification',
+                    'points' => [
+                        ['en' => 'All users must verify primary identity', 'fr' => 'Tous les utilisateurs doivent vérifier l\'identité'],
+                    ],
+                ],
+            ],
+            'business_policies_message' => 'Global message notice',
+        ]);
+
+        $individualUser = User::factory()->create([
+            'business_id' => null,
+        ]);
+
+        $response = $this->actingAs($individualUser, 'api')
+            ->getJson('/api/case-study-sections?lang=en', [
+                'api-key' => 'BANKING-CO-EFFICIENT',
+                'platform' => 'WEB',
+            ]);
+
+        $response->assertStatus(200);
+        $sections = $response->json('policy_sections');
+        $this->assertIsArray($sections);
+        $this->assertCount(1, $sections);
+        $this->assertEquals('Global Verification Policy', $sections[0]['title']);
+        $this->assertEquals(['All users must verify primary identity'], $sections[0]['points']);
+    }
+
+    /** @test */
+    public function business_user_without_custom_policies_falls_back_to_global_default()
+    {
+        $settings = \App\Models\Settings::first() ?? \App\Models\Settings::create([]);
+        $settings->update([
+            'policy_sections' => [
+                [
+                    'id' => 1,
+                    'title_en' => 'Global Fallback Policy',
+                    'title_fr' => 'Politique Globale de Repli',
+                    'points' => [
+                        ['en' => 'Default rule for unconfigured banks', 'fr' => 'Règle par défaut'],
+                    ],
+                ],
+            ],
+        ]);
+
+        $emptyBank = Business::create([
+            'name' => 'Bank Without Policies',
+            'email' => 'empty_' . uniqid() . '@bank.com',
+            'password' => 'Secret123!',
+            'status' => 1,
+            'policy_sections' => null,
+            'business_policies_message' => null,
+        ]);
+
+        $user = User::factory()->create([
+            'business_id' => $emptyBank->id,
+        ]);
+
+        $response = $this->actingAs($user, 'api')
+            ->getJson('/api/case-study-sections?lang=en', [
+                'api-key' => 'BANKING-CO-EFFICIENT',
+                'platform' => 'WEB',
+            ]);
+
+        $response->assertStatus(200);
+        $sections = $response->json('policy_sections');
+        $this->assertIsArray($sections);
+        $this->assertCount(1, $sections);
+        $this->assertEquals('Global Fallback Policy', $sections[0]['title']);
+    }
+
+    /** @test */
+    public function super_admin_can_update_global_policy_sections()
+    {
+        $adminUser = User::factory()->create();
+
+        $payload = [
+            'target_business_id' => 'global',
+            'sections' => [
+                [
+                    'title_en' => 'Admin Set Global Section 1',
+                    'title_fr' => 'Section Globale 1 par Admin',
+                    'points' => [
+                        ['en' => 'Global point 1', 'fr' => 'Point global 1'],
+                    ],
+                ],
+                [
+                    'title_en' => 'Admin Set Global Section 2',
+                    'title_fr' => 'Section Globale 2 par Admin',
+                    'points' => [],
+                ],
+                [
+                    'title_en' => 'Admin Set Global Section 3',
+                    'title_fr' => 'Section Globale 3 par Admin',
+                    'points' => [],
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($adminUser, 'web')
+            ->post(route('admin.case_study_questions.policy_sections.update'), $payload);
+
+        $response->assertSessionHas('success');
+
+        $settings = \App\Models\Settings::first();
+        $this->assertNotNull($settings);
+        $this->assertIsArray($settings->policy_sections);
+        $this->assertEquals('Admin Set Global Section 1', $settings->policy_sections[0]['title']);
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\CaseStudyQuestion;
 use App\Models\CaseStudyQuestionOption;
+use App\Models\Settings;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -27,7 +28,158 @@ class CaseStudyQuestionController extends Controller
         $businesses = Business::orderBy('name')->get();
         $selectedBusiness = $request->query('business_id');
 
-        return view('admin.case_study_questions.index', compact('questions', 'businesses', 'selectedBusiness'));
+        $settings = Settings::first();
+        if (!$settings) {
+            $settings = Settings::create([]);
+        }
+
+        $targetBusinessId = null;
+        $targetBusinessName = 'Global Default (Individual Users & Banks without custom policies)';
+        $targetType = 'global';
+        $policyMessage = $settings->business_policies_message;
+        $sections = $settings->formatted_policy_sections;
+
+        if ($request->filled('business_id') && $request->business_id !== 'global') {
+            $business = Business::find($request->business_id);
+            if ($business) {
+                $targetBusinessId = $business->id;
+                $targetBusinessName = $business->name;
+                $targetType = 'business';
+                $sections = $business->formatted_policy_sections;
+                $policyMessage = $business->business_policies_message;
+            }
+        }
+
+        return view('admin.case_study_questions.index', compact(
+            'questions',
+            'businesses',
+            'selectedBusiness',
+            'sections',
+            'targetBusinessId',
+            'targetBusinessName',
+            'targetType',
+            'policyMessage'
+        ));
+    }
+
+    public function updatePolicySections(Request $request)
+    {
+        $targetBusinessId = $request->input('target_business_id');
+
+        if ($request->has('sections')) {
+            $request->validate([
+                'sections' => 'nullable|array|max:3',
+                'sections.*.title_en' => 'nullable|string|max:255',
+                'sections.*.title_fr' => 'nullable|string|max:255',
+                'sections.*.points' => 'nullable|array',
+                'sections.*.points.*.en' => 'nullable|string|max:1000',
+                'sections.*.points.*.fr' => 'nullable|string|max:1000',
+            ]);
+
+            $rawSections = $request->input('sections', []);
+            $cleanSections = [];
+            $formattedLines = [];
+            $hasAnyContent = false;
+
+            for ($i = 0; $i < 3; $i++) {
+                $sec = $rawSections[$i] ?? [];
+                $titleEn = trim((string)($sec['title_en'] ?? ''));
+                $titleFr = trim((string)($sec['title_fr'] ?? ''));
+                $points = $sec['points'] ?? [];
+
+                $cleanPoints = [];
+                $pointsEnOnly = [];
+
+                if (is_array($points)) {
+                    foreach ($points as $p) {
+                        $en = is_array($p) ? trim((string)($p['en'] ?? '')) : trim((string)$p);
+                        $fr = is_array($p) ? trim((string)($p['fr'] ?? '')) : '';
+
+                        if ($en !== '' || $fr !== '') {
+                            $cleanPoints[] = [
+                                'en' => $en ?: $fr,
+                                'fr' => $fr ?: $en,
+                            ];
+                            $pointsEnOnly[] = $en ?: $fr;
+                        }
+                    }
+                }
+
+                if ($titleEn !== '' || $titleFr !== '' || !empty($cleanPoints)) {
+                    $hasAnyContent = true;
+                }
+
+                $cleanSections[] = [
+                    'id' => $i + 1,
+                    'title' => $titleEn ?: ($titleFr ?: 'Section ' . ($i + 1)),
+                    'title_en' => $titleEn,
+                    'title_fr' => $titleFr,
+                    'points' => $cleanPoints,
+                ];
+
+                if ($titleEn !== '' || !empty($pointsEnOnly)) {
+                    $displayTitle = $titleEn ?: ('Section ' . ($i + 1));
+                    $formattedLines[] = "=== {$displayTitle} ===";
+                    foreach ($pointsEnOnly as $pt) {
+                        $formattedLines[] = "• {$pt}";
+                    }
+                    $formattedLines[] = "";
+                }
+            }
+
+            $businessPoliciesMessage = $hasAnyContent ? trim(implode("\n", $formattedLines)) : null;
+
+            if ($targetBusinessId && $targetBusinessId !== 'global') {
+                $business = Business::findOrFail($targetBusinessId);
+                $business->update([
+                    'policy_sections' => $hasAnyContent ? $cleanSections : null,
+                    'business_policies_message' => $businessPoliciesMessage,
+                ]);
+                $msg = 'Policy sections for ' . $business->name . ' updated successfully.';
+            } else {
+                $settings = Settings::first();
+                if (!$settings) {
+                    $settings = Settings::create([]);
+                }
+                $settings->update([
+                    'policy_sections' => $hasAnyContent ? $cleanSections : null,
+                    'business_policies_message' => $businessPoliciesMessage,
+                ]);
+                $msg = 'Global default policy sections updated successfully.';
+            }
+
+            return redirect()->back()->with('success', $msg);
+        }
+
+        if ($request->has('business_policies_message')) {
+            $request->validate([
+                'business_policies_message' => 'nullable|string|max:5000',
+            ]);
+            $msg = $request->business_policies_message;
+
+            if ($targetBusinessId && $targetBusinessId !== 'global') {
+                $business = Business::findOrFail($targetBusinessId);
+                $business->update([
+                    'business_policies_message' => $msg,
+                    'policy_sections' => null,
+                ]);
+                $successMsg = 'Policy message for ' . $business->name . ' updated successfully.';
+            } else {
+                $settings = Settings::first();
+                if (!$settings) {
+                    $settings = Settings::create([]);
+                }
+                $settings->update([
+                    'business_policies_message' => $msg,
+                    'policy_sections' => null,
+                ]);
+                $successMsg = 'Global policy message updated successfully.';
+            }
+
+            return redirect()->back()->with('success', $successMsg);
+        }
+
+        return redirect()->back();
     }
 
     public function create()

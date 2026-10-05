@@ -159,6 +159,7 @@ Route::group(['middleware' => ['auth', 'admin.auth']], function () {
     // Case Study Questions
     Route::controller(\App\Http\Controllers\Admin\CaseStudyQuestionController::class)->group(function () {
         Route::get('/case-study-questions', 'index')->name('admin.case_study_questions.index');
+        Route::post('/case-study-questions/policy-sections', 'updatePolicySections')->name('admin.case_study_questions.policy_sections.update');
         Route::get('/case-study-questions/create', 'create')->name('admin.case_study_questions.create');
         Route::post('/case-study-questions', 'store')->name('admin.case_study_questions.store');
         Route::post('/case-study-questions/import', 'import')->name('admin.case_study_questions.import');

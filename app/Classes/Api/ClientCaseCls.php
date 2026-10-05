@@ -198,66 +198,85 @@ class ClientCaseCls
             app()->setLocale($locale);
 
             $policyMessage = null;
-            $policySections = [];
+            $rawSections = [];
+
+            // 1. If businessId provided, check if the business has custom policy sections or message
             if ($businessId) {
                 $business = \App\Models\Business::find($businessId);
-                $policyMessage = $business?->business_policies_message;
+                $bSections = $business?->policy_sections;
+                $bMessage = $business?->business_policies_message;
 
-                $rawSections = $business?->policy_sections;
-                if (!empty($rawSections) && is_array($rawSections)) {
-                    $policySections = collect($rawSections)->map(function ($sec, $idx) use ($locale) {
-                        $titleEn = $sec['title_en'] ?? ($sec['title'] ?? '');
-                        $titleFr = $sec['title_fr'] ?? ($sec['title'] ?? '');
-                        $localizedTitle = $locale === 'fr'
-                            ? ($titleFr ?: $titleEn)
-                            : ($titleEn ?: $titleFr);
+                $hasCustomBusinessContent = (!empty($bSections) && is_array($bSections)) || !empty(trim((string)$bMessage));
+                if ($hasCustomBusinessContent) {
+                    $rawSections = $bSections;
+                    $policyMessage = $bMessage;
+                }
+            }
 
-                        $rawPoints = $sec['points'] ?? [];
-                        $localizedPoints = [];
-                        $pointsDetails = [];
+            // 2. If no business-specific policies exist (individual user or business without custom policies),
+            // fall back to global default policy sections configured in Settings by Super Admin
+            if (empty($rawSections) && empty($policyMessage)) {
+                $settings = \App\Models\Settings::first();
+                if ($settings) {
+                    $rawSections = $settings->policy_sections;
+                    $policyMessage = $settings->business_policies_message;
+                }
+            }
 
-                        foreach ($rawPoints as $pt) {
-                            if (is_array($pt)) {
-                                $ptEn = trim((string)($pt['en'] ?? ($pt['fr'] ?? '')));
-                                $ptFr = trim((string)($pt['fr'] ?? ($pt['en'] ?? '')));
-                                $chosen = $locale === 'fr' ? ($ptFr ?: $ptEn) : ($ptEn ?: $ptFr);
-                                if ($chosen !== '') {
-                                    $localizedPoints[] = $chosen;
-                                    $pointsDetails[] = ['en' => $ptEn, 'fr' => $ptFr];
-                                }
-                            } else {
-                                $pStr = trim((string)$pt);
-                                if ($pStr !== '') {
-                                    $localizedPoints[] = $pStr;
-                                    $pointsDetails[] = ['en' => $pStr, 'fr' => $pStr];
-                                }
+            $policySections = [];
+            if (!empty($rawSections) && is_array($rawSections)) {
+                $policySections = collect($rawSections)->map(function ($sec, $idx) use ($locale) {
+                    $titleEn = $sec['title_en'] ?? ($sec['title'] ?? '');
+                    $titleFr = $sec['title_fr'] ?? ($sec['title'] ?? '');
+                    $localizedTitle = $locale === 'fr'
+                        ? ($titleFr ?: $titleEn)
+                        : ($titleEn ?: $titleFr);
+
+                    $rawPoints = $sec['points'] ?? [];
+                    $localizedPoints = [];
+                    $pointsDetails = [];
+
+                    foreach ($rawPoints as $pt) {
+                        if (is_array($pt)) {
+                            $ptEn = trim((string)($pt['en'] ?? ($pt['fr'] ?? '')));
+                            $ptFr = trim((string)($pt['fr'] ?? ($pt['en'] ?? '')));
+                            $chosen = $locale === 'fr' ? ($ptFr ?: $ptEn) : ($ptEn ?: $ptFr);
+                            if ($chosen !== '') {
+                                $localizedPoints[] = $chosen;
+                                $pointsDetails[] = ['en' => $ptEn, 'fr' => $ptFr];
+                            }
+                        } else {
+                            $pStr = trim((string)$pt);
+                            if ($pStr !== '') {
+                                $localizedPoints[] = $pStr;
+                                $pointsDetails[] = ['en' => $pStr, 'fr' => $pStr];
                             }
                         }
+                    }
 
-                        return [
-                            'id'             => $sec['id'] ?? ($idx + 1),
-                            'title'          => $localizedTitle,
-                            'title_en'       => $titleEn,
-                            'title_fr'       => $titleFr,
-                            'points'         => $localizedPoints,
-                            'points_details' => $pointsDetails,
-                        ];
-                    })->filter(function ($sec) {
-                        return $sec['title'] !== '' || !empty($sec['points']);
-                    })->values()->all();
-                } elseif (!empty($policyMessage)) {
-                    $lines = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string)$policyMessage)), fn($l) => $l !== ''));
-                    $policySections = [
-                        [
-                            'id'             => 1,
-                            'title'          => $locale === 'fr' ? 'Lignes directrices sur les politiques' : 'Policy Guidelines',
-                            'title_en'       => 'Policy Guidelines',
-                            'title_fr'       => 'Lignes directrices sur les politiques',
-                            'points'         => $lines,
-                            'points_details' => array_map(fn($line) => ['en' => $line, 'fr' => $line], $lines),
-                        ],
+                    return [
+                        'id'             => $sec['id'] ?? ($idx + 1),
+                        'title'          => $localizedTitle,
+                        'title_en'       => $titleEn,
+                        'title_fr'       => $titleFr,
+                        'points'         => $localizedPoints,
+                        'points_details' => $pointsDetails,
                     ];
-                }
+                })->filter(function ($sec) {
+                    return $sec['title'] !== '' || !empty($sec['points']);
+                })->values()->all();
+            } elseif (!empty($policyMessage)) {
+                $lines = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string)$policyMessage)), fn($l) => $l !== ''));
+                $policySections = [
+                    [
+                        'id'             => 1,
+                        'title'          => $locale === 'fr' ? 'Lignes directrices sur les politiques' : 'Policy Guidelines',
+                        'title_en'       => 'Policy Guidelines',
+                        'title_fr'       => 'Lignes directrices sur les politiques',
+                        'points'         => $lines,
+                        'points_details' => array_map(fn($line) => ['en' => $line, 'fr' => $line], $lines),
+                    ],
+                ];
             }
 
             $questions = $this->caseStudyQuestionRepository->getAllSectionsWithQuestions($businessId);
