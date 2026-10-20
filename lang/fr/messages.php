@@ -444,6 +444,7 @@ return [
     'business_exams' => 'Examens d\'entreprise',
     'all_exam_types' => 'Tous les types d\'examens',
     'filter_by_type' => 'Filtrer par type',
+    'filter_by_exam_type' => 'Filtrer par type d\'examen',
     'description_en' => 'Description (EN)',
     'description_fr' => 'Description (FR)',
     'question_text_en' => 'Texte de la question (EN)',

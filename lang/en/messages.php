@@ -410,6 +410,7 @@ return [
     'business_exams' => 'Business Exams',
     'all_exam_types' => 'All Types',
     'filter_by_type' => 'Filter by Type',
+    'filter_by_exam_type' => 'Filter by Exam Type',
     'description_en' => 'Description (EN)',
     'description_fr' => 'Description (FR)',
     'question_text_en' => 'Question Text (EN)',
