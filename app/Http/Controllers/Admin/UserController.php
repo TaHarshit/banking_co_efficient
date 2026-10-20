@@ -45,7 +45,7 @@ class UserController extends Controller
 
         $business_count = Business::count();
         $contact_count  = ContactUs::count();
-        $personalized_question_count = Question::count();
+        $personalized_question_count = Question::whereNull('business_id')->count();
         $exam_question_count = SkillAssessmentQuestion::count();
         $case_study_question_count = CaseStudyQuestion::count();
 

@@ -60,7 +60,7 @@
                 cancelButtonText: '{{ __('messages.cancel') ?? 'Cancel' }}'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = '{{ url('admin/skill-assessment/questions/delete-all') }}/' + sectionId;
+                    window.location.href = '{{ route('deleteallskillassessmentquestions', '') }}/' + sectionId;
                 }
             });
         }

@@ -4,9 +4,10 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Mail\Message;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Redirect legacy /admin and /admin/* URLs to root domain
+Route::any('/admin/{any?}', function ($any = null) {
+    return redirect('/' . ($any ?? ''));
+})->where('any', '.*');
 
 
 Route::Get('/test-mail', function (\Illuminate\Http\Request $request) {
