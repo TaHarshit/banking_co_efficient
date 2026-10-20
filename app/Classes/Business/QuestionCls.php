@@ -408,11 +408,11 @@ class QuestionCls
                 $deletedCount++;
             }
 
-            Session::flash('message', "Successfully deleted {$deletedCount} questions!");
+            Session::flash('message', __('messages.all_questions_deleted'));
             Session::flash('icon', 'success');
             return redirect()->route('business.questions', $sectionId);
         } catch (Exception $e) {
-            Session::flash('message', 'Delete failed: ' . $e->getMessage());
+            Session::flash('message', __('messages.something_went_wrong'));
             Session::flash('icon', 'danger');
             return redirect()->back();
         }

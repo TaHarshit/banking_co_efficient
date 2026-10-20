@@ -48,7 +48,16 @@
             });
         }
 
-        function showDeleteAllConfirm(url) {
+        function showDeleteAllConfirm(url, count) {
+            if (typeof count !== 'undefined' && count <= 0) {
+                Swal.fire({
+                    icon: 'info',
+                    title: '{{ __('messages.delete_all') }}',
+                    text: '{{ __('messages.no_questions') }}',
+                    confirmButtonColor: '#3085d6',
+                });
+                return;
+            }
             Swal.fire({
                 title: '{{ __('messages.are_you_sure') }}',
                 text: "{{ __('messages.delete_all_warning') }}",
@@ -118,12 +127,10 @@
                                     data-bs-target="#importModal">
                                     <i class="bi bi-upload"></i> {{ __('messages.import') }}
                                 </button>
-                                @if ($questions->count() > 0)
-                                    <button type="button" class="btn btn-danger me-2"
-                                        onclick="showDeleteAllConfirm('{{ route('business.questions.delete-all', $section->id) }}')">
-                                        <i class="bi bi-trash"></i> {{ __('messages.delete_all') }}
-                                    </button>
-                                @endif
+                                <button type="button" class="btn btn-danger me-2"
+                                    onclick="showDeleteAllConfirm('{{ route('business.questions.delete-all', $section->id) }}', {{ $questions->count() }})">
+                                    <i class="bi bi-trash"></i> {{ __('messages.delete_all') }}
+                                </button>
                                 <a href="{{ route('business.questions.create', $section->id) }}"
                                     class="btn btn-primary">
                                     <i class="bi bi-plus"></i> {{ __('messages.add_question') }}

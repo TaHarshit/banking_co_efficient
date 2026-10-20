@@ -2,13 +2,27 @@
 
 @section('title', __('messages.employees'))
 
+@section('pagewisestyle')
+@endsection
+
+@section('pagewisescript')
+@endsection
+
+@section('customjs')
+    <script>
+        function showConfirmToast(url) {
+            $('#confirm_url').attr('href', url);
+            $('#confirmModal').modal('show');
+        }
+    </script>
+@endsection
+
 @section('content')
-    <div class="pagetitle">
+    <div class="pagetitle mb-4">
         <h1>{{ __('messages.employees') }}</h1>
         <nav>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('business.dashboard') }}">{{ __('messages.dashboard') }}</a>
-                </li>
+                <li class="breadcrumb-item"><a href="{{ route('business.dashboard') }}">{{ __('messages.dashboard') }}</a></li>
                 <li class="breadcrumb-item active">{{ __('messages.employees') }}</li>
             </ol>
         </nav>
@@ -18,96 +32,112 @@
         <div class="row">
             <div class="col-lg-12">
                 @include('partials.messages')
+
+                @php
+                    $usedQ = $business->getUsedQuota();
+                    $totQ = (int)($business->user_quota ?? 0);
+                    $remQ = $business->getRemainingQuota();
+                    $isSubActive = $business->isSubscriptionActive();
+                @endphp
+
+                @if(!$isSubActive)
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-octagon-fill me-2"></i>
+                        Your business subscription is not active or has expired. Adding new employees or approving users is currently disabled. Please contact your system administrator.
+                    </div>
+                @elseif($remQ <= 0)
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        You have used all <strong>{{ $totQ }}</strong> employee seats in your quota. To add more employees, please contact administrator to upgrade your plan.
+                    </div>
+                @endif
+
                 <div class="card">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div>
-                                <h5 class="card-title mb-0 d-inline-block me-3">{{ __('messages.employee_list') }}</h5>
-                                @php
-                                    $usedQ = $business->getUsedQuota();
-                                    $totQ = (int)($business->user_quota ?? 0);
-                                    $remQ = $business->getRemainingQuota();
-                                    $isSubActive = $business->isSubscriptionActive();
-                                @endphp
-                                <span class="badge {{ $remQ > 0 ? 'bg-primary' : 'bg-danger' }}">
-                                    <i class="bi bi-people me-1"></i>Seats: {{ $usedQ }} / {{ $totQ }} used ({{ $remQ }} available)
-                                </span>
-                            </div>
-                            <div>
-                                @if(!$isSubActive)
-                                    <span class="badge bg-danger me-2"><i class="bi bi-exclamation-octagon me-1"></i>Subscription Inactive / Expired</span>
-                                @elseif($remQ <= 0)
-                                    <span class="badge bg-warning text-dark me-2"><i class="bi bi-exclamation-triangle me-1"></i>Quota Full</span>
-                                @endif
-                                <a href="{{ route('business.employees.import') }}" class="btn btn-success btn-sm">
+                        <h5 class="card-title">{{ __('messages.employee_list') }}
+                            <span class="badge {{ $remQ > 0 ? 'bg-primary' : 'bg-danger' }} ms-2" style="font-size: 13px; font-weight: 500;">
+                                <i class="bi bi-people me-1"></i>Seats: {{ $usedQ }} / {{ $totQ }} used ({{ $remQ }} available)
+                            </span>
+                            <div style="float: right;">
+                                <a href="{{ route('business.employees.import') }}" class="btn btn-success me-2">
                                     <i class="bi bi-file-earmark-excel"></i> {{ __('messages.import_excel') }}
                                 </a>
-                                <a href="{{ route('business.employees.create') }}" class="btn btn-primary btn-sm">
-                                    <i class="bi bi-plus-circle"></i> {{ __('messages.add_employee') }}
+                                <a href="{{ route('business.employees.create') }}" class="btn btn-primary">
+                                    <i class="bi bi-plus"></i> {{ __('messages.add_employee') }}
                                 </a>
                             </div>
-                        </div>
-
-                        @if(!$isSubActive)
-                            <div class="alert alert-danger">
-                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                Your business subscription is not active or has expired. Adding new employees or approving users is currently disabled. Please contact your system administrator.
-                            </div>
-                        @elseif($remQ <= 0)
-                            <div class="alert alert-warning">
-                                <i class="bi bi-exclamation-triangle me-2"></i>
-                                You have used all <strong>{{ $totQ }}</strong> employee seats in your quota. To add more employees, please contact administrator to upgrade your plan.
-                            </div>
-                        @endif
+                        </h5>
 
                         <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i>
+                            <i class="bi bi-info-circle me-1"></i>
                             {{ __('messages.employees_register_hint') }}
                             <strong>{{ $business->business_code }}</strong>
                         </div>
 
-                        <table class="table table-bordered datatable">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>{{ __('messages.name') }}</th>
-                                    <th>{{ __('messages.email') }}</th>
-                                    <th>{{ __('messages.department') }}</th>
-                                    <th>{{ __('messages.phone') }}</th>
-                                    <th>{{ __('messages.actions') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php $i = 1; @endphp
-                                @foreach ($employees as $emp)
-                                    <tr>
-                                        <td>{{ $i++ }}</td>
-                                        <td>{{ $emp->name }}</td>
-                                        <td>{{ $emp->email }}</td>
-                                        <td>{{ $emp->department ?? '-' }}</td>
-                                        <td>{{ $emp->phone ?? '-' }}</td>
-                                        <td>
-                                            <a href="{{ route('business.employees.edit', $emp->id) }}"
-                                                class="btn btn-warning btn-sm">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <a href="javascript:void(0)"
-                                                onclick="showConfirmToast('{{ route('business.employees.delete', $emp->id) }}')"
-                                                class="btn btn-danger btn-sm">
-                                                <i class="bi bi-trash"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                        <div class="row">
+                            <div class="col-12">
+                                @if ($employees->count() > 0)
+                                    <div class="table-responsive">
+                                        <table class="table datatable">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>{{ __('messages.name') }}</th>
+                                                    <th>{{ __('messages.email') }}</th>
+                                                    <th>{{ __('messages.department') }}</th>
+                                                    <th>{{ __('messages.phone_number') }}</th>
+                                                    <th>{{ __('messages.action') }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @php $i = 1; @endphp
+                                                @foreach ($employees as $emp)
+                                                    <tr>
+                                                        <td>{{ $i++ }}</td>
+                                                        <td><strong>{{ $emp->name }}</strong></td>
+                                                        <td>{{ $emp->email }}</td>
+                                                        <td>
+                                                            @if($emp->department)
+                                                                <span class="badge bg-light text-dark border">{{ $emp->department }}</span>
+                                                            @else
+                                                                <span class="text-muted">-</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>{{ $emp->phone ?? '-' }}</td>
+                                                        <td>
+                                                            <a href="{{ route('business.employees.edit', $emp->id) }}"
+                                                                style="font-size: 20px; color:#00ACEF !important"
+                                                                class="text-primary me-2"
+                                                                title="{{ __('messages.edit') }}">
+                                                                <i class="bi bi-pencil-fill"></i>
+                                                            </a>
+                                                            <a href="javascript:void(0);"
+                                                                style="font-size: 20px; color:#EE6C4D !important;"
+                                                                onclick="return showConfirmToast('{{ route('business.employees.delete', $emp->id) }}')"
+                                                                class="text-danger"
+                                                                title="{{ __('messages.delete') }}">
+                                                                <i class="bi bi-trash-fill"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="alert alert-info mb-0">
+                                        <i class="bi bi-info-circle"></i> {{ __('messages.no_records_found') ?? 'No employees found.' }}
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Confirm Modal -->
+    <!-- Confirm Delete Modal -->
     <div class="modal fade" id="confirmModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -126,13 +156,4 @@
             </div>
         </div>
     </div>
-@endsection
-
-@section('customjs')
-    <script>
-        function showConfirmToast(url) {
-            $('#confirm_url').attr('href', url);
-            $('#confirmModal').modal('show');
-        }
-    </script>
 @endsection
