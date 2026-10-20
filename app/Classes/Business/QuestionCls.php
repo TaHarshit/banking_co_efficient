@@ -71,18 +71,12 @@ class QuestionCls
                 'is_active' => $request->has('is_active') ? 1 : 0,
             ];
 
-            // Add settings for rating scale
-            if ($request->question_type === Question::TYPE_RATING_SCALE) {
-                $data['settings'] = [
-                    'min_value' => $request->min_value ?? 1,
-                    'max_value' => $request->max_value ?? 5,
-                ];
-            }
+            $data['settings'] = $this->buildSettings($request);
 
             $question = $this->QuestionRep->StoreQuestion($data, $id);
 
-            // Store options for select-type questions
-            if (in_array($request->question_type, [Question::TYPE_SINGLE_SELECT, Question::TYPE_MULTI_SELECT])) {
+            // Store options for select-type questions and rating scale
+            if (in_array($request->question_type, [Question::TYPE_SINGLE_SELECT, Question::TYPE_MULTI_SELECT, Question::TYPE_RATING_SCALE])) {
                 $options = $this->parseOptions($request);
                 if (!empty($options)) {
                     $this->QuestionRep->StoreOptions($question->id, $options);
@@ -105,11 +99,59 @@ class QuestionCls
     }
 
     /**
+     * Build settings JSON based on question type
+     */
+    protected function buildSettings($request)
+    {
+        $settings = [];
+
+        if ($request->question_type === Question::TYPE_MULTI_SELECT) {
+            if ($request->filled('max_selections')) {
+                $settings['max_selections'] = (int) $request->max_selections;
+            }
+        } elseif ($request->question_type === Question::TYPE_RATING_SCALE) {
+            $settings['min_value'] = (int) ($request->min_value ?? 1);
+            $settings['max_value'] = (int) ($request->max_value ?? 5);
+        } elseif ($request->question_type === Question::TYPE_TEXT_INPUT) {
+            if ($request->filled('min_characters')) {
+                $settings['min_characters'] = (int) $request->min_characters;
+            }
+            if ($request->filled('max_characters')) {
+                $settings['max_characters'] = (int) $request->max_characters;
+            }
+            if ($request->filled('placeholder_en')) {
+                $settings['placeholder_en'] = $request->placeholder_en;
+            }
+            if ($request->filled('placeholder_fr')) {
+                $settings['placeholder_fr'] = $request->placeholder_fr;
+            }
+        }
+
+        return !empty($settings) ? $settings : null;
+    }
+
+    /**
      * Parse options from request
      */
     private function parseOptions($request)
     {
         $options = [];
+
+        // Support indexed options array: options[0][option_text_en]
+        if ($request->has('options') && is_array($request->options)) {
+            foreach ($request->options as $index => $opt) {
+                if (!empty($opt['option_text_en']) || !empty($opt['option_text_fr'])) {
+                    $options[] = [
+                        'text_en' => $opt['option_text_en'] ?? '',
+                        'text_fr' => $opt['option_text_fr'] ?? ($opt['option_text_en'] ?? ''),
+                        'subtitle_en' => $opt['option_subtitle_en'] ?? null,
+                        'subtitle_fr' => $opt['option_subtitle_fr'] ?? null,
+                    ];
+                }
+            }
+            return $options;
+        }
+
         $textsEn = $request->input('option_text_en', []);
         $textsFr = $request->input('option_text_fr', []);
         $subtitlesEn = $request->input('option_subtitle_en', []);

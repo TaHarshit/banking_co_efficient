@@ -1,84 +1,141 @@
 @extends('layouts.business')
+@section('title', __('messages.manage_sections'))
+@section('pagewisestyle')
+@endsection
+@section('pagewisescript')
+@endsection
+@section('customjs')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="text/javascript">
+        function update_status(el) {
+            var status = el.checked ? 1 : 0;
+            $.post('{{ route('business.sections.status') }}', {
+                _token: '{{ csrf_token() }}',
+                id: el.value,
+                status: status
+            }, function(data) {
+                if (data == 1) {
+                    if (typeof NotifMsg === 'function') {
+                        NotifMsg('{{ __('messages.section_status_updated') }}', 'success', 'Success');
+                    } else if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: '{{ __('messages.section_status_updated') }}',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+                    }
+                } else {
+                    if (typeof NotifMsg === 'function') {
+                        NotifMsg('{{ __('messages.something_went_wrong') }}', 'danger', 'Danger');
+                    } else if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'error',
+                            title: '{{ __('messages.something_went_wrong') }}',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+                    }
+                }
+            });
+        }
 
-@section('title', __('messages.sections'))
+        function showConfirmToast(url) {
+            $('#confirm_url').attr('href', url);
+            $('#confirmModal').modal('show');
+        }
+    </script>
+@endsection
 
 @section('content')
-    <div class="pagetitle">
-        <h1>{{ __('messages.sections') }}</h1>
+    <div class="pagetitle mb-4">
+        <h1>{{ __('messages.manage_sections') }}</h1>
+        <p class="form-text text-muted">Onboarding Section</p>
         <nav>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('business.dashboard') }}">{{ __('messages.dashboard') }}</a>
-                </li>
+                <li class="breadcrumb-item"><a href="{{ route('business.dashboard') }}">{{ __('messages.dashboard') }}</a></li>
+                <li class="breadcrumb-item">{{ __('messages.personalized_experience') }}</li>
                 <li class="breadcrumb-item active">{{ __('messages.sections') }}</li>
             </ol>
         </nav>
     </div>
-
     <section class="section">
         <div class="row">
             <div class="col-lg-12">
                 @include('partials.messages')
                 <div class="card">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="card-title mb-0">{{ __('messages.section_list') }}</h5>
-                            <div>
-                                <a href="{{ route('business.sections.create') }}" class="btn btn-primary btn-sm">
-                                    <i class="bi bi-plus-circle"></i> {{ __('messages.add_section') }}
-                                </a>
+                        <h5 class="card-title">{{ __('messages.manage_sections') }} <span class="form-text text-muted">(Onboarding)</span>
+                            <a href="{{ route('business.sections.create') }}" class="btn btn-primary" style="float: right;">
+                                <i class="bi bi-plus"></i> {{ __('messages.add_section') }}
+                            </a>
+                        </h5>
+                        <div class="row">
+                            <div class="col-12">
+                                @if ($sections->count() > 0)
+                                    <div class="table-responsive">
+                                        <table class="table datatable">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>{{ __('messages.section_title') }} (EN)</th>
+                                                    <th>{{ __('messages.section_title') }} (FR)</th>
+                                                    <th>{{ __('messages.questions') }}</th>
+                                                    <th>{{ __('messages.status') }}</th>
+                                                    <th>{{ __('messages.action') }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($sections as $index => $section)
+                                                    <tr>
+                                                        <td>{{ $section->order }}</td>
+                                                        <td>{{ $section->title_en }}</td>
+                                                        <td>{{ $section->title_fr }}</td>
+                                                        <td>
+                                                            <a href="{{ route('business.questions', $section->id) }}"
+                                                                class="btn btn-sm btn-info">
+                                                                <i class="bi bi-list-ul"></i>
+                                                                {{ __('messages.view_questions') }}
+                                                                ({{ $section->questions->count() }})
+                                                            </a>
+                                                        </td>
+                                                        <td>
+                                                            <div class="form-check form-switch">
+                                                                <input class="form-check-input"
+                                                                    onchange="update_status(this)" type="checkbox"
+                                                                    {{ $section->is_active ? 'checked' : '' }}
+                                                                    value="{{ $section->id }}">
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <a href="{{ route('business.sections.edit', $section->id) }}"
+                                                                style="font-size: 20px; color:#00ACEF !important"
+                                                                class="text-primary me-2">
+                                                                <i class="bi bi-pencil-fill"></i>
+                                                            </a>
+                                                            <a href="javascript:void(0);"
+                                                                style="font-size: 20px; color:#EE6C4D !important;"
+                                                                onclick="return showConfirmToast('{{ route('business.sections.delete', $section->id) }}')"
+                                                                class="text-danger">
+                                                                <i class="bi bi-trash-fill"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle"></i> {{ __('messages.no_sections') }}
+                                    </div>
+                                @endif
                             </div>
                         </div>
-
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i>
-                            {{ __('messages.sections_info') }}
-                        </div>
-
-                        <table class="table table-bordered datatable">
-                            <thead>
-                                <tr>
-                                    <th width="50">#</th>
-                                    <th>{{ __('messages.title') }} (EN)</th>
-                                    <th>{{ __('messages.title') }} (FR)</th>
-                                    <th width="80">{{ __('messages.order') }}</th>
-                                    <th width="100">{{ __('messages.status') }}</th>
-                                    <th width="200">{{ __('messages.actions') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php $i = 1; @endphp
-                                @foreach ($sections as $section)
-                                    <tr>
-                                        <td>{{ $i++ }}</td>
-                                        <td>{{ $section->title_en }}</td>
-                                        <td>{{ $section->title_fr }}</td>
-                                        <td>{{ $section->order }}</td>
-                                        <td>
-                                            @if ($section->is_active)
-                                                <span class="badge bg-success">{{ __('messages.active') }}</span>
-                                            @else
-                                                <span class="badge bg-danger">{{ __('messages.inactive') }}</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <a href="{{ route('business.questions', $section->id) }}"
-                                                class="btn btn-info btn-sm" title="{{ __('messages.manage_questions') }}">
-                                                <i class="bi bi-list-ul"></i>
-                                            </a>
-                                            <a href="{{ route('business.sections.edit', $section->id) }}"
-                                                class="btn btn-warning btn-sm">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <a href="javascript:void(0)"
-                                                onclick="showConfirmToast('{{ route('business.sections.delete', $section->id) }}')"
-                                                class="btn btn-danger btn-sm">
-                                                <i class="bi bi-trash"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             </div>
@@ -99,18 +156,9 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary"
                         data-bs-dismiss="modal">{{ __('messages.cancel') }}</button>
-                    <a href="#" id="confirm_url" class="btn btn-danger">{{ __('messages.delete') }}</a>
+                    <a href="" id="confirm_url" class="btn btn-danger">{{ __('messages.delete') }}</a>
                 </div>
             </div>
         </div>
     </div>
-@endsection
-
-@section('customjs')
-    <script>
-        function showConfirmToast(url) {
-            $('#confirm_url').attr('href', url);
-            $('#confirmModal').modal('show');
-        }
-    </script>
 @endsection

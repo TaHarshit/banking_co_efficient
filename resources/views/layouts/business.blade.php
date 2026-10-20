@@ -178,7 +178,7 @@
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('business.sections*') || request()->routeIs('business.questions*') ? '' : 'collapsed' }}"
                     href="{{ route('business.sections') }}">
-                    <i class="bi bi-list-ul"></i>
+                    <i class="bi bi-diagram-3"></i>
                     <span>{{ __('messages.personalized_experience') ?? 'Personalized Experience' }}</span>
                 </a>
             </li>
