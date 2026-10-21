@@ -133,28 +133,34 @@ class SectionRepository extends BaseRepository
 
     /**
      * Get active sections for a specific business
-     * Returns business-specific sections if available, otherwise falls back to admin sections
+     * Returns business-specific sections if available with active questions, otherwise falls back to admin sections
      */
     public function GetActiveSectionsByBusiness($businessId = null)
     {
         if ($businessId) {
-            // Check if business has any active sections
+            // Check if business has any active sections that contain active questions
             $businessSections = $this->model
                 ->where('business_id', $businessId)
                 ->where('is_active', true)
+                ->whereHas('questions', function ($q) {
+                    $q->where('is_active', true);
+                })
                 ->orderBy('order')
                 ->get();
 
-            // If business has sections, return them
+            // If business has sections with questions, return them
             if ($businessSections->count() > 0) {
                 return $businessSections;
             }
         }
 
-        // Fallback to admin sections (where business_id is null)
+        // Fallback to admin sections (where business_id is null) that have active questions
         return $this->model
             ->whereNull('business_id')
             ->where('is_active', true)
+            ->whereHas('questions', function ($q) {
+                $q->where('is_active', true);
+            })
             ->orderBy('order')
             ->get();
     }

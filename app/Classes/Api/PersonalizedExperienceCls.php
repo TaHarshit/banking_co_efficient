@@ -277,10 +277,10 @@ class PersonalizedExperienceCls
     /**
      * Get completion status for a user
      */
-    public function GetCompletionStatus($userId)
+    public function GetCompletionStatus($userId, $businessId = null)
     {
         try {
-            $sections = $this->SectionRep->GetActiveSections();
+            $sections = $this->SectionRep->GetActiveSectionsByBusiness($businessId);
             $totalQuestions = 0;
 
             foreach ($sections as $section) {

@@ -140,7 +140,20 @@ class PersonalizedExperienceController extends Controller
     {
         $userId = Auth::id();
 
-        $result = $this->ExperienceCls->GetCompletionStatus($userId);
+        $businessId = null;
+        $businessCode = $request->header('business_code') ?? $request->header('business-code');
+        if ($businessCode) {
+            $business = \App\Models\Business::where('business_code', $businessCode)->first();
+            if ($business) {
+                $businessId = $business->id;
+            }
+        }
+        if (!$businessId && Auth::check()) {
+            $user = Auth::user();
+            $businessId = $user->business_id ?? null;
+        }
+
+        $result = $this->ExperienceCls->GetCompletionStatus($userId, $businessId);
 
         if ($result['success']) {
             return response()->json([

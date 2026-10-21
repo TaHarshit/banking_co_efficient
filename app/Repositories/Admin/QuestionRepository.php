@@ -25,32 +25,31 @@ class QuestionRepository extends BaseRepository
     }
 
     /**
-     * Get all active questions for a section (admin only)
+     * Get all active questions for a section
      */
     public function GetActiveQuestionsBySection($sectionId)
     {
         return $this->model
             ->where('section_id', $sectionId)
-            ->whereNull('business_id')
             ->where('is_active', true)
             ->orderBy('order')
             ->get();
     }
 
     /**
-     * Get a single question by ID (admin only)
+     * Get a single question by ID
      */
     public function GetQuestion($id)
     {
-        return $this->model->whereNull('business_id')->find($id);
+        return $this->model->find($id);
     }
 
     /**
-     * Get question with options (admin only)
+     * Get question with options
      */
     public function GetQuestionWithOptions($id)
     {
-        return $this->model->whereNull('business_id')->with('options')->find($id);
+        return $this->model->with('options')->find($id);
     }
 
     /**
