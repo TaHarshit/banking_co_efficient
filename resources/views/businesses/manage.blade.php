@@ -53,20 +53,20 @@
                             <div class="row">
                                 <div class="col-12">
                                     <div class="table-responsive">
-                                        <table class="table datatable">
+                                        <table class="table datatable align-middle">
                                             <thead>
                                                 <tr>
                                                     <th>#</th>
                                                     <th>{{ __('messages.logo') }}</th>
                                                     <th>{{ __('messages.name') }}</th>
-                                                    <th>{{ __('messages.business_code') }}</th>
+                                                    <th style="white-space: nowrap;">{{ __('messages.business_code') }}</th>
                                                     <th>{{ __('messages.email') }}</th>
                                                     <th>{{ __('messages.address') }}</th>
-                                                    <th>Plan / Status</th>
-                                                    <th>Validity Period</th>
-                                                    <th>Quota (Seats)</th>
+                                                    <th style="min-width: 110px;">Plan / Status</th>
+                                                    <th style="min-width: 150px; white-space: nowrap;">Validity Period</th>
+                                                    <th style="min-width: 120px; white-space: nowrap;">Quota (Seats)</th>
                                                     <th>{{ __('messages.status') }}</th>
-                                                    <th>{{ __('messages.action') }}</th>
+                                                    <th style="min-width: 130px; width: 130px; text-align: center; white-space: nowrap;">{{ __('messages.action') }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -89,7 +89,7 @@
                                                             @endif
                                                         </td>
                                                         <td><strong>{{ $val->name }}</strong></td>
-                                                        <td>
+                                                        <td class="text-nowrap">
                                                             <code
                                                                 class="text-primary">{{ $val->business_code ?? __('messages.na') }}</code>
                                                         </td>
@@ -105,7 +105,7 @@
                                                             @endphp
                                                             <span class="badge {{ $badgeClass }}">{{ $statusText }}</span>
                                                         </td>
-                                                        <td>
+                                                        <td class="text-nowrap">
                                                             @if($val->subscription_start_date && $val->subscription_end_date)
                                                                 <small class="d-block text-muted">
                                                                     {{ \Carbon\Carbon::parse($val->subscription_start_date)->format('M d, Y') }} -
@@ -115,7 +115,7 @@
                                                                 <span class="text-muted small">Not Set</span>
                                                             @endif
                                                         </td>
-                                                        <td>
+                                                        <td class="text-nowrap">
                                                             @php
                                                                 $usedQuota = $val->getUsedQuota();
                                                                 $totalQuota = (int)($val->user_quota ?? 0);
@@ -132,24 +132,26 @@
                                                                     value="{{ $val->id }}">
                                                             </div>
                                                         </td>
-                                                        <td>
-                                                            <a href="{{ route('updatebusiness', ['id' => $val->id]) }}"
-                                                                style="font-size: 20px; color:#00ACEF !important"
-                                                                class="text-primary" title="Edit">
-                                                                <i class="bi bi-pencil-fill"></i>
-                                                            </a>
-                                                            @if (empty($val->password))
-                                                                <a href="{{ route('resendbusinessinvitation', ['id' => $val->id]) }}"
-                                                                    style="font-size: 20px; color:#FFA500 !important"
-                                                                    class="text-warning" title="Resend Invitation">
-                                                                    <i class="bi bi-envelope-fill"></i>
+                                                        <td class="text-nowrap" style="min-width: 130px; text-align: center;">
+                                                            <div class="d-inline-flex align-items-center justify-content-center gap-2">
+                                                                <a href="{{ route('updatebusiness', ['id' => $val->id]) }}"
+                                                                    style="font-size: 20px; color:#00ACEF !important"
+                                                                    class="text-primary" title="Edit">
+                                                                    <i class="bi bi-pencil-fill"></i>
                                                                 </a>
-                                                            @endif
-                                                            <a href="javascript:void(0);"
-                                                                style="font-size: 20px; color:#EE6C4D !important;"
-                                                                onclick="return showConfirmToast('{{ route('deletebusiness', ['id' => $val->id]) }}')"
-                                                                class="text-danger" title="Delete"><i
-                                                                    class="bi bi-trash-fill"></i></a>
+                                                                @if (empty($val->password))
+                                                                    <a href="{{ route('resendbusinessinvitation', ['id' => $val->id]) }}"
+                                                                        style="font-size: 20px; color:#FFA500 !important"
+                                                                        class="text-warning" title="Resend Invitation">
+                                                                        <i class="bi bi-envelope-fill"></i>
+                                                                    </a>
+                                                                @endif
+                                                                <a href="javascript:void(0);"
+                                                                    style="font-size: 20px; color:#EE6C4D !important;"
+                                                                    onclick="return showConfirmToast('{{ route('deletebusiness', ['id' => $val->id]) }}')"
+                                                                    class="text-danger" title="Delete"><i
+                                                                        class="bi bi-trash-fill"></i></a>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                     @php
