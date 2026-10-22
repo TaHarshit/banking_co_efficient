@@ -20,7 +20,7 @@
                         var height = this.naturalHeight;
                         window.URL.revokeObjectURL(this.src);
                         if (width !== 200 || height !== 200) {
-                            alert('The logo must be exactly 200x200 pixels.');
+                            alert(@json(__('messages.logo_dimensions')));
                             var dropifyInstance = $('#logo').data('dropify');
                             if (dropifyInstance) {
                                 dropifyInstance.resetPreview();
@@ -68,12 +68,12 @@
     @include('partials.sidebar')
     <main id="main" class="main">
         <div class="pagetitle mb-4">
-            <h1>{{ isset($data) ? 'Edit Business' : 'Add Business' }}</h1>
+            <h1>{{ isset($data) ? __('messages.edit_business') : __('messages.add_business') }}</h1>
             <nav>
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('managebusinesses') }}">Manage Businesses</a></li>
-                    <li class="breadcrumb-item">{{ isset($data) ? 'Edit Business' : 'Add Business' }}</li>
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">{{ __('messages.dashboard') }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('managebusinesses') }}">{{ __('messages.manage_businesses') }}</a></li>
+                    <li class="breadcrumb-item">{{ isset($data) ? __('messages.edit_business') : __('messages.add_business') }}</li>
                 </ol>
             </nav>
         </div>
@@ -82,14 +82,14 @@
                 <div class="col-lg-9">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">{{ isset($data) ? 'Edit Business' : 'Add Business' }}</h5>
+                            <h5 class="card-title">{{ isset($data) ? __('messages.edit_business') : __('messages.add_business') }}</h5>
                             <form class="row g-3 needs-validation" action="{{ route('storebusiness') }}" method="POST"
                                 enctype="multipart/form-data" novalidate>
                                 @csrf
                                 <input type="hidden" name="id" value="{{ isset($data) ? $data->id : '0' }}">
 
                                 <div class="col-12 position-relative">
-                                    <label for="name" class="form-label">Business Name <span
+                                    <label for="name" class="form-label">{{ __('messages.business_name') }} <span
                                             class="text-danger">*</span></label>
                                     <input type="text" name="name"
                                         class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}" id="name"
@@ -100,7 +100,7 @@
                                 </div>
 
                                 <div class="col-12 position-relative">
-                                    <label for="email" class="form-label">Email <span
+                                    <label for="email" class="form-label">{{ __('messages.email') }} <span
                                             class="text-danger">*</span></label>
                                     <input type="email" name="email"
                                         class="form-control {{ $errors->has('email') ? 'is-invalid' : '' }}" id="email"
@@ -109,28 +109,26 @@
                                         <div class="invalid-feedback">{{ $errors->first('email') }}</div>
                                     @endif
                                     @if (!isset($data))
-                                        <small class="text-muted">An invitation email will be sent to this address to set up
-                                            password.</small>
+                                        <small class="text-muted">{{ __('messages.invitation_email_notice') }}</small>
                                     @endif
                                 </div>
 
                                 <div class="col-12 position-relative">
-                                    <label for="logo" class="form-label">Logo</label>
+                                    <label for="logo" class="form-label">{{ __('messages.logo') }}</label>
                                     <div class="{{ $errors->has('logo') ? 'is-invalid' : '' }}">
                                         <input type="file" name="logo"
                                             class="dropify {{ $errors->has('logo') ? 'is-invalid' : '' }}" id="logo"
                                             accept="image/png,image/jpeg,image/jpg"
                                             data-default-file="{{ isset($data) && $data->logo && Storage::exists('public/business_logos/' . $data->logo) ? asset('storage/business_logos/' . $data->logo) : '' }}">
                                     </div>
-                                    <label class="pl-1 mt-1 col-md-12 col-lg-12">Required size: 200x200px (JPG,
-                                        PNG)</label>
+                                    <label class="pl-1 mt-1 col-md-12 col-lg-12">{{ __('messages.recommended_size') }}</label>
                                     @if ($errors->has('logo'))
                                         <div class="invalid-feedback d-block">{{ $errors->first('logo') }}</div>
                                     @endif
                                 </div>
 
                                 <div class="col-12 position-relative">
-                                    <label for="address" class="form-label">Address</label>
+                                    <label for="address" class="form-label">{{ __('messages.address') }}</label>
                                     <textarea name="address" id="address" rows="3"
                                         class="form-control {{ $errors->has('address') ? 'is-invalid' : '' }}">{{ isset($data) ? $data->address : old('address') }}</textarea>
                                     @if ($errors->has('address'))
@@ -139,12 +137,12 @@
                                 </div>
 
                                 <hr class="my-4">
-                                <h5 class="card-title text-primary"><i class="bi bi-credit-card-2-front me-2"></i>Cash Subscription & Employee Quota</h5>
+                                <h5 class="card-title text-primary"><i class="bi bi-credit-card-2-front me-2"></i>{{ __('messages.cash_subscription_quota') }}</h5>
 
                                 <div class="col-md-6 position-relative">
-                                    <label for="plan_id" class="form-label">Subscription Plan</label>
+                                    <label for="plan_id" class="form-label">{{ __('messages.subscription_plan') }}</label>
                                     <select name="plan_id" id="plan_id" class="form-select {{ $errors->has('plan_id') ? 'is-invalid' : '' }}">
-                                        <option value="">-- Select Plan --</option>
+                                        <option value="">{{ __('messages.select_plan') }}</option>
                                         @if(isset($plans))
                                             @foreach($plans as $plan)
                                                 <option value="{{ $plan->id }}" 
@@ -152,7 +150,7 @@
                                                     data-validity="{{ $plan->validity }}"
                                                     data-validity-type="{{ $plan->validity_type }}"
                                                     {{ (isset($data) && $data->plan_id == $plan->id) || old('plan_id') == $plan->id ? 'selected' : '' }}>
-                                                    {{ $plan->name }} ({{ $plan->type == 1 ? 'Business' : 'Individual' }} - ${{ number_format($plan->price, 2) }})
+                                                    {{ $plan->name }} ({{ $plan->type == 1 ? __('messages.business') : __('messages.individual') }} - ${{ number_format($plan->price, 2) }})
                                                 </option>
                                             @endforeach
                                         @endif
@@ -163,17 +161,17 @@
                                 </div>
 
                                 <div class="col-md-6 position-relative">
-                                    <label for="user_quota" class="form-label">Employee Quota (Seats)</label>
+                                    <label for="user_quota" class="form-label">{{ __('messages.employee_quota_seats') }}</label>
                                     <input type="number" name="user_quota" id="user_quota" min="0" class="form-control {{ $errors->has('user_quota') ? 'is-invalid' : '' }}"
-                                        value="{{ isset($data) ? $data->user_quota : old('user_quota', 0) }}" placeholder="Max employees allowed">
-                                    <small class="text-muted">Maximum number of employees the business can add under their account.</small>
+                                        value="{{ isset($data) ? $data->user_quota : old('user_quota', 0) }}" placeholder="{{ __('messages.max_employees_allowed') }}">
+                                    <small class="text-muted">{{ __('messages.quota_desc') }}</small>
                                     @if ($errors->has('user_quota'))
                                         <div class="invalid-feedback">{{ $errors->first('user_quota') }}</div>
                                     @endif
                                 </div>
 
                                 <div class="col-md-6 position-relative">
-                                    <label for="subscription_start_date" class="form-label">Subscription Start Date</label>
+                                    <label for="subscription_start_date" class="form-label">{{ __('messages.subscription_start_date') }}</label>
                                     <input type="date" name="subscription_start_date" id="subscription_start_date" 
                                         class="form-control {{ $errors->has('subscription_start_date') ? 'is-invalid' : '' }}"
                                         value="{{ isset($data) && $data->subscription_start_date ? \Carbon\Carbon::parse($data->subscription_start_date)->format('Y-m-d') : old('subscription_start_date', date('Y-m-d')) }}">
@@ -183,7 +181,7 @@
                                 </div>
 
                                 <div class="col-md-6 position-relative">
-                                    <label for="subscription_end_date" class="form-label">Subscription End Date</label>
+                                    <label for="subscription_end_date" class="form-label">{{ __('messages.subscription_end_date') }}</label>
                                     <input type="date" name="subscription_end_date" id="subscription_end_date" 
                                         class="form-control {{ $errors->has('subscription_end_date') ? 'is-invalid' : '' }}"
                                         value="{{ isset($data) && $data->subscription_end_date ? \Carbon\Carbon::parse($data->subscription_end_date)->format('Y-m-d') : old('subscription_end_date') }}">
@@ -193,12 +191,12 @@
                                 </div>
 
                                 <div class="col-md-6 position-relative">
-                                    <label for="payment_mode" class="form-label">Payment Mode</label>
+                                    <label for="payment_mode" class="form-label">{{ __('messages.payment_mode') }}</label>
                                     <select name="payment_mode" id="payment_mode" class="form-select {{ $errors->has('payment_mode') ? 'is-invalid' : '' }}">
-                                        <option value="cash" {{ (isset($data) && $data->payment_mode == 'cash') || old('payment_mode') == 'cash' ? 'selected' : '' }}>Cash</option>
-                                        <option value="bank_transfer" {{ (isset($data) && $data->payment_mode == 'bank_transfer') || old('payment_mode') == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
-                                        <option value="cheque" {{ (isset($data) && $data->payment_mode == 'cheque') || old('payment_mode') == 'cheque' ? 'selected' : '' }}>Cheque</option>
-                                        <option value="other" {{ (isset($data) && $data->payment_mode == 'other') || old('payment_mode') == 'other' ? 'selected' : '' }}>Other</option>
+                                        <option value="cash" {{ (isset($data) && $data->payment_mode == 'cash') || old('payment_mode') == 'cash' ? 'selected' : '' }}>{{ __('messages.cash') }}</option>
+                                        <option value="bank_transfer" {{ (isset($data) && $data->payment_mode == 'bank_transfer') || old('payment_mode') == 'bank_transfer' ? 'selected' : '' }}>{{ __('messages.bank_transfer') }}</option>
+                                        <option value="cheque" {{ (isset($data) && $data->payment_mode == 'cheque') || old('payment_mode') == 'cheque' ? 'selected' : '' }}>{{ __('messages.cheque') }}</option>
+                                        <option value="other" {{ (isset($data) && $data->payment_mode == 'other') || old('payment_mode') == 'other' ? 'selected' : '' }}>{{ __('messages.other') }}</option>
                                     </select>
                                     @if ($errors->has('payment_mode'))
                                         <div class="invalid-feedback">{{ $errors->first('payment_mode') }}</div>
@@ -206,7 +204,7 @@
                                 </div>
 
                                 <div class="col-md-6 position-relative">
-                                    <label for="payment_notes" class="form-label">Cash Payment Notes / Receipt Reference</label>
+                                    <label for="payment_notes" class="form-label">{{ __('messages.payment_notes_ref') }}</label>
                                     <textarea name="payment_notes" id="payment_notes" rows="2" class="form-control {{ $errors->has('payment_notes') ? 'is-invalid' : '' }}"
                                         placeholder="e.g. Cash collected by admin, receipt #1234">{{ isset($data) ? $data->payment_notes : old('payment_notes') }}</textarea>
                                     @if ($errors->has('payment_notes'))
@@ -216,13 +214,13 @@
 
                                 @if (isset($data))
                                     <div class="col-12 position-relative">
-                                        <label for="status" class="form-label">Status</label>
+                                        <label for="status" class="form-label">{{ __('messages.status') }}</label>
                                         <select name="status" id="status"
                                             class="form-control {{ $errors->has('status') ? 'is-invalid' : '' }}">
                                             <option value="1"
-                                                {{ isset($data) && $data->status == 1 ? 'selected' : '' }}>Active</option>
+                                                {{ isset($data) && $data->status == 1 ? 'selected' : '' }}>{{ __('messages.active') }}</option>
                                             <option value="0"
-                                                {{ isset($data) && $data->status == 0 ? 'selected' : '' }}>Inactive
+                                                {{ isset($data) && $data->status == 0 ? 'selected' : '' }}>{{ __('messages.inactive') }}
                                             </option>
                                         </select>
                                         @if ($errors->has('status'))
@@ -233,8 +231,8 @@
 
                                 <div class="col-sm-10 mt-4">
                                     <button type="submit"
-                                        class="btn btn-primary">{{ isset($data) ? 'Save Changes' : 'Add Business' }}</button>
-                                    <a href="{{ route('managebusinesses') }}" class="btn btn-secondary ms-2">Cancel</a>
+                                        class="btn btn-primary">{{ isset($data) ? __('messages.save_changes') : __('messages.add_business') }}</button>
+                                    <a href="{{ route('managebusinesses') }}" class="btn btn-secondary ms-2">{{ __('messages.cancel') }}</a>
                                 </div>
                             </form>
                         </div>

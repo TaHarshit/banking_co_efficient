@@ -75,12 +75,12 @@
                             </h5>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                                    <i class="bi bi-phone me-1"></i> 3 App Policy Sections
+                                    <i class="bi bi-phone me-1"></i> {{ __('messages.app_policy_sections') }}
                                 </span>
                                 <span class="badge bg-light text-dark border">
                                     🇬🇧 EN / 🇫🇷 FR
                                 </span>
-                                <span class="badge text-secondary">Optional</span>
+                                <span class="badge text-secondary">{{ __('messages.optional') }}</span>
                             </div>
                         </div>
                         <p class="text-muted small mb-3">
@@ -130,14 +130,14 @@
                             <!-- Collapsible Controls Bar -->
                             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 pb-2 border-bottom">
                                 <div class="small text-muted">
-                                    <i class="bi bi-arrows-expand me-1"></i> Click on any section header to expand or collapse.
+                                    <i class="bi bi-arrows-expand me-1"></i> {{ __('messages.expand_collapse_hint') }}
                                 </div>
                                 <div class="btn-group btn-group-sm">
                                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="expandAllSections()">
-                                        <i class="bi bi-arrows-angle-expand me-1"></i> Expand All
+                                        <i class="bi bi-arrows-angle-expand me-1"></i> {{ __('messages.expand_all') }}
                                     </button>
                                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="collapseAllSections()">
-                                        <i class="bi bi-arrows-angle-contract me-1"></i> Collapse All
+                                        <i class="bi bi-arrows-angle-contract me-1"></i> {{ __('messages.collapse_all') }}
                                     </button>
                                 </div>
                             </div>
@@ -170,15 +170,15 @@
                                              aria-controls="section-collapse-{{ $i }}">
                                             <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
                                                 <span class="badge {{ $meta['badge_bg'] }} rounded-pill px-2 py-1 flex-shrink-0">
-                                                    Section {{ $i + 1 }}
+                                                    {{ __('messages.section') }} {{ $i + 1 }}
                                                 </span>
                                                 <span class="fw-semibold text-dark text-truncate title-preview" id="title-preview-{{ $i }}">
-                                                    {{ $titleEnVal ?: ($titleFrVal ?: 'Empty Section (Click to expand & edit)') }}
+                                                    {{ $titleEnVal ?: ($titleFrVal ?: __('messages.empty_section_hint')) }}
                                                 </span>
                                             </div>
                                             <div class="d-flex align-items-center gap-2 flex-shrink-0">
                                                 <span class="badge bg-light text-secondary border count-badge" id="count-{{ $i }}">
-                                                    {{ $filledCount }} {{ $filledCount === 1 ? 'point' : 'points' }}
+                                                    {{ $filledCount }} {{ $filledCount === 1 ? __('messages.point') : __('messages.points') }}
                                                 </span>
                                                 <i class="bi bi-chevron-down collapse-chevron text-muted"></i>
                                             </div>
@@ -189,7 +189,7 @@
                                                 <div class="row g-2 mb-3">
                                                     <div class="col-md-6">
                                                         <label class="form-label small fw-bold text-dark mb-1">
-                                                            🇬🇧 {{ __('messages.section_title') ?? 'Section Title' }} (EN)
+                                                            🇬🇧 {{ __('messages.section_name_en') }}
                                                         </label>
                                                         <input type="text" name="sections[{{ $i }}][title_en]" 
                                                                class="form-control form-control-sm" 
@@ -199,7 +199,7 @@
                                                     </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label small fw-bold text-dark mb-1">
-                                                            🇫🇷 {{ __('messages.section_title') ?? 'Section Title' }} (FR)
+                                                            🇫🇷 {{ __('messages.section_name_fr') }}
                                                         </label>
                                                         <input type="text" name="sections[{{ $i }}][title_fr]" 
                                                                class="form-control form-control-sm" 
@@ -211,23 +211,23 @@
 
                                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                                     <label class="form-label small fw-bold text-dark m-0">
-                                                        <i class="bi bi-list-check me-1 text-muted"></i>Point Messages (EN / FR)
+                                                        <i class="bi bi-list-check me-1 text-muted"></i>{{ __('messages.point_messages') }}
                                                     </label>
-                                                    <span class="text-muted small">Bullet points shown on mobile app</span>
+                                                    <span class="text-muted small">{{ __('messages.bullet_points_mobile_app') }}</span>
                                                 </div>
 
                                                 <div id="points-container-{{ $i }}" class="points-container mb-3">
                                                     @forelse ($pointsVal as $pIdx => $point)
                                                         @php
                                                             $enVal = is_array($point) ? ($point['en'] ?? '') : (string)$point;
-                                                            $frVal = is_array($point) ? ($point['fr'] ?? '') : '';
+                                                             $frVal = is_array($point) ? ($point['fr'] ?? '') : '';
                                                         @endphp
                                                         <div class="point-item-row point-item">
                                                             <div class="d-flex justify-content-between align-items-center mb-1">
                                                                 <span class="small fw-semibold text-secondary point-label">
-                                                                    <i class="bi bi-circle-fill text-{{ $meta['color'] }} me-1" style="font-size: 0.45rem; vertical-align: middle;"></i>Point #{{ $pIdx + 1 }}
+                                                                    <i class="bi bi-circle-fill text-{{ $meta['color'] }} me-1" style="font-size: 0.45rem; vertical-align: middle;"></i>{{ __('messages.point') }} #{{ $pIdx + 1 }}
                                                                 </span>
-                                                                <button type="button" class="btn btn-sm btn-outline-danger border-0 py-0 px-2" onclick="removePoint(this, {{ $i }})" title="Remove point">
+                                                                <button type="button" class="btn btn-sm btn-outline-danger border-0 py-0 px-2" onclick="removePoint(this, {{ $i }})" title="{{ __('messages.delete') }}">
                                                                     <i class="bi bi-trash"></i>
                                                                 </button>
                                                             </div>
@@ -258,9 +258,9 @@
                                                         <div class="point-item-row point-item">
                                                             <div class="d-flex justify-content-between align-items-center mb-1">
                                                                 <span class="small fw-semibold text-secondary point-label">
-                                                                    <i class="bi bi-circle-fill text-{{ $meta['color'] }} me-1" style="font-size: 0.45rem; vertical-align: middle;"></i>Point #1
+                                                                    <i class="bi bi-circle-fill text-{{ $meta['color'] }} me-1" style="font-size: 0.45rem; vertical-align: middle;"></i>{{ __('messages.point') }} #1
                                                                 </span>
-                                                                <button type="button" class="btn btn-sm btn-outline-danger border-0 py-0 px-2" onclick="removePoint(this, {{ $i }})" title="Remove point">
+                                                                <button type="button" class="btn btn-sm btn-outline-danger border-0 py-0 px-2" onclick="removePoint(this, {{ $i }})" title="{{ __('messages.delete') }}">
                                                                     <i class="bi bi-trash"></i>
                                                                 </button>
                                                             </div>
@@ -291,7 +291,7 @@
                                                 </div>
 
                                                 <button type="button" class="btn btn-outline-{{ $meta['color'] }} btn-sm px-3 rounded-pill" onclick="addPoint({{ $i }})">
-                                                    <i class="bi bi-plus-circle me-1"></i> Add Point
+                                                    <i class="bi bi-plus-circle me-1"></i> {{ __('messages.add_point') }}
                                                 </button>
                                             </div>
                                         </div>
@@ -302,9 +302,9 @@
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-2 border-top">
                                 <small class="text-muted">
                                     @if ($hasActiveSections || $business->business_policies_message)
-                                        <i class="bi bi-check-circle-fill text-success me-1"></i> Bilingual policy sections are active and will be displayed in the app before case creation.
+                                        <i class="bi bi-check-circle-fill text-success me-1"></i> {{ __('messages.policy_sections_active_notice') }}
                                     @else
-                                        <i class="bi bi-info-circle me-1"></i> No policy sections configured. Users will see standard case creation flow without this prompt.
+                                        <i class="bi bi-info-circle me-1"></i> {{ __('messages.no_policy_sections_configured') }}
                                     @endif
                                 </small>
                                 <div class="d-flex gap-2">
@@ -323,9 +323,9 @@
                         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                             <div>
                                 <h5 class="card-title m-0 p-0">
-                                    <i class="bi bi-card-checklist me-2"></i>Policy Questions & Criteria
+                                    <i class="bi bi-card-checklist me-2"></i>{{ __('messages.policy_questions_criteria') }}
                                 </h5>
-                                <p class="text-muted small m-0">Questions and evaluation criteria used during case study analysis.</p>
+                                <p class="text-muted small m-0">{{ __('messages.policy_questions_desc') }}</p>
                             </div>
                             <div class="d-flex gap-2">
                                 <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#importModal">
@@ -341,8 +341,7 @@
                             <div class="alert alert-warning d-flex align-items-center" role="alert">
                                 <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2 fs-5"></i>
                                 <div>
-                                    <strong>Default Global Policies Active:</strong> Your bank currently uses the system's global default policy questions ({{ $globalQuestionsCount }} questions). 
-                                    Once you add or import customized questions here, your bank's case studies will automatically evaluate against your specific policies.
+                                    <strong>{{ __('messages.default_global_policies_active') }}:</strong> {{ __('messages.bank_uses_global_policies_desc') }} ({{ $globalQuestionsCount }} {{ __('messages.questions') }}).
                                 </div>
                             </div>
                         @endif
@@ -352,10 +351,10 @@
                                 <table class="table table-bordered table-hover datatable">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>{{ __('messages.section') }} (EN)</th>
-                                            <th>{{ __('messages.section') }} (FR)</th>
-                                            <th>{{ __('messages.question') }} (EN)</th>
-                                            <th>{{ __('messages.question') }} (FR)</th>
+                                            <th>{{ __('messages.section_name_en') }}</th>
+                                            <th>{{ __('messages.section_name_fr') }}</th>
+                                            <th>{{ __('messages.question_en') }}</th>
+                                            <th>{{ __('messages.question_fr') }}</th>
                                             <th class="text-center">{{ __('messages.options') }}</th>
                                             <th class="text-center" width="130">{{ __('messages.action') }}</th>
                                         </tr>
@@ -370,12 +369,12 @@
                                                 <td class="text-center"><span class="badge bg-secondary rounded-pill">{{ $question->options->count() }}</span></td>
                                                 <td class="text-center">
                                                     <a href="{{ route('business.policies.edit', $question->id) }}"
-                                                        class="btn btn-sm btn-outline-primary me-1" title="Edit">
+                                                        class="btn btn-sm btn-outline-primary me-1" title="{{ __('messages.edit') }}">
                                                         <i class="bi bi-pencil-fill"></i>
                                                     </a>
                                                     <a href="{{ route('business.policies.destroy', $question->id) }}"
                                                         onclick="return confirm('{{ __('messages.confirm_delete_policy_question') }}')"
-                                                        class="btn btn-sm btn-outline-danger" title="Delete">
+                                                        class="btn btn-sm btn-outline-danger" title="{{ __('messages.delete') }}">
                                                         <i class="bi bi-trash-fill"></i>
                                                     </a>
                                                 </td>
@@ -390,10 +389,10 @@
                         @else
                             <div class="text-center py-4 border rounded bg-light">
                                 <i class="bi bi-shield-lock display-6 text-muted mb-2 d-block"></i>
-                                <h6 class="text-muted">No custom policy questions yet.</h6>
-                                <p class="text-muted small mb-3">Click "Add Question" to create your bank's specific policy questions, or "Import" from an Excel/CSV file.</p>
+                                <h6 class="text-muted">{{ __('messages.no_custom_policy_questions') }}</h6>
+                                <p class="text-muted small mb-3">{{ __('messages.no_custom_policy_questions_desc') }}</p>
                                 <a href="{{ route('business.policies.create') }}" class="btn btn-primary btn-sm">
-                                    <i class="bi bi-plus-circle me-1"></i> Add First Policy Question
+                                    <i class="bi bi-plus-circle me-1"></i> {{ __('messages.add_first_policy_question') }}
                                 </a>
                             </div>
                         @endif
@@ -416,17 +415,17 @@
                     </div>
                     <div class="modal-body">
                         <p class="small text-muted mb-3">
-                            Upload an Excel (.xlsx, .xls) or CSV file containing your bank's policy questions and options.
+                            {{ __('messages.import_policy_desc') }}
                         </p>
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">File <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">{{ __('messages.excel_csv_file') }} <span class="text-danger">*</span></label>
                             <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ __('messages.close') }}</button>
                         <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="bi bi-upload me-1"></i> Upload & Import
+                            <i class="bi bi-upload me-1"></i> {{ __('messages.upload_import') }}
                         </button>
                     </div>
                 </form>
@@ -556,7 +555,7 @@
                     });
                     if (hasVal) count++;
                 });
-                badge.textContent = `${count} ${count === 1 ? 'point' : 'points'}`;
+                badge.textContent = `${count} ${count === 1 ? @json(__('messages.point')) : @json(__('messages.points'))}`;
             }
         }
 
@@ -571,7 +570,7 @@
                 if (en && fr) {
                     label = `${en} (${fr})`;
                 } else {
-                    label = en || fr || 'Empty Section (Click to expand & edit)';
+                    label = en || fr || @json(__('messages.empty_section_hint'));
                 }
                 preview.textContent = label;
             }

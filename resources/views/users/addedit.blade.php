@@ -76,7 +76,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="username" class="form-label">Username</label>
+                                    <label for="username" class="form-label">{{ __('messages.username') }}</label>
                                     <input type="text" name="username" class="form-control @error('username') is-invalid @enderror" id="username"
                                         value="{{ isset($data) ? $data->username : old('username') }}">
                                     @error('username')
@@ -94,9 +94,9 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="business_id" class="form-label">Select Business</label>
+                                    <label for="business_id" class="form-label">{{ __('messages.select_business') }}</label>
                                     <select name="business_id" id="business_id" class="form-select @error('business_id') is-invalid @enderror">
-                                        <option value="">No Business (Individual)</option>
+                                        <option value="">{{ __('messages.no_business_individual') }}</option>
                                         @foreach($businesses as $business)
                                             <option value="{{ $business->id }}" 
                                                 {{ (isset($data) && $data->business_id == $business->id) || old('business_id') == $business->id ? 'selected' : '' }}>
@@ -110,7 +110,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="job_title" class="form-label">Job Title</label>
+                                    <label for="job_title" class="form-label">{{ __('messages.job_title') }}</label>
                                     <input type="text" name="job_title" class="form-control @error('job_title') is-invalid @enderror" id="job_title"
                                         value="{{ isset($data) ? $data->job_title : old('job_title') }}">
                                     @error('job_title')
@@ -119,7 +119,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="institution" class="form-label">Institution</label>
+                                    <label for="institution" class="form-label">{{ __('messages.institution') }}</label>
                                     <input type="text" name="institution" class="form-control @error('institution') is-invalid @enderror" id="institution"
                                         value="{{ isset($data) ? $data->institution : old('institution') }}">
                                     @error('institution')
@@ -128,7 +128,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="department" class="form-label">Department</label>
+                                    <label for="department" class="form-label">{{ __('messages.department') }}</label>
                                     <input type="text" name="department" class="form-control @error('department') is-invalid @enderror" id="department"
                                         value="{{ isset($data) ? $data->department : old('department') }}">
                                     @error('department')
@@ -137,7 +137,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="year_of_experience" class="form-label">Years of Experience</label>
+                                    <label for="year_of_experience" class="form-label">{{ __('messages.years_of_experience') }}</label>
                                     <input type="text" name="year_of_experience" class="form-control @error('year_of_experience') is-invalid @enderror" id="year_of_experience"
                                         value="{{ isset($data) ? $data->year_of_experience : old('year_of_experience') }}">
                                     @error('year_of_experience')
@@ -167,7 +167,7 @@
                                                 <i class="bi bi-eye-slash" id="passwordToggleIcon"></i>
                                             </button>
                                         </div>
-                                        <small class="text-muted">Leave blank to keep current password.</small>
+                                        <small class="text-muted">{{ __('messages.leave_blank_keep_password') }}</small>
                                         @error('password')
                                             <div class="invalid-feedback d-block">{{ $message }}</div>
                                         @enderror
@@ -177,7 +177,7 @@
                                         <div class="alert alert-info border-info d-flex align-items-center">
                                             <i class="bi bi-info-circle me-2 fs-4"></i>
                                             <div>
-                                                Password will be automatically generated and sent to the user's email address.
+                                                {{ __('messages.password_auto_generated_notice') }}
                                             </div>
                                         </div>
                                     </div>
@@ -188,7 +188,7 @@
                                         <i class="bi bi-save me-1"></i>
                                         {{ isset($data) ? __('messages.save') : __('messages.add') }}
                                     </button>
-                                    <a href="{{ route('manageusers') }}" class="btn btn-light ms-2">Cancel</a>
+                                    <a href="{{ route('manageusers') }}" class="btn btn-light ms-2">{{ __('messages.cancel') }}</a>
                                 </div>
                             </form>
                         </div>

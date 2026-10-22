@@ -147,7 +147,7 @@
                 <a class="nav-link {{ request()->routeIs('business.contacts*') ? '' : 'collapsed' }}"
                     href="{{ route('business.contacts') }}">
                     <i class="bi bi-envelope"></i>
-                    <span>{{ __('Contact Us') }}</span>
+                    <span>{{ __('messages.contact_us') }}</span>
                 </a>
             </li>
 

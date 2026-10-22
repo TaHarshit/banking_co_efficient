@@ -187,11 +187,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                         class="form-label">{{ __('messages.exam_level_en') ?? 'Exam Level (EN)' }}</label>
                                     <select name="exam_level" id="exam_level"
                                         class="form-control {{ $errors->has('exam_level') ? 'is-invalid' : '' }}">
-                                        <option value="">Select Exam Level</option>
-                                        <option value="beginner" {{ isset($data) && $data->exam_level == 'beginner' ? 'selected' : '' }}>Beginner</option>
-                                        <option value="intermediate" {{ isset($data) && $data->exam_level == 'intermediate' ? 'selected' : '' }}>Intermediate</option>
-                                        <option value="advanced" {{ isset($data) && $data->exam_level == 'advanced' ? 'selected' : '' }}>Advanced</option>
-                                        <option value="expert" {{ isset($data) && $data->exam_level == 'expert' ? 'selected' : '' }}>Expert</option>
+                                        <option value="">{{ __('messages.select_exam_level') }}</option>
+                                        <option value="beginner" {{ isset($data) && $data->exam_level == 'beginner' ? 'selected' : '' }}>{{ __('messages.beginner') }}</option>
+                                        <option value="intermediate" {{ isset($data) && $data->exam_level == 'intermediate' ? 'selected' : '' }}>{{ __('messages.intermediate') }}</option>
+                                        <option value="advanced" {{ isset($data) && $data->exam_level == 'advanced' ? 'selected' : '' }}>{{ __('messages.advanced') }}</option>
+                                        <option value="expert" {{ isset($data) && $data->exam_level == 'expert' ? 'selected' : '' }}>{{ __('messages.expert') }}</option>
                                     </select>
                                     @if ($errors->has('exam_level'))
                                         <div class="invalid-feedback">{{ $errors->first('exam_level') }}</div>

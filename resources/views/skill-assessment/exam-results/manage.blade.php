@@ -57,11 +57,11 @@
                                     <select name="status" class="form-select">
                                         <option value="">{{ __('messages.all_statuses') ?? 'All Statuses' }}</option>
                                         <option value="in_progress"
-                                            {{ request('status') == 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                                            {{ request('status') == 'in_progress' ? 'selected' : '' }}>{{ __('messages.in_progress') }}</option>
                                         <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>
-                                            Completed</option>
+                                            {{ __('messages.completed') }}</option>
                                         <option value="evaluated" {{ request('status') == 'evaluated' ? 'selected' : '' }}>
-                                            Evaluated</option>
+                                            {{ __('messages.evaluated') }}</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3 d-flex align-items-end">
@@ -115,15 +115,15 @@
                                                                 class="badge {{ $exam->percentage >= 70 ? 'bg-success' : ($exam->percentage >= 40 ? 'bg-warning' : 'bg-danger') }}">
                                                                 {{ number_format($exam->percentage, 1) }}%
                                                             </span>
-                                                            <small class="text-muted d-block font-monospace">Score (1-5): {{ number_format($exam->score_scale_5, 2) }}</small>
+                                                            <small class="text-muted d-block font-monospace">{{ __('messages.score_1_5') }}: {{ number_format($exam->score_scale_5, 2) }}</small>
                                                         </td>
                                                         <td>
                                                             @if ($exam->status == 'in_progress')
-                                                                <span class="badge bg-secondary">In Progress</span>
+                                                                <span class="badge bg-secondary">{{ __('messages.in_progress') }}</span>
                                                             @elseif($exam->status == 'completed')
-                                                                <span class="badge bg-primary">Completed</span>
+                                                                <span class="badge bg-primary">{{ __('messages.completed') }}</span>
                                                             @else
-                                                                <span class="badge bg-success">Evaluated</span>
+                                                                <span class="badge bg-success">{{ __('messages.evaluated') }}</span>
                                                             @endif
                                                         </td>
                                                         <td>{{ $exam->completed_at ? $exam->completed_at->format('d M Y H:i') : 'N/A' }}
@@ -140,7 +140,7 @@
                                                 @endforeach
                                             </tbody>
                                         </table>
-                                        <div class="d-flex justify-content-center">
+                                        <div class="mt-2">
                                             {{ $exams->links() }}
                                         </div>
                                     </div>

@@ -43,12 +43,12 @@
                 @if(!$isSubActive)
                     <div class="alert alert-danger">
                         <i class="bi bi-exclamation-octagon-fill me-2"></i>
-                        Your business subscription is not active or has expired. Adding new employees or approving users is currently disabled. Please contact your system administrator.
+                        {{ __('messages.business_sub_inactive_notice') }}
                     </div>
                 @elseif($remQ <= 0)
                     <div class="alert alert-warning">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        You have used all <strong>{{ $totQ }}</strong> employee seats in your quota. To add more employees, please contact administrator to upgrade your plan.
+                        {{ __('messages.quota_exceeded_notice') }}
                     </div>
                 @endif
 
@@ -56,7 +56,7 @@
                     <div class="card-body">
                         <h5 class="card-title">{{ __('messages.employee_list') }}
                             <span class="badge {{ $remQ > 0 ? 'bg-primary' : 'bg-danger' }} ms-2" style="font-size: 13px; font-weight: 500;">
-                                <i class="bi bi-people me-1"></i>Seats: {{ $usedQ }} / {{ $totQ }} used ({{ $remQ }} available)
+                                <i class="bi bi-people me-1"></i>{{ __('messages.seats') }}: {{ $usedQ }} / {{ $totQ }} {{ __('messages.used') }} ({{ $remQ }} {{ __('messages.available') }})
                             </span>
                             <div style="float: right;">
                                 <a href="{{ route('business.employees.import') }}" class="btn btn-success me-2">

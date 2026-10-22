@@ -54,7 +54,7 @@
 @section('content')
     <div class="pagetitle mb-4">
         <h1>{{ __('messages.manage_sections') }}</h1>
-        <p class="form-text text-muted">Onboarding Section</p>
+        <p class="form-text text-muted">{{ __('messages.onboarding_section') }}</p>
         <nav>
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="{{ route('business.dashboard') }}">{{ __('messages.dashboard') }}</a></li>
@@ -69,7 +69,7 @@
                 @include('partials.messages')
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">{{ __('messages.manage_sections') }} <span class="form-text text-muted">(Onboarding)</span>
+                        <h5 class="card-title">{{ __('messages.manage_sections') }} <span class="form-text text-muted">({{ __('messages.onboarding') }})</span>
                             <a href="{{ route('business.sections.create') }}" class="btn btn-primary" style="float: right;">
                                 <i class="bi bi-plus"></i> {{ __('messages.add_section') }}
                             </a>

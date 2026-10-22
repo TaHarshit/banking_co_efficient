@@ -84,7 +84,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="username" class="form-label">Username</label>
+                                    <label for="username" class="form-label">{{ __('messages.username') }}</label>
                                     <input type="text" name="username"
                                         class="form-control @error('username') is-invalid @enderror" id="username"
                                         value="{{ isset($data) ? $data->username : old('username') }}">
@@ -105,7 +105,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="job_title" class="form-label">Job Title</label>
+                                    <label for="job_title" class="form-label">{{ __('messages.job_title') }}</label>
                                     <input type="text" name="job_title"
                                         class="form-control @error('job_title') is-invalid @enderror" id="job_title"
                                         value="{{ isset($data) ? $data->job_title : old('job_title') }}">
@@ -115,7 +115,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="institution" class="form-label">Institution</label>
+                                    <label for="institution" class="form-label">{{ __('messages.institution') }}</label>
                                     <input type="text" name="institution"
                                         class="form-control @error('institution') is-invalid @enderror" id="institution"
                                         value="{{ isset($data) ? $data->institution : old('institution') }}">
@@ -125,7 +125,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="department" class="form-label">Department</label>
+                                    <label for="department" class="form-label">{{ __('messages.department') }}</label>
                                     <input type="text" name="department"
                                         class="form-control @error('department') is-invalid @enderror" id="department"
                                         value="{{ isset($data) ? $data->department : old('department') }}">
@@ -135,7 +135,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="year_of_experience" class="form-label">Years of Experience</label>
+                                    <label for="year_of_experience" class="form-label">{{ __('messages.years_of_experience') }}</label>
                                     <input type="text" name="year_of_experience"
                                         class="form-control @error('year_of_experience') is-invalid @enderror"
                                         id="year_of_experience"
@@ -154,7 +154,7 @@
                                             <i class="bi bi-eye-slash" id="profilePasswordToggleIcon"></i>
                                         </button>
                                     </div>
-                                    <small class="text-muted">Leave blank to keep current password.</small>
+                                    <small class="text-muted">{{ __('messages.leave_blank_keep_password') }}</small>
                                     @error('password')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
@@ -176,7 +176,7 @@
                                         <i class="bi bi-save me-1"></i>
                                         {{ __('messages.save') }}
                                     </button>
-                                    <a href="{{ route('dashboard') }}" class="btn btn-light ms-2">Cancel</a>
+                                    <a href="{{ route('dashboard') }}" class="btn btn-light ms-2">{{ __('messages.cancel') }}</a>
                                 </div>
                             </form>
                         </div>

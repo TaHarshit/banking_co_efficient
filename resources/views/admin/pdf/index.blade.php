@@ -91,7 +91,7 @@
                 <div class="col-lg-12">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">Document Information</h5>
+                            <h5 class="card-title">{{ __('messages.document_information') }}</h5>
 
                             <div class="row mb-4">
                                 <div class="col-md-6">
@@ -110,8 +110,8 @@
                                         <hr>
                                         <div class="row">
                                             <div class="col-4">
-                                                <small class="text-muted d-block">Document ID</small>
-                                                <span class="badge bg-secondary font-monospace">{{ $documentId ?? 'N/A' }}</span>
+                                                <small class="text-muted d-block">{{ __('messages.document_id') }}</small>
+                                                <span class="badge bg-secondary font-monospace">{{ $documentId ?? __('messages.na') }}</span>
                                             </div>
                                             <div class="col-4">
                                                 <small class="text-muted d-block">{{ __('messages.file_size') }}</small>

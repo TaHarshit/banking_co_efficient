@@ -90,7 +90,7 @@
                                                 class="form-control {{ $errors->has('email') ? 'is-invalid' : '' }}"
                                                 id="email">
                                             @if ($errors->has('email'))
-                                                <div class="invalid-tooltip">{{ $errors->first('email') }}</div>
+                                                <div class="invalid-feedback">{{ $errors->first('email') }}</div>
                                             @endif
                                         </div>
                                         <div class="col-12 position-relative">
@@ -104,7 +104,7 @@
                                                     <i class="bi bi-eye-slash" id="passwordToggleIcon"></i>
                                                 </button>
                                                 @if ($errors->has('password'))
-                                                    <div class="invalid-tooltip">{{ $errors->first('password') }}</div>
+                                                    <div class="invalid-feedback">{{ $errors->first('password') }}</div>
                                                 @endif
                                             </div>
                                         </div>
@@ -143,8 +143,8 @@
                                 </div>
                             </div>
                             <!-- <div class="credits">
-                                                                    Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
-                                                                </div> -->
+                                                                        Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+                                                                    </div> -->
                         </div>
                     </div>
                 </div>

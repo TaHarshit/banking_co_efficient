@@ -46,7 +46,7 @@
                 score: score
             }, function(data) {
                 if (data.success) {
-                    NotifMsg('Score updated successfully', 'success', 'Success');
+                    NotifMsg('{{ __('messages.score_updated_successfully') }}', 'success', '{{ __('messages.success') }}');
                     // Update totals
                     document.getElementById('total_score').textContent = data.exam.total_score;
                     document.getElementById('percentage').textContent = parseFloat(data.exam.percentage).toFixed(
@@ -57,10 +57,10 @@
                     document.getElementById('exam_status').textContent = data.exam.status.charAt(0).toUpperCase() +
                         data.exam.status.slice(1);
                 } else {
-                    NotifMsg('Something went wrong', 'danger', 'Error');
+                    NotifMsg('{{ __('messages.something_went_wrong') }}', 'danger', '{{ __('messages.danger') }}');
                 }
             }).fail(function() {
-                NotifMsg('Failed to update score', 'danger', 'Error');
+                NotifMsg('{{ __('messages.failed_to_update_score') }}', 'danger', '{{ __('messages.danger') }}');
             });
         }
     </script>
@@ -129,7 +129,7 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th>Score (1-5 Scale)</th>
+                                    <th>{{ __('messages.score_1_5_scale') }}</th>
                                     <td>
                                         <span id="score_scale_5" class="fw-bold text-primary">
                                             {{ number_format($exam->score_scale_5, 2) }}
@@ -147,15 +147,15 @@
                     @if(!empty($exam->section_scores))
                         <div class="card mt-3">
                             <div class="card-body">
-                                <h5 class="card-title">Section-Wise Scores</h5>
+                                <h5 class="card-title">{{ __('messages.section_wise_scores') }}</h5>
                                 <div class="table-responsive">
                                     <table class="table table-bordered table-sm align-middle">
                                         <thead>
                                             <tr>
-                                                <th>Section</th>
-                                                <th>Score</th>
+                                                <th>{{ __('messages.section') }}</th>
+                                                <th>{{ __('messages.score') }}</th>
                                                 <th>%</th>
-                                                <th>1-5 Scale</th>
+                                                <th>{{ __('messages.scale_1_5') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -195,7 +195,7 @@
                                         @if ($answer->question->question_type == 'open_text')
                                             <div class="open-text-answer">
                                                 <strong>{{ __('messages.answer') ?? 'Answer' }}:</strong>
-                                                <p class="mb-2">{{ $answer->text_answer ?? 'No answer provided' }}</p>
+                                                <p class="mb-2">{{ $answer->text_answer ?? __('messages.no_answer_provided') }}</p>
                                                 <hr>
                                                 <div class="d-flex align-items-center gap-2">
                                                     <label><strong>{{ __('messages.score') ?? 'Score' }}:</strong></label>

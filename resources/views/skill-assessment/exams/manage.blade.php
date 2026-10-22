@@ -17,9 +17,9 @@
                 status: status
             }, function(data) {
                 if (data == 1) {
-                    NotifMsg('Exam template status updated successfully', 'success', 'Success');
+                    NotifMsg('{{ __('messages.exam_status_updated') }}', 'success', '{{ __('messages.success') }}');
                 } else {
-                    NotifMsg('Something went wrong', 'danger', 'Danger');
+                    NotifMsg('{{ __('messages.something_went_wrong') }}', 'danger', '{{ __('messages.danger') }}');
                 }
             });
         }
@@ -63,7 +63,7 @@
                                 <div class="col-md-3">
                                     <label for="exam_source_filter" class="form-label">{{ __('messages.filter_by_type') ?? 'Type' }}</label>
                                     <select id="exam_source_filter" class="form-select" onchange="filterExamsBySource(this.value)">
-                                        <option value="">All</option>
+                                        <option value="">{{ __('messages.all') }}</option>
                                         <option value="global" {{ (isset($source) && $source == 'global') ? 'selected' : '' }}>{{ __('messages.global') ?? 'Global' }}</option>
                                         <option value="business" {{ (isset($source) && $source == 'business') ? 'selected' : '' }}>{{ __('messages.business') ?? 'Business' }}</option>
                                     </select>
@@ -122,14 +122,14 @@
                                                                 @if ($template->duration_minutes)
                                                                     {{ $template->duration_minutes }} min
                                                                 @else
-                                                                    <span class="text-muted">No limit</span>
+                                                                    <span class="text-muted">{{ __('messages.no_limit') }}</span>
                                                                 @endif
                                                             </td>
                                                             <td>
                                                                 @if ($template->passing_percentage)
                                                                     {{ $template->passing_percentage }}%
                                                                 @else
-                                                                    <span class="text-muted">N/A</span>
+                                                                    <span class="text-muted">{{ __('messages.na') }}</span>
                                                                 @endif
                                                             </td>
                                                             <td>

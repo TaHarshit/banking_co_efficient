@@ -48,7 +48,7 @@
                         <div class="card-body">
                             <h5 class="card-title">{{ __('messages.manage_businesses') }}
                                 <a href="{{ route('createbusiness') }}" class="btn btn-primary"
-                                    style="float: right;">{{ __('messages.add_new') }} {{ __('messages.business') }}</a>
+                                    style="float: right;"><i class="bi bi-plus"></i> {{ __('messages.add_new') }} {{ __('messages.business') }}</a>
                             </h5>
                             <div class="row">
                                 <div class="col-12">
@@ -62,9 +62,9 @@
                                                     <th style="white-space: nowrap;">{{ __('messages.business_code') }}</th>
                                                     <th>{{ __('messages.email') }}</th>
                                                     <th>{{ __('messages.address') }}</th>
-                                                    <th style="min-width: 110px;">Plan / Status</th>
-                                                    <th style="min-width: 150px; white-space: nowrap;">Validity Period</th>
-                                                    <th style="min-width: 120px; white-space: nowrap;">Quota (Seats)</th>
+                                                    <th style="min-width: 110px;">{{ __('messages.plan_status') }}</th>
+                                                    <th style="min-width: 150px; white-space: nowrap;">{{ __('messages.validity_period') }}</th>
+                                                    <th style="min-width: 120px; white-space: nowrap;">{{ __('messages.quota_seats') }}</th>
                                                     <th>{{ __('messages.status') }}</th>
                                                     <th style="min-width: 130px; width: 130px; text-align: center; white-space: nowrap;">{{ __('messages.action') }}</th>
                                                 </tr>
@@ -112,7 +112,7 @@
                                                                     {{ \Carbon\Carbon::parse($val->subscription_end_date)->format('M d, Y') }}
                                                                 </small>
                                                             @else
-                                                                <span class="text-muted small">Not Set</span>
+                                                                <span class="text-muted small">{{ __('messages.not_set') }}</span>
                                                             @endif
                                                         </td>
                                                         <td class="text-nowrap">
@@ -121,7 +121,7 @@
                                                                 $totalQuota = (int)($val->user_quota ?? 0);
                                                             @endphp
                                                             <span class="badge {{ $usedQuota >= $totalQuota && $totalQuota > 0 ? 'bg-warning text-dark' : 'bg-info text-dark' }}">
-                                                                {{ $usedQuota }} / {{ $totalQuota }} Seats
+                                                                {{ $usedQuota }} / {{ $totalQuota }} {{ __('messages.seats') }}
                                                             </span>
                                                         </td>
                                                         <td>
@@ -132,24 +132,24 @@
                                                                     value="{{ $val->id }}">
                                                             </div>
                                                         </td>
-                                                        <td class="text-nowrap" style="min-width: 130px; text-align: center;">
+                                                        <td class="text-nowrap" style="min-width: 130px; text-align: left;">
                                                             <div class="d-inline-flex align-items-center justify-content-center gap-2">
                                                                 <a href="{{ route('updatebusiness', ['id' => $val->id]) }}"
                                                                     style="font-size: 20px; color:#00ACEF !important"
-                                                                    class="text-primary" title="Edit">
+                                                                    class="text-primary" title="{{ __('messages.edit') }}">
                                                                     <i class="bi bi-pencil-fill"></i>
                                                                 </a>
                                                                 @if (empty($val->password))
                                                                     <a href="{{ route('resendbusinessinvitation', ['id' => $val->id]) }}"
                                                                         style="font-size: 20px; color:#FFA500 !important"
-                                                                        class="text-warning" title="Resend Invitation">
+                                                                        class="text-warning" title="{{ __('messages.resend_invitation') }}">
                                                                         <i class="bi bi-envelope-fill"></i>
                                                                     </a>
                                                                 @endif
                                                                 <a href="javascript:void(0);"
                                                                     style="font-size: 20px; color:#EE6C4D !important;"
                                                                     onclick="return showConfirmToast('{{ route('deletebusiness', ['id' => $val->id]) }}')"
-                                                                    class="text-danger" title="Delete"><i
+                                                                    class="text-danger" title="{{ __('messages.delete') }}"><i
                                                                         class="bi bi-trash-fill"></i></a>
                                                             </div>
                                                         </td>

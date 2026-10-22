@@ -419,16 +419,16 @@
                                 <div class="card-body pb-0">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h5 class="card-title mb-0">{{ __('messages.skill_assessment_results') }} <span>|
-                                                Cumulative</span></h5>
+                                                {{ __('messages.cumulative') }}</span></h5>
                                         @if ((isset($exam_types) && count($exam_types) > 0) || (isset($exam_templates) && count($exam_templates) > 0))
                                             <div class="d-flex align-items-center">
                                                 @if (isset($exam_types) && count($exam_types) > 0)
                                                     <label for="examTypeFilter"
-                                                        class="form-label me-2 mb-0">{{ __('messages.filter_by_type') ?? 'Filter by Type' }}</label>
+                                                        class="form-label me-2 mb-0">{{ __('messages.filter_by_exam_type') }}</label>
                                                     <select id="examTypeFilter" class="form-select form-select-sm me-2"
                                                         style="width: 200px;">
                                                         <option value="">
-                                                            {{ __('messages.all_exam_types') ?? 'All Types' }}</option>
+                                                            {{ __('messages.all_exam_types') }}</option>
                                                         @foreach ($exam_types as $key => $label)
                                                             <option value="{{ $key }}"
                                                                 {{ isset($selected_exam_type) && $selected_exam_type == $key ? 'selected' : '' }}>
@@ -470,7 +470,7 @@
                                                         left: 'left'
                                                     },
                                                     series: [{
-                                                        name: 'User Count',
+                                                        name: '{{ __('messages.user_count') }}',
                                                         type: 'pie',
                                                         radius: '50%',
                                                         data: [{
@@ -584,7 +584,7 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="5" class="text-center">
+                                                    <td colspan="6" class="text-center">
                                                         {{ __('messages.no_recent_businesses') }}</td>
                                                 </tr>
                                             @endforelse

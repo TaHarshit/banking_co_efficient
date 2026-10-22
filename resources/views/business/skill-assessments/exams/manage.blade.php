@@ -53,14 +53,14 @@
                                                             @if ($template->duration_minutes)
                                                                 {{ $template->duration_minutes }} min
                                                             @else
-                                                                <span class="text-muted">No limit</span>
+                                                                <span class="text-muted">{{ __('messages.no_limit') }}</span>
                                                             @endif
                                                         </td>
                                                         <td>
                                                             @if ($template->passing_percentage)
                                                                 {{ $template->passing_percentage }}%
                                                             @else
-                                                                <span class="text-muted">N/A</span>
+                                                                <span class="text-muted">{{ __('messages.na') }}</span>
                                                             @endif
                                                         </td>
                                                         <td>
@@ -126,9 +126,9 @@
                 status: status
             }, function(data) {
                 if (data == 1) {
-                    NotifMsg('Exam template status updated successfully', 'success', 'Success');
+                    NotifMsg('{{ __('messages.exam_status_updated') }}', 'success', '{{ __('messages.success') }}');
                 } else {
-                    NotifMsg('Something went wrong', 'danger', 'Danger');
+                    NotifMsg('{{ __('messages.something_went_wrong') }}', 'danger', '{{ __('messages.danger') }}');
                 }
             });
         }

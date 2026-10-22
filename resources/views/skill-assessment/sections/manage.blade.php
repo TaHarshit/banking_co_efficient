@@ -17,9 +17,9 @@
                 status: status
             }, function(data) {
                 if (data == 1) {
-                    NotifMsg('Section status updated successfully', 'success', 'Success');
+                    NotifMsg('{{ __('messages.section_status_updated') }}', 'success', '{{ __('messages.success') }}');
                 } else {
-                    NotifMsg('Something went wrong', 'danger', 'Danger');
+                    NotifMsg('{{ __('messages.something_went_wrong') }}', 'danger', '{{ __('messages.danger') }}');
                 }
             });
         }

@@ -35,7 +35,7 @@
                             </div>
                             <div class="ms-auto text-end">
                                 <div class="d-flex align-items-center gap-2 justify-content-end mb-1">
-                                    <span class="badge bg-primary fs-6">{{ $plan ? $plan->name : 'Business Account' }}</span>
+                                    <span class="badge bg-primary fs-6">{{ $plan ? $plan->name : __('messages.business_account') }}</span>
                                     @php
                                         $badgeClass = $subscriptionStatusText === 'Active' ? 'bg-success' : ($subscriptionStatusText === 'Expired' ? 'bg-danger' : 'bg-warning text-dark');
                                     @endphp
@@ -43,12 +43,12 @@
                                 </div>
                                 @if($business->subscription_end_date)
                                     <small class="text-muted d-block">
-                                        <i class="bi bi-calendar-check me-1"></i>Valid until: <strong>{{ \Carbon\Carbon::parse($business->subscription_end_date)->format('M d, Y') }}</strong>
+                                        <i class="bi bi-calendar-check me-1"></i>{{ __('messages.valid_until') }}: <strong>{{ \Carbon\Carbon::parse($business->subscription_end_date)->format('M d, Y') }}</strong>
                                     </small>
                                 @endif
                                 <small class="text-muted">
-                                    <i class="bi bi-people me-1"></i>Quota: <strong>{{ $usedSeats }} / {{ $totalSeats }} Seats</strong>
-                                    ({{ $seatsRemaining }} remaining)
+                                    <i class="bi bi-people me-1"></i>{{ __('messages.quota') }}: <strong>{{ $usedSeats }} / {{ $totalSeats }} {{ __('messages.seats') }}</strong>
+                                    ({{ $seatsRemaining }} {{ __('messages.remaining') }})
                                 </small>
                             </div>
                         </div>
@@ -206,10 +206,10 @@
                                     @if (isset($exam_types) && count($exam_types) > 0)
                                         <div class="d-flex align-items-center">
                                             <label for="examTypeFilter"
-                                                class="form-label me-2 mb-0 text-nowrap">{{ __('messages.filter_by_exam_type') ?? 'Filter by Type' }}</label>
+                                                class="form-label me-2 mb-0 text-nowrap">{{ __('messages.filter_by_exam_type') }}</label>
                                             <select id="examTypeFilter" class="form-select form-select-sm"
                                                 style="max-width: 200px;">
-                                                <option value="">{{ __('messages.all_exam_types') ?? 'All Types' }}
+                                                <option value="">{{ __('messages.all_exam_types') }}
                                                 </option>
                                                 @foreach ($exam_types as $key => $label)
                                                     <option value="{{ $key }}"
@@ -253,7 +253,7 @@
                                         data: {
                                             labels: ['0-50%', '51-70%', '71-90%', '91-100%'],
                                             datasets: [{
-                                                label: 'User Count',
+                                                label: @json(__('messages.users')),
                                                 data: [
                                                     data['0-50'],
                                                     data['51-70'],
@@ -297,7 +297,7 @@
                                                             }
                                                             const total = data['0-50'] + data['51-70'] + data['71-90'] +
                                                                 data['91-100'];
-                                                            label += context.raw + ' Users (' +
+                                                            label += context.raw + ' ' + @json(__('messages.users')) + ' (' +
                                                                 Math.round(context.raw / (total || 1) * 100) + '%)';
                                                             return label;
                                                         }

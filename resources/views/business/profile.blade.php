@@ -42,7 +42,7 @@
             copyText.select();
             copyText.setSelectionRange(0, 99999);
             navigator.clipboard.writeText(copyText.value).then(() => {
-                alert("{{ __('messages.business_code') }} copied: " + copyText.value);
+                alert("{{ __('messages.code_copied') }}");
             });
         }
     </script>

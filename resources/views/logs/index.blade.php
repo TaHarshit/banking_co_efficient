@@ -12,11 +12,11 @@
     @include('partials.sidebar')
     <main id="main" class="main">
         <div class="pagetitle mb-4">
-            <h1>Admin Activity Logs</h1>
+            <h1>{{ __('messages.admin_activity_logs') }}</h1>
             <nav>
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Activity Logs</li>
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">{{ __('messages.dashboard') }}</a></li>
+                    <li class="breadcrumb-item active">{{ __('messages.activity_logs') }}</li>
                 </ol>
             </nav>
         </div>
@@ -28,9 +28,9 @@
                             <h5 class="card-title">
                                 <form method="GET" action="{{ route('admin.activity_logs.index') }}" class="row g-3 align-items-center">
                                     <div class="col-md-3">
-                                        <label for="moduleFilter" class="form-label mb-0 fw-bold">Module</label>
+                                        <label for="moduleFilter" class="form-label mb-0 fw-bold">{{ __('messages.module') }}</label>
                                         <select name="module" id="moduleFilter" class="form-select" onchange="this.form.submit()">
-                                            <option value="">All Modules</option>
+                                            <option value="">{{ __('messages.all_modules') }}</option>
                                             @foreach ($modules as $module)
                                                 <option value="{{ $module }}" {{ request('module') == $module ? 'selected' : '' }}>
                                                     {{ $module }}
@@ -39,9 +39,9 @@
                                         </select>
                                     </div>
                                     <div class="col-md-3">
-                                        <label for="adminFilter" class="form-label mb-0 fw-bold">Admin</label>
+                                        <label for="adminFilter" class="form-label mb-0 fw-bold">{{ __('messages.admin') }}</label>
                                         <select name="admin_id" id="adminFilter" class="form-select" onchange="this.form.submit()">
-                                            <option value="">All Admins</option>
+                                            <option value="">{{ __('messages.all_admins') }}</option>
                                             @foreach ($admins as $admin)
                                                 <option value="{{ $admin->id }}" {{ request('admin_id') == $admin->id ? 'selected' : '' }}>
                                                     {{ $admin->name }} {{ $admin->surname }}
@@ -55,13 +55,13 @@
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
-                                            <th>Date & Time</th>
-                                            <th>Admin</th>
-                                            <th>Module</th>
-                                            <th>Action</th>
-                                            <th>Description</th>
-                                            <th>IP Address</th>
-                                            <th>Details</th>
+                                            <th>{{ __('messages.date_time') }}</th>
+                                            <th>{{ __('messages.admin') }}</th>
+                                            <th>{{ __('messages.module') }}</th>
+                                            <th>{{ __('messages.action') }}</th>
+                                            <th>{{ __('messages.description') }}</th>
+                                            <th>{{ __('messages.ip_address') }}</th>
+                                            <th>{{ __('messages.details') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -72,7 +72,7 @@
                                                     @if($log->admin)
                                                         {{ $log->admin->name }} {{ $log->admin->surname }}
                                                     @else
-                                                        <span class="text-muted">System/Deleted</span>
+                                                        <span class="text-muted">{{ __('messages.system_deleted') }}</span>
                                                     @endif
                                                 </td>
                                                 <td><span class="badge bg-primary">{{ $log->module }}</span></td>
@@ -98,7 +98,7 @@
                                                             <div class="modal-dialog modal-lg">
                                                                 <div class="modal-content">
                                                                     <div class="modal-header">
-                                                                        <h5 class="modal-title">Log Details #{{ $log->id }}</h5>
+                                                                        <h5 class="modal-title">{{ __('messages.log_details') }} #{{ $log->id }}</h5>
                                                                         <button type="button" class="btn-close" data-bs-toggle="modal" data-bs-target="#dataModal{{ $log->id }}" aria-label="Close"></button>
                                                                     </div>
                                                                     <div class="modal-body">
@@ -112,12 +112,12 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="7" class="text-center">No activity logs found.</td>
+                                                <td colspan="7" class="text-center">{{ __('messages.no_activity_logs') }}</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
                                 </table>
-                                <div class="d-flex justify-content-center">
+                                <div class="mt-2">
                                     {{ $logs->appends(request()->query())->links() }}
                                 </div>
                             </div>

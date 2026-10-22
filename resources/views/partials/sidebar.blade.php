@@ -69,7 +69,7 @@
         <li class="nav-item">
             <a class="nav-link {{ request()->routeIs('admin.activity_logs.index') ? 'active' : 'collapsed' }}" href="{{ route('admin.activity_logs.index') }}">
                 <i class="bi bi-list-check"></i>
-                <span>Activity Logs</span>
+                <span>{{ __('messages.activity_logs') }}</span>
             </a>
         </li>
 

@@ -16,11 +16,11 @@
                     </button>
                 </div> -->
                 <div class="modal-body">
-                    Are you sure you want to delete this record?
+                    {{ __('messages.delete_confirmation') }}
                 </div>
                 <div class="modal-footer">
-                    <a href="" class="btn btn-primary"id="confirm_url"> Confirm </a>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <a href="" class="btn btn-primary" id="confirm_url">{{ __('messages.confirm') }}</a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('messages.cancel') }}</button>
                 </div>
             </div>
         </div>

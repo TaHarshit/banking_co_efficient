@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Forgot Password - {{ config('app.name') }}</title>
+    <title>{{ __('messages.forgot_password') }} - {{ config('app.name') }}</title>
     <link href="{{ url('assets/vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url('assets/css/style.css') }}" rel="stylesheet">
 </head>
@@ -27,8 +27,8 @@
                             <div class="card mb-3">
                                 <div class="card-body">
                                     <div class="pt-4 pb-2 text-center">
-                                        <h5 class="card-title pb-0 fs-4">Forgot Password</h5>
-                                        <p class="text-center small">Enter your business email to receive a reset link
+                                        <h5 class="card-title pb-0 fs-4">{{ __('messages.forgot_password') }}</h5>
+                                        <p class="text-center small">{{ __('messages.enter_business_email_reset') }}
                                         </p>
                                     </div>
 
@@ -44,7 +44,7 @@
                                     <form method="POST" action="{{ route('business.password.email') }}">
                                         @csrf
                                         <div class="col-12 mb-3">
-                                            <label for="email" class="form-label">Email</label>
+                                            <label for="email" class="form-label">{{ __('messages.email') }}</label>
                                             <input type="email" name="email"
                                                 class="form-control {{ $errors->has('email') ? 'is-invalid' : '' }}"
                                                 id="email" value="{{ old('email') }}" required>
@@ -54,13 +54,12 @@
                                         </div>
 
                                         <div class="col-12">
-                                            <button class="btn btn-primary w-100" type="submit">Send Reset
-                                                Link</button>
+                                            <button class="btn btn-primary w-100" type="submit">{{ __('messages.send_reset_link') }}</button>
                                         </div>
                                     </form>
 
                                     <div class="mt-3 text-center">
-                                        <a href="{{ route('business.login') }}">Back to login</a>
+                                        <a href="{{ route('business.login') }}">{{ __('messages.back_to_login') }}</a>
                                     </div>
                                 </div>
                             </div>

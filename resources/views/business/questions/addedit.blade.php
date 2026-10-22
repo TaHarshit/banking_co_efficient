@@ -221,8 +221,7 @@
                             {{-- Helper Text - Bilingual --}}
                             <div class="col-12 mt-3">
                                 <label class="form-label fw-bold">{{ __('messages.question_helper') }}</label>
-                                <small class="text-muted">(e.g., "Multiple selection possible", "Up to 3
-                                    priorities")</small>
+                                <small class="text-muted">{{ __('messages.helper_text_example') }}</small>
                             </div>
                             <div class="col-md-6 position-relative">
                                 <label for="helper_text_en" class="form-label">🇬🇧
@@ -252,7 +251,7 @@
                                                 <input type="number" name="max_selections" id="max_selections"
                                                     class="form-control" min="1"
                                                     value="{{ isset($data) && $data->settings ? $data->settings['max_selections'] ?? '' : old('max_selections') }}"
-                                                    placeholder="Leave empty for unlimited">
+                                                    placeholder="{{ __('messages.leave_empty_unlimited') }}">
                                             </div>
                                         </div>
                                     </div>
@@ -398,7 +397,7 @@
                                         </div>
                                         <div class="text-muted small mt-2">
                                             <i class="bi bi-info-circle"></i>
-                                            {{ __('messages.question_type') == 'rating_scale' ? 'For rating scale, options are used as row labels (e.g., Relational, Analytical, etc.)' : 'Add the answer options that users can select from.' }}
+                                            {{ (isset($data) && $data->question_type == 'rating_scale') ? __('messages.rating_scale_options_hint') : __('messages.select_options_hint') }}
                                         </div>
                                     </div>
                                 </div>

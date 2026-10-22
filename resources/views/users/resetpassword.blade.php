@@ -145,7 +145,7 @@
                 } else {
                     confirmInput.classList.remove('is-valid');
                     confirmInput.classList.add('is-invalid');
-                    if(confirmFeedback) confirmFeedback.innerText = 'Passwords do not match.';
+                    if(confirmFeedback) confirmFeedback.innerText = @json(__('messages.passwords_do_not_match'));
                     return false;
                 }
             }
@@ -209,9 +209,8 @@
                                 <div class="card-body p-4">
 
                                     <div class="pt-2 pb-3">
-                                        <h5 class="card-title text-center pb-0 fs-4 text-primary">Reset Password</h5>
-                                        <p class="text-center small text-muted">Create a strong and secure password for your
-                                            account</p>
+                                        <h5 class="card-title text-center pb-0 fs-4 text-primary">{{ __('messages.reset_password') }}</h5>
+                                        <p class="text-center small text-muted">{{ __('messages.create_strong_password') }}</p>
                                     </div>
 
                                     <!-- Status Message -->
@@ -234,19 +233,19 @@
 
                                         <!-- Email Field -->
                                         <div class="col-12">
-                                            <label for="email" class="form-label">Email Address</label>
+                                            <label for="email" class="form-label">{{ __('messages.email_address') }}</label>
                                             <div class="input-group has-validation">
                                                 <span class="input-group-text" id="inputGroupPrepend"><i
                                                         class="bi bi-envelope"></i></span>
                                                 <input type="email" name="email" class="form-control" id="email"
                                                     placeholder="name@example.com" value="{{ request('email') }}" required>
-                                                <div class="invalid-feedback">Please enter a valid email address.</div>
+                                                <div class="invalid-feedback">{{ __('messages.please_enter_valid_email') }}</div>
                                             </div>
                                         </div>
 
                                         <!-- Password Field -->
                                         <div class="col-12">
-                                            <label for="password" class="form-label">New Password</label>
+                                            <label for="password" class="form-label">{{ __('messages.new_password') }}</label>
                                             <div class="input-group has-validation">
                                                 <span class="input-group-text"><i class="bi bi-lock"></i></span>
                                                 <input type="password" name="password" class="form-control" id="password"
@@ -256,27 +255,22 @@
                                                     onclick="togglePasswordVisibility(event)">
                                                     <i class="bi bi-eye" id="togglePasswordIcon"></i>
                                                 </button>
-                                                <div class="invalid-feedback">Please enter your new password.</div>
+                                                <div class="invalid-feedback">{{ __('messages.please_enter_new_password') }}</div>
                                             </div>
 
                                             <!-- Visual Password Criteria Indicators -->
                                             <ul class="validation-checklist" id="checklist">
-                                                <li id="rule-length" class="text-muted"><i class="bi bi-circle text-muted"></i> At least 8
-                                                    characters</li>
-                                                <li id="rule-lowercase" class="text-muted"><i class="bi bi-circle text-muted"></i> Lowercase letter
-                                                    (a-z)</li>
-                                                <li id="rule-uppercase" class="text-muted"><i class="bi bi-circle text-muted"></i> Uppercase letter
-                                                    (A-Z)</li>
-                                                <li id="rule-number" class="text-muted"><i class="bi bi-circle text-muted"></i> At least one number
-                                                    (0-9)</li>
-                                                <li id="rule-special" class="text-muted"><i class="bi bi-circle text-muted"></i> At least one
-                                                    special symbol (? . , _ / ( ) &amp; % ! + &quot; ^ = # @ $ * -)</li>
+                                                <li id="rule-length" class="text-muted"><i class="bi bi-circle text-muted"></i> {{ __('messages.at_least_8_chars') }}</li>
+                                                <li id="rule-lowercase" class="text-muted"><i class="bi bi-circle text-muted"></i> {{ __('messages.lowercase_letter') }}</li>
+                                                <li id="rule-uppercase" class="text-muted"><i class="bi bi-circle text-muted"></i> {{ __('messages.uppercase_letter') }}</li>
+                                                <li id="rule-number" class="text-muted"><i class="bi bi-circle text-muted"></i> {{ __('messages.at_least_one_number') }}</li>
+                                                <li id="rule-special" class="text-muted"><i class="bi bi-circle text-muted"></i> {{ __('messages.at_least_one_special') }}</li>
                                             </ul>
                                         </div>
 
                                         <!-- Confirm Password Field -->
                                         <div class="col-12">
-                                            <label for="password_confirmation" class="form-label">Confirm Password</label>
+                                            <label for="password_confirmation" class="form-label">{{ __('messages.confirm_password') }}</label>
                                             <div class="input-group has-validation">
                                                 <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
                                                 <input type="password" name="password_confirmation" class="form-control"
@@ -286,15 +280,13 @@
                                                     onclick="toggleConfirmPasswordVisibility(event)">
                                                     <i class="bi bi-eye" id="toggleConfirmPasswordIcon"></i>
                                                 </button>
-                                                <div class="invalid-feedback" id="confirmFeedback">Please confirm your
-                                                    password.</div>
+                                                <div class="invalid-feedback" id="confirmFeedback">{{ __('messages.please_confirm_password') }}</div>
                                             </div>
                                         </div>
 
                                         <!-- Submit Button -->
                                         <div class="col-12 pt-2">
-                                            <button class="btn btn-primary w-100" type="submit" id="submitBtn">Update
-                                                Password</button>
+                                            <button class="btn btn-primary w-100" type="submit" id="submitBtn">{{ __('messages.update_password') }}</button>
                                         </div>
                                     </form>
 
@@ -304,7 +296,7 @@
 
                             <!-- Copyright info -->
                             <div class="text-center small text-muted mt-2">
-                                &copy; {{ date('Y') }} NegoMaster. All rights reserved.
+                                &copy; {{ date('Y') }} {{ config('app.name') }}. {{ __('messages.all_rights_reserved') }}
                             </div>
 
                         </div>

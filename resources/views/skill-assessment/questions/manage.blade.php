@@ -113,7 +113,7 @@
                                 <div class="col-md-3">
                                     <label for="source_filter" class="form-label">{{ __('messages.filter_by_type') ?? 'Type' }}</label>
                                     <select id="source_filter" class="form-select" onchange="filterBySection(document.getElementById('section_filter').value)">
-                                        <option value="">All</option>
+                                        <option value="">{{ __('messages.all') }}</option>
                                         <option value="global" {{ (isset($source) && $source == 'global') ? 'selected' : '' }}>{{ __('messages.global') ?? 'Global' }}</option>
                                         <option value="business" {{ (isset($source) && $source == 'business') ? 'selected' : '' }}>{{ __('messages.business') ?? 'Business' }}</option>
                                     </select>
@@ -176,7 +176,7 @@
                                                             <td>{{ $question->order }}</td>
                                                             <td>
                                                                 <span
-                                                                    class="badge bg-info">{{ $question->section->title ?? 'N/A' }}</span>
+                                                                    class="badge bg-info">{{ $question->section->title ?? __('messages.na') }}</span>
                                                             </td>
                                                             <td>
                                                                 @if($question->business_id)
