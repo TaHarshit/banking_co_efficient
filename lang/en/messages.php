@@ -762,4 +762,8 @@ return [
     'page_not_found_desc' => 'The page you are looking for doesn\'t exist.',
     'back_to_home' => 'Back to home',
     'internal_server_error' => 'Internal server error!',
+    'reset' => 'Reset',
+    'date_from' => 'From Date',
+    'date_to' => 'To Date',
+    'search_candidate' => 'Search by candidate name or email...',
 ];

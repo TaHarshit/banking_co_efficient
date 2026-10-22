@@ -794,4 +794,8 @@ return [
     'page_not_found_desc' => 'La page que vous recherchez n\'existe pas.',
     'back_to_home' => 'Retour à l\'accueil',
     'internal_server_error' => 'Erreur interne du serveur !',
+    'reset' => 'Réinitialiser',
+    'date_from' => 'Date de début',
+    'date_to' => 'Date de fin',
+    'search_candidate' => 'Rechercher par nom ou e-mail du candidat...',
 ];

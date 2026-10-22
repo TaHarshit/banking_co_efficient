@@ -18,24 +18,59 @@ class SkillAssessmentExamController extends Controller
         $query = SkillAssessmentExam::with(['user', 'section', 'examTemplate'])
             ->orderBy('created_at', 'desc');
 
+        // Search by candidate name, surname, or email
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('name', 'like', "%{$search}%")
+                        ->orWhere('surname', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhereRaw("CONCAT(COALESCE(name, ''), ' ', COALESCE(surname, '')) LIKE ?", ["%{$search}%"]);
+                });
+            });
+        }
+
         // Filter by status
-        if ($request->has('status') && $request->status !== '') {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
         // Filter by exam template
-        if ($request->has('exam_template_id') && $request->exam_template_id !== '') {
+        if ($request->filled('exam_template_id')) {
             $query->where('skill_assessment_exam_template_id', $request->exam_template_id);
         }
 
-        // Filter by section
-        if ($request->has('section_id') && $request->section_id !== '') {
-            $query->where('skill_assessment_section_id', $request->section_id);
+        // Filter by section (supports template sections, exam section, and answered questions section)
+        if ($request->filled('section_id')) {
+            $sectionId = $request->section_id;
+            $query->where(function ($q) use ($sectionId) {
+                $q->where('skill_assessment_section_id', $sectionId)
+                    ->orWhereHas('examTemplate.sections', function ($sub) use ($sectionId) {
+                        $sub->where('skill_assessment_sections.id', $sectionId);
+                    })
+                    ->orWhereHas('answers.question', function ($sub) use ($sectionId) {
+                        $sub->where('skill_assessment_section_id', $sectionId);
+                    });
+            });
         }
 
-        $exams = $query->paginate(20);
-        $sections = \App\Models\SkillAssessmentSection::where('is_active', true)->get();
-        $examTemplates = SkillAssessmentExamTemplate::where('is_active', true)->get();
+        // Filter by date range
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $exams = $query->paginate(20)->appends($request->all());
+        $sections = \App\Models\SkillAssessmentSection::with('examTemplate')
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get();
+        $examTemplates = SkillAssessmentExamTemplate::where('is_active', true)
+            ->orderBy('title')
+            ->get();
 
         return view('skill-assessment.exam-results.manage', compact('exams', 'sections', 'examTemplates'));
     }

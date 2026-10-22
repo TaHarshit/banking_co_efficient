@@ -4,6 +4,44 @@
 @section('pagewisescript')
 @endsection
 @section('customjs')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const templateSelect = document.getElementById('exam_template_id');
+            const sectionSelect = document.getElementById('section_id');
+
+            if (templateSelect && sectionSelect) {
+                function updateSectionOptions() {
+                    const selectedTemplate = templateSelect.value;
+                    const options = sectionSelect.querySelectorAll('option');
+
+                    options.forEach(opt => {
+                        if (!opt.value) {
+                            opt.hidden = false;
+                            opt.disabled = false;
+                            return;
+                        }
+                        const optTemplate = opt.getAttribute('data-template');
+                        if (!selectedTemplate || optTemplate === selectedTemplate) {
+                            opt.hidden = false;
+                            opt.disabled = false;
+                        } else {
+                            opt.hidden = true;
+                            opt.disabled = true;
+                        }
+                    });
+
+                    // If currently selected option is now hidden/disabled, reset section selection
+                    const currentSelected = sectionSelect.selectedOptions[0];
+                    if (currentSelected && currentSelected.disabled) {
+                        sectionSelect.value = '';
+                    }
+                }
+
+                templateSelect.addEventListener('change', updateSectionOptions);
+                updateSectionOptions();
+            }
+        });
+    </script>
 @endsection
 @include('partials.headerfiles')
 @include('partials.footerfiles')
@@ -29,8 +67,14 @@
                             <h5 class="card-title">{{ __('messages.filter_results') ?? 'Filter Results' }}</h5>
                             <form method="GET" action="{{ route('manageskillassessmentexams') }}" class="row g-3">
                                 <div class="col-md-3">
+                                    <label class="form-label">{{ __('messages.user') ?? 'Candidate' }}</label>
+                                    <input type="text" name="search" class="form-control"
+                                        placeholder="{{ __('messages.search_candidate') ?? 'Search candidate...' }}"
+                                        value="{{ request('search') }}">
+                                </div>
+                                <div class="col-md-3">
                                     <label class="form-label">{{ __('messages.exams') ?? 'Exam' }}</label>
-                                    <select name="exam_template_id" class="form-select">
+                                    <select name="exam_template_id" id="exam_template_id" class="form-select">
                                         <option value="">{{ __('messages.all_exams') ?? 'All Exams' }}</option>
                                         @foreach ($examTemplates as $template)
                                             <option value="{{ $template->id }}"
@@ -42,10 +86,11 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">{{ __('messages.section') ?? 'Section' }}</label>
-                                    <select name="section_id" class="form-select">
+                                    <select name="section_id" id="section_id" class="form-select">
                                         <option value="">{{ __('messages.all_sections') ?? 'All Sections' }}</option>
                                         @foreach ($sections as $section)
                                             <option value="{{ $section->id }}"
+                                                data-template="{{ $section->skill_assessment_exam_template_id }}"
                                                 {{ request('section_id') == $section->id ? 'selected' : '' }}>
                                                 {{ $section->title }}
                                             </option>
@@ -64,9 +109,21 @@
                                             {{ __('messages.evaluated') }}</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3 d-flex align-items-end">
-                                    <button type="submit"
-                                        class="btn btn-primary">{{ __('messages.filter') ?? 'Filter' }}</button>
+                                <div class="col-md-3">
+                                    <label class="form-label">{{ __('messages.date_from') ?? 'Date From' }}</label>
+                                    <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">{{ __('messages.date_to') ?? 'Date To' }}</label>
+                                    <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-funnel"></i> {{ __('messages.filter') ?? 'Filter' }}
+                                    </button>
+                                    <a href="{{ route('manageskillassessmentexams') }}" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-counterclockwise"></i> {{ __('messages.reset') ?? 'Reset' }}
+                                    </a>
                                 </div>
                             </form>
                         </div>
@@ -74,11 +131,14 @@
 
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">{{ __('messages.exam_submissions') ?? 'Exam Submissions' }}</h5>
+                            <h5 class="card-title d-flex justify-content-between align-items-center">
+                                <span>{{ __('messages.exam_submissions') ?? 'Exam Submissions' }}</span>
+                                <span class="badge bg-secondary">{{ $exams->total() }}</span>
+                            </h5>
                             <div class="row">
                                 <div class="col-12">
                                     <div class="table-responsive">
-                                        <table class="table datatable">
+                                        <table class="table table-hover align-middle">
                                             <thead>
                                                 <tr>
                                                     <th>#</th>
@@ -92,12 +152,18 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @php $i = 1; @endphp
-                                                @foreach ($exams as $exam)
+                                                @forelse ($exams as $exam)
                                                     <tr>
-                                                        <td>{{ $i }}</td>
-                                                        <td>{{ optional($exam->user)->name ?? 'N/A' }}
-                                                            {{ optional($exam->user)->surname ?? '' }}</td>
+                                                        <td>{{ ($exams->currentPage() - 1) * $exams->perPage() + $loop->iteration }}</td>
+                                                        <td>
+                                                            <div class="fw-semibold">
+                                                                {{ optional($exam->user)->name ?? 'N/A' }}
+                                                                {{ optional($exam->user)->surname ?? '' }}
+                                                            </div>
+                                                            @if(optional($exam->user)->email)
+                                                                <small class="text-muted">{{ $exam->user->email }}</small>
+                                                            @endif
+                                                        </td>
                                                         <td>
                                                             @if ($exam->examTemplate)
                                                                 <span
@@ -126,7 +192,7 @@
                                                                 <span class="badge bg-success">{{ __('messages.evaluated') }}</span>
                                                             @endif
                                                         </td>
-                                                        <td>{{ $exam->completed_at ? $exam->completed_at->format('d M Y H:i') : 'N/A' }}
+                                                        <td>{{ $exam->completed_at ? $exam->completed_at->format('d M Y H:i') : ($exam->created_at ? $exam->created_at->format('d M Y H:i') : 'N/A') }}
                                                         </td>
                                                         <td>
                                                             <a href="{{ route('viewskillassessmentexam', ['id' => $exam->id]) }}"
@@ -136,12 +202,18 @@
                                                             </a>
                                                         </td>
                                                     </tr>
-                                                    @php $i++; @endphp
-                                                @endforeach
+                                                @empty
+                                                    <tr>
+                                                        <td colspan="8" class="text-center py-4 text-muted">
+                                                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                                            {{ __('messages.no_data') ?? 'No exam submissions found matching the criteria.' }}
+                                                        </td>
+                                                    </tr>
+                                                @endforelse
                                             </tbody>
                                         </table>
                                         <div class="mt-2">
-                                            {{ $exams->links() }}
+                                            {{ $exams->appends(request()->all())->links() }}
                                         </div>
                                     </div>
                                 </div>
