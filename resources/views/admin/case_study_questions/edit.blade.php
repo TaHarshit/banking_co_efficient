@@ -23,12 +23,14 @@
                         <div class="col-md-5">
                             <label class="form-label">🇬🇧 {{ __('messages.option_text_en') }}</label>
                             <input type="text" name="options[${optionIndex}][en]" 
-                                   class="form-control" required>
+                                   class="form-control" 
+                                   placeholder="{{ __('messages.placeholder_option_en') }}" required>
                         </div>
                         <div class="col-md-5">
                             <label class="form-label">🇫🇷 {{ __('messages.option_text_fr') }}</label>
                             <input type="text" name="options[${optionIndex}][fr]" 
-                                   class="form-control" required>
+                                   class="form-control" 
+                                   placeholder="{{ __('messages.placeholder_option_fr') }}" required>
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
                             <button type="button" class="btn btn-outline-danger" onclick="removeOption(${optionIndex})">
@@ -100,20 +102,26 @@
 
                                 <div class="col-md-6">
                                     <label class="form-label">🇬🇧 {{ __('messages.section_name_en') }} <span class="text-danger">*</span></label>
-                                    <input type="text" name="section_name_en" class="form-control" value="{{ old('section_name_en', $question->section_name_en) }}" required>
+                                    <input type="text" name="section_name_en" class="form-control" 
+                                        value="{{ old('section_name_en', $question->section_name_en) }}" 
+                                        placeholder="{{ __('messages.placeholder_section_name_en') }}" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">🇫🇷 {{ __('messages.section_name_fr') }} <span class="text-danger">*</span></label>
-                                    <input type="text" name="section_name_fr" class="form-control" value="{{ old('section_name_fr', $question->section_name_fr) }}" required>
+                                    <input type="text" name="section_name_fr" class="form-control" 
+                                        value="{{ old('section_name_fr', $question->section_name_fr) }}" 
+                                        placeholder="{{ __('messages.placeholder_section_name_fr') }}" required>
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label">🇬🇧 {{ __('messages.question_en') }} <span class="text-danger">*</span></label>
-                                    <textarea name="question_en" rows="3" class="form-control" required>{{ old('question_en', $question->question_en) }}</textarea>
+                                    <textarea name="question_en" rows="3" class="form-control" 
+                                        placeholder="{{ __('messages.placeholder_question_en') }}" required>{{ old('question_en', $question->question_en) }}</textarea>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">🇫🇷 {{ __('messages.question_fr') }} <span class="text-danger">*</span></label>
-                                    <textarea name="question_fr" rows="3" class="form-control" required>{{ old('question_fr', $question->question_fr) }}</textarea>
+                                    <textarea name="question_fr" rows="3" class="form-control" 
+                                        placeholder="{{ __('messages.placeholder_question_fr') }}" required>{{ old('question_fr', $question->question_fr) }}</textarea>
                                 </div>
 
                                 <div class="col-12 mt-4">
@@ -132,12 +140,14 @@
                                                             <div class="col-md-5">
                                                                 <label class="form-label">🇬🇧 {{ __('messages.option_text_en') }}</label>
                                                                 <input type="text" name="options[{{ $index }}][en]" 
-                                                                    class="form-control" value="{{ $option->option_en }}" required>
+                                                                    class="form-control" value="{{ $option->option_en }}" 
+                                                                    placeholder="{{ __('messages.placeholder_option_en') }}" required>
                                                             </div>
                                                             <div class="col-md-5">
                                                                 <label class="form-label">🇫🇷 {{ __('messages.option_text_fr') }}</label>
                                                                 <input type="text" name="options[{{ $index }}][fr]" 
-                                                                    class="form-control" value="{{ $option->option_fr }}" required>
+                                                                    class="form-control" value="{{ $option->option_fr }}" 
+                                                                    placeholder="{{ __('messages.placeholder_option_fr') }}" required>
                                                             </div>
                                                             <div class="col-md-2 d-flex align-items-end">
                                                                 <button type="button" class="btn btn-outline-danger" onclick="removeOption({{ $index }})">

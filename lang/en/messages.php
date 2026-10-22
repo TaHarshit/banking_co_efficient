@@ -766,4 +766,10 @@ return [
     'date_from' => 'From Date',
     'date_to' => 'To Date',
     'search_candidate' => 'Search by candidate name or email...',
+    'placeholder_section_name_en' => 'e.g. Risk Assessment, Loan Eligibility',
+    'placeholder_section_name_fr' => 'ex. Évaluation des risques, Éligibilité au prêt',
+    'placeholder_question_en' => 'Enter question in English...',
+    'placeholder_question_fr' => 'Entrez la question en français...',
+    'placeholder_option_en' => 'Enter option in English (e.g. Yes, Compliant, No)',
+    'placeholder_option_fr' => 'Entrez l\'option en français (ex. Oui, Conforme, Non)',
 ];
