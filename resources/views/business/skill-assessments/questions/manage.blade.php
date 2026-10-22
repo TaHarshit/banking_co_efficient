@@ -24,7 +24,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="card-title mb-0">{{ __('messages.question_list') ?? 'Question List' }}
-                                <span class="badge bg-secondary">{{ $questions->count() }}</span>
+                                <span class="badge bg-secondary text-light">{{ $questions->count() }}</span>
                             </h5>
                             <div>
                                 <a href="{{ route('business.skill-assessment.sections') }}"

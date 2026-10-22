@@ -55,7 +55,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">{{ __('messages.employee_list') }}
-                            <span class="badge {{ $remQ > 0 ? 'bg-primary' : 'bg-danger' }} ms-2" style="font-size: 13px; font-weight: 500;">
+                            <span class="badge {{ $remQ > 0 ? 'bg-primary' : 'bg-danger' }} ms-2" style="font-size: 13px; font-weight: 500; color:white;">
                                 <i class="bi bi-people me-1"></i>{{ __('messages.seats') }}: {{ $usedQ }} / {{ $totQ }} {{ __('messages.used') }} ({{ $remQ }} {{ __('messages.available') }})
                             </span>
                             <div style="float: right;">
