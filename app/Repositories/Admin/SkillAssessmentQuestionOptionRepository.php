@@ -95,32 +95,39 @@ class SkillAssessmentQuestionOptionRepository extends BaseRepository
     /**
      * Store multiple options for a question
      */
-    public function StoreOptionsForQuestion($questionId, $options, $correctAnswerIndex = null)
+    public function StoreOptionsForQuestion($questionId, $options, $correctAnswerIndex = null, $questionType = 'radio')
     {
         // Delete existing options first
         $this->model->where('skill_assessment_question_id', $questionId)->delete();
 
+        $savedOptions = [];
+        $hasCorrectOption = false;
+
         // Store new options
         foreach ($options as $index => $optionData) {
-            // Determine if this option is correct
             $isCorrect = false;
-            if ($correctAnswerIndex !== null) {
-                // For radio type - single correct answer ONLY
-                $isCorrect = ((string) $correctAnswerIndex === (string) $index);
-            } elseif (!empty($optionData['is_correct'])) {
-                // For multi-select type - only if explicitly true
-                $isCorrect = true;
+            if ($questionType === 'radio') {
+                if ($correctAnswerIndex !== null && (string) $correctAnswerIndex === (string) $index) {
+                    $isCorrect = true;
+                    $hasCorrectOption = true;
+                }
             }
 
-            $this->model->create([
+            $savedOptions[] = $this->model->create([
                 'skill_assessment_question_id' => $questionId,
                 'option_text' => $optionData['option_text'],
                 'option_text_fr' => $optionData['option_text_fr'] ?? null,
                 'weightage' => $optionData['weightage'] ?? 0.00,
-                'order' => $index + 1,
+                'order' => count($savedOptions) + 1,
                 'is_active' => true,
                 'is_correct' => $isCorrect,
             ]);
+        }
+
+        // Guaranteed fallback: If question is single select (radio) and no option was marked correct,
+        // mark the first option as correct
+        if ($questionType === 'radio' && !$hasCorrectOption && !empty($savedOptions)) {
+            $savedOptions[0]->update(['is_correct' => true]);
         }
 
         return true;

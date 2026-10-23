@@ -29,7 +29,7 @@
 
     <section class="section">
         <div class="row">
-            <div class="col-lg-8">
+            <div class="col-lg-10">
                 @include('partials.messages')
                 <div class="card">
                     <div class="card-body">
@@ -45,20 +45,39 @@
                                     value="{{ $examTemplateId }}">
                             @endif
 
-                            <div class="mb-3">
-                                <label for="title" class="form-label">{{ __('messages.title') }} <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" name="title" id="title"
-                                    class="form-control @error('title') is-invalid @enderror"
-                                    value="{{ old('title', $data->title ?? '') }}" required>
-                                @error('title')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="title" class="form-label">{{ __('messages.title_en') ?? 'Title (EN)' }} <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" name="title" id="title"
+                                        class="form-control @error('title') is-invalid @enderror"
+                                        value="{{ old('title', isset($data) ? ($data->getRawOriginal('title') ?? $data->title) : '') }}" required>
+                                    @error('title')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="title_fr" class="form-label">{{ __('messages.title_fr') ?? 'Title (FR)' }}</label>
+                                    <input type="text" name="title_fr" id="title_fr"
+                                        class="form-control @error('title_fr') is-invalid @enderror"
+                                        value="{{ old('title_fr', $data->title_fr ?? '') }}"
+                                        placeholder="{{ __('messages.title_fr_placeholder') ?? 'Titre de la section en français' }}">
+                                    @error('title_fr')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="description" class="form-label">{{ __('messages.description') }}</label>
-                                <textarea name="description" id="description" class="form-control" rows="4">{{ old('description', $data->description ?? '') }}</textarea>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="description" class="form-label">{{ __('messages.description_en') ?? 'Description (EN)' }}</label>
+                                    <textarea name="description" id="description" class="form-control" rows="4">{{ old('description', isset($data) ? ($data->getRawOriginal('description') ?? $data->description) : '') }}</textarea>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="description_fr" class="form-label">{{ __('messages.description_fr') ?? 'Description (FR)' }}</label>
+                                    <textarea name="description_fr" id="description_fr" class="form-control" rows="4"
+                                        placeholder="{{ __('messages.description_fr_placeholder') ?? 'Description facultative en français' }}">{{ old('description_fr', $data->description_fr ?? '') }}</textarea>
+                                </div>
                             </div>
 
                             <div class="row">

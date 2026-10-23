@@ -78,8 +78,10 @@ class SkillAssessmentSectionCls
                 'business_id' => $businessId,
                 'skill_assessment_exam_template_id' => $request->skill_assessment_exam_template_id ?? null,
                 'title' => $request->title,
+                'title_fr' => $request->title_fr,
                 'description' => $request->description,
-                'order' => $request->order ?? $this->GetNextOrder($businessId),
+                'description_fr' => $request->description_fr,
+                'order' => $request->order ?? $this->GetNextOrder($businessId, $request->skill_assessment_exam_template_id ?? null),
                 'is_active' => $request->has('is_active') ? 1 : 0,
             ];
 

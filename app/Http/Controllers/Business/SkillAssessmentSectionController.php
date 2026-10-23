@@ -89,6 +89,9 @@ class SkillAssessmentSectionController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
+            'title_fr' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'description_fr' => 'nullable|string',
         ]);
 
         $id = $request->input('id', 0);

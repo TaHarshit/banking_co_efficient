@@ -116,11 +116,17 @@ class SkillAssessmentQuestionController extends Controller
 
         // Validate options if question type requires them
         if (in_array($request->input('question_type'), ['radio', 'multi_select'])) {
-            $request->validate([
+            $rules = [
                 'options' => 'required|array|min:2',
                 'options.*.option_text' => 'required|string|max:255',
                 'options.*.weightage' => 'required|numeric|min:0|max:100',
-            ]);
+            ];
+
+            if ($request->input('question_type') === 'radio') {
+                $rules['correct_answer'] = 'required';
+            }
+
+            $request->validate($rules);
         }
 
         $id = $request->input('id', 0);

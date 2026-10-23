@@ -80,10 +80,26 @@ class SkillAssessmentQuestionController extends Controller
      */
     public function Store(Request $request, $sectionId)
     {
-        $request->validate([
+        $rules = [
             'question_type' => 'required|string',
             'question_text' => 'required|string|max:1000',
-        ]);
+            'question_text_fr' => 'nullable|string|max:1000',
+            'helper_text' => 'nullable|string|max:500',
+            'helper_text_fr' => 'nullable|string|max:500',
+        ];
+
+        if (in_array($request->input('question_type'), ['radio', 'multi_select'])) {
+            $rules['options'] = 'required|array|min:2';
+            $rules['options.*.option_text'] = 'required|string|max:255';
+            $rules['options.*.option_text_fr'] = 'nullable|string|max:255';
+            $rules['options.*.weightage'] = 'required|numeric|min:0|max:100';
+
+            if ($request->input('question_type') === 'radio') {
+                $rules['correct_answer'] = 'required';
+            }
+        }
+
+        $request->validate($rules);
 
         $id = $request->input('id', 0);
         return $this->QuestionCls->StoreQuestion($request, $sectionId, $this->getBusinessId(), $id);

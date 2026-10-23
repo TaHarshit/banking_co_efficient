@@ -128,7 +128,7 @@ class SkillAssessmentQuestionCls
                     if ($data['question_type'] === 'radio') {
                         $correctAnswerIndex = $request->input('correct_answer');
                     }
-                    $this->OptionRep->StoreOptionsForQuestion($question->id, $options, $correctAnswerIndex);
+                    $this->OptionRep->StoreOptionsForQuestion($question->id, $options, $correctAnswerIndex, $data['question_type']);
                 }
             }
 
@@ -404,7 +404,7 @@ class SkillAssessmentQuestionCls
                         }
 
                         if (!empty($options)) {
-                            $this->OptionRep->StoreOptionsForQuestion($question->id, $options, $correctAnswerIndex);
+                            $this->OptionRep->StoreOptionsForQuestion($question->id, $options, $correctAnswerIndex, $data['question_type']);
                         }
                     }
 

@@ -43,9 +43,27 @@
         let optionIndex = {{ isset($data) && $data->options ? $data->options->count() : 0 }};
 
         $(document).ready(function() {
+            if (optionIndex === 0) {
+                addOption();
+                addOption();
+            }
             toggleQuestionTypeSettings();
             $('#question_type').on('change', function() {
                 toggleQuestionTypeSettings();
+            });
+
+            // Prevent submission of radio questions without a selected correct option
+            $('form.needs-validation').on('submit', function(e) {
+                var type = $('#question_type').val();
+                if (type === 'radio') {
+                    if ($('input[name="correct_answer"]:checked').length === 0) {
+                        e.preventDefault();
+                        alert('{{ __('messages.please_select_correct_option') ?? 'Please select the correct option for single choice questions.' }}');
+                        return false;
+                    }
+                } else {
+                    $('input[name="correct_answer"]').prop('disabled', true);
+                }
             });
         });
 
@@ -58,19 +76,24 @@
             
             if (type === 'radio') {
                 $('.correct-answer-col').show();
+                $('input[name="correct_answer"]').prop('disabled', false);
                 $('.correct-answer-info-radio').show();
                 $('.correct-answer-info-multi').hide();
+                if ($('input[name="correct_answer"]:checked').length === 0) {
+                    $('input[name="correct_answer"]').first().prop('checked', true);
+                }
                 updateRadioHighlights();
             } else if (type === 'multi_select') {
                 // Remove correct radio when user selects type is multi
                 $('.correct-answer-col').hide();
+                $('input[name="correct_answer"]').prop('disabled', true).prop('checked', false);
                 $('.correct-answer-info-radio').hide();
                 $('.correct-answer-info-multi').show();
                 // Don't show any option green for multi-select
                 $('.option-row').removeClass('correct-answer');
-                $('input[name="correct_answer"]').prop('checked', false);
             } else {
                 $('.correct-answer-col').hide();
+                $('input[name="correct_answer"]').prop('disabled', true).prop('checked', false);
                 $('.option-row').removeClass('correct-answer');
             }
         }
@@ -114,6 +137,7 @@
                                 <input class="form-check-input" type="radio" 
                                        name="correct_answer" 
                                        value="${optionIndex}"
+                                       ${isRadio ? '' : 'disabled'}
                                        onchange="highlightCorrectAnswer(this)">
                                 <label class="form-check-label">{{ __('messages.correct') ?? 'Correct' }}</label>
                             </div>
@@ -127,12 +151,19 @@
                 </div>
             `;
             $('#options-container').append(html);
+            if (isRadio && $('input[name="correct_answer"]:checked').length === 0) {
+                $('#option-row-' + optionIndex).find('input[name="correct_answer"]').prop('checked', true);
+            }
             optionIndex++;
             toggleQuestionTypeSettings();
         }
 
         function removeOption(index) {
+            var wasChecked = $('#option-row-' + index).find('input[name="correct_answer"]').is(':checked');
             $('#option-row-' + index).remove();
+            if (wasChecked && $('#question_type').val() === 'radio') {
+                $('input[name="correct_answer"]').first().prop('checked', true);
+            }
             updateRadioHighlights();
         }
 

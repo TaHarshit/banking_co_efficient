@@ -78,7 +78,9 @@ class SkillAssessmentQuestionCls
                 'business_id' => $businessId,
                 'question_type' => $request->question_type,
                 'question_text' => $request->question_text,
+                'question_text_fr' => $request->question_text_fr,
                 'helper_text' => $request->helper_text,
+                'helper_text_fr' => $request->helper_text_fr,
                 'order' => $request->order ?? $this->GetNextOrder($sectionId, $businessId),
                 'is_required' => $request->has('is_required') ? 1 : 0,
                 'is_active' => $request->has('is_active') ? 1 : 0,
@@ -100,9 +102,9 @@ class SkillAssessmentQuestionCls
             // Handle options for radio and multi_select
             if (in_array($request->question_type, ['radio', 'multi_select'])) {
                 $options = $request->input('options', []);
-                $correctAnswerIndex = $request->input('correct_answer');
+                $correctAnswerIndex = ($request->question_type === 'radio') ? $request->input('correct_answer') : null;
                 if (!empty($options)) {
-                    $this->storeOptions($question->id, $options, $correctAnswerIndex);
+                    $this->storeOptions($question->id, $options, $correctAnswerIndex, $request->question_type);
                 }
             }
 
@@ -120,32 +122,41 @@ class SkillAssessmentQuestionCls
     /**
      * Store options for a question
      */
-    private function storeOptions($questionId, $options, $correctAnswerIndex = null)
+    private function storeOptions($questionId, $options, $correctAnswerIndex = null, $questionType = 'radio')
     {
         // Delete existing options
         SkillAssessmentQuestionOption::where('skill_assessment_question_id', $questionId)->delete();
+
+        $savedOptions = [];
+        $hasCorrectOption = false;
 
         // Store new options
         foreach ($options as $index => $optionData) {
             if (empty($optionData['option_text'])) continue;
 
             $isCorrect = false;
-            if ($correctAnswerIndex !== null) {
-                // For radio type - single correct answer ONLY
-                $isCorrect = ((string) $correctAnswerIndex === (string) $index);
-            } elseif (!empty($optionData['is_correct'])) {
-                $isCorrect = true;
+            if ($questionType === 'radio') {
+                if ($correctAnswerIndex !== null && (string) $correctAnswerIndex === (string) $index) {
+                    $isCorrect = true;
+                    $hasCorrectOption = true;
+                }
             }
 
-            SkillAssessmentQuestionOption::create([
+            $savedOptions[] = SkillAssessmentQuestionOption::create([
                 'skill_assessment_question_id' => $questionId,
                 'option_text' => $optionData['option_text'],
                 'option_text_fr' => $optionData['option_text_fr'] ?? null,
                 'weightage' => $optionData['weightage'] ?? 0,
-                'order' => $index + 1,
+                'order' => count($savedOptions) + 1,
                 'is_active' => true,
                 'is_correct' => $isCorrect,
             ]);
+        }
+
+        // Guaranteed fallback: If question is single select (radio) and no option was marked correct,
+        // mark the first option as correct so it can NEVER be saved without a correct option
+        if ($questionType === 'radio' && !$hasCorrectOption && !empty($savedOptions)) {
+            $savedOptions[0]->update(['is_correct' => true]);
         }
     }
 
@@ -366,7 +377,7 @@ class SkillAssessmentQuestionCls
                         }
 
                         if (!empty($options)) {
-                            $this->storeOptions($question->id, $options, $correctAnswerIndex);
+                            $this->storeOptions($question->id, $options, $correctAnswerIndex, $data['question_type']);
                         }
                     }
 
