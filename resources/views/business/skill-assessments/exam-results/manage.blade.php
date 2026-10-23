@@ -131,7 +131,7 @@
                     <div class="card-body">
                         <h5 class="card-title d-flex justify-content-between align-items-center">
                             <span>{{ __('messages.exam_submissions') ?? 'Exam Submissions' }}</span>
-                            <span class="badge bg-secondary">{{ $exams->total() }}</span>
+                            <span class="badge bg-secondary text-light">{{ $exams->total() }}</span>
                         </h5>
                         <div class="row">
                             <div class="col-12">
