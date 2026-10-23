@@ -130,9 +130,10 @@ class SkillAssessmentQuestionCls
             if (empty($optionData['option_text'])) continue;
 
             $isCorrect = false;
-            if ($correctAnswerIndex !== null && $correctAnswerIndex == $index) {
-                $isCorrect = true;
-            } elseif (isset($optionData['is_correct'])) {
+            if ($correctAnswerIndex !== null) {
+                // For radio type - single correct answer ONLY
+                $isCorrect = ((string) $correctAnswerIndex === (string) $index);
+            } elseif (!empty($optionData['is_correct'])) {
                 $isCorrect = true;
             }
 

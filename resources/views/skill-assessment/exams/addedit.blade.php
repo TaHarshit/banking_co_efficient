@@ -1,58 +1,127 @@
 @extends('layouts.app')
 @section('pagewisestyle')
+<style>
+.tags-input-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    min-height: 38px;
+    height: auto;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    cursor: text;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+.tags-input-wrapper.form-control {
+    background-image: none !important;
+}
+
+.tags-input-wrapper:focus-within {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.tags-input-wrapper.is-invalid {
+    border-color: #dc3545;
+}
+
+.tags-input-wrapper.is-invalid:focus-within {
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+.tags-list {
+    display: contents;
+}
+
+.tag-item {
+    background-color: #0d6efd;
+    color: #fff;
+    padding: 2px 8px 2px 10px;
+    border-radius: 50rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    line-height: 1.35;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.tag-item .remove-tag {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    padding: 0;
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    transition: color .15s ease, background-color .15s ease;
+}
+
+.tag-item .remove-tag:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.tag-inner-input {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    padding: 2px 4px;
+    flex: 1 1 120px;
+    min-width: 90px;
+    font-size: 0.875rem;
+    background: transparent;
+    color: #212529;
+    height: 28px;
+}
+
+.tag-inner-input::placeholder {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+</style>
 @endsection
 @section('pagewisescript')
 @endsection
 @section('customjs')
-<style>
-.tags-input-container {
-    position: relative;
-}
-.tags-display {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-bottom: 5px;
-    min-height: 30px;
-    padding: 5px;
-    border: 1px solid #ced4da;
-    border-radius: 0.375rem;
-    background-color: #f8f9fa;
-}
-.tag-item {
-    background-color: #0d6efd;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 15px;
-    font-size: 0.875rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
-.remove-tag {
-    cursor: pointer;
-    font-weight: bold;
-    margin-left: 5px;
-}
-.remove-tag:hover {
-    color: #ffcccc;
-}
-</style>
-
 <script>
-function addTag(inputId, displayId, hiddenId) {
+function focusTagInput(inputId) {
     const input = document.getElementById(inputId);
-    const display = document.getElementById(displayId);
+    if (input) {
+        input.focus();
+    }
+}
+
+function addTag(listId, inputId, hiddenId) {
+    const list = document.getElementById(listId);
+    const input = document.getElementById(inputId);
     const hidden = document.getElementById(hiddenId);
     
-    if (input.value.trim() === '') return;
+    if (!input || !list || !hidden) return;
     
-    // Check if tag already exists
-    const existingTags = Array.from(display.querySelectorAll('.tag-item')).map(tag => 
-        tag.textContent.replace('×', '').trim()
+    const value = input.value.trim().replace(/^,+|,+$/g, '');
+    if (value === '') return;
+    
+    // Check if tag already exists (case-insensitive)
+    const existingTags = Array.from(list.querySelectorAll('.tag-item')).map(tag => 
+        (tag.getAttribute('data-value') || tag.textContent.replace('×', '')).trim().toLowerCase()
     );
     
-    if (existingTags.includes(input.value.trim())) {
+    if (existingTags.includes(value.toLowerCase())) {
         input.value = '';
         return;
     }
@@ -60,63 +129,115 @@ function addTag(inputId, displayId, hiddenId) {
     // Create new tag element
     const tagSpan = document.createElement('span');
     tagSpan.className = 'tag-item';
-    tagSpan.innerHTML = input.value.trim() + ' <span class="remove-tag" onclick="removeTag(this)">×</span>';
+    tagSpan.setAttribute('data-value', value);
     
-    display.appendChild(tagSpan);
+    const textNode = document.createTextNode(value);
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'remove-tag';
+    removeBtn.innerHTML = '&times;';
+    removeBtn.onclick = function(e) {
+        removeTag(this, e);
+    };
     
-    // Update hidden field with JSON array
-    updateHiddenField(displayId, hiddenId);
+    tagSpan.appendChild(textNode);
+    tagSpan.appendChild(removeBtn);
+    list.appendChild(tagSpan);
     
-    // Clear input
+    updateHiddenField(listId, hiddenId);
     input.value = '';
+    
+    // Update placeholder
+    if (list.children.length > 0) {
+        input.placeholder = (inputId.indexOf('fr') !== -1) ? 'Ajouter une balise...' : 'Add tag...';
+    }
 }
 
-function removeTag(element) {
-    const tagItem = element.parentElement;
-    const display = tagItem.parentElement;
-    const hiddenInputId = display.id.replace('tags-display', 'tags').replace('-fr', '_fr');
-    const hiddenInput = document.getElementById(hiddenInputId);
+function removeTag(element, event) {
+    if (event) {
+        event.stopPropagation();
+    }
+    const tagItem = element.closest('.tag-item');
+    if (!tagItem) return;
+    
+    const list = tagItem.parentElement;
+    const isFr = list.id.indexOf('fr') !== -1;
+    const hiddenId = isFr ? 'tags_fr' : 'tags';
+    const inputId = isFr ? 'tags_fr_input' : 'tags_input';
     
     tagItem.remove();
-    updateHiddenField(display.id, hiddenInputId);
+    updateHiddenField(list.id, hiddenId);
+    
+    const input = document.getElementById(inputId);
+    if (input && list.children.length === 0) {
+        input.placeholder = isFr ? 'Tapez et appuyez sur Entrée pour ajouter des balises' : 'Type and press Enter to add tags';
+    }
 }
 
-function updateHiddenField(displayId, hiddenId) {
-    const display = document.getElementById(displayId);
+function updateHiddenField(listId, hiddenId) {
+    const list = document.getElementById(listId);
     const hidden = document.getElementById(hiddenId);
-    const tags = Array.from(display.querySelectorAll('.tag-item')).map(tag => 
-        tag.textContent.replace('×', '').trim()
+    if (!list || !hidden) return;
+    
+    const tags = Array.from(list.querySelectorAll('.tag-item')).map(tag => 
+        (tag.getAttribute('data-value') || tag.firstChild.textContent).trim()
     );
-    hidden.value = JSON.stringify(tags);
+    hidden.value = tags.length > 0 ? JSON.stringify(tags) : '';
 }
 
-// Initialize existing tags on page load
+function setupTagInput(listId, inputId, hiddenId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            addTag(listId, inputId, hiddenId);
+        } else if (e.key === 'Backspace' && input.value === '') {
+            const list = document.getElementById(listId);
+            if (list && list.lastElementChild) {
+                const removeBtn = list.lastElementChild.querySelector('.remove-tag');
+                if (removeBtn) {
+                    removeTag(removeBtn);
+                }
+            }
+        }
+    });
+    
+    input.addEventListener('paste', function(e) {
+        const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+        if (pasteData && pasteData.includes(',')) {
+            e.preventDefault();
+            const parts = pasteData.split(',');
+            parts.forEach(function(part) {
+                input.value = part;
+                addTag(listId, inputId, hiddenId);
+            });
+            input.value = '';
+        }
+    });
+    
+    input.addEventListener('blur', function() {
+        if (input.value.trim() !== '') {
+            addTag(listId, inputId, hiddenId);
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    // English tags
-    const tagsInput = document.getElementById('tags_input');
-    if (tagsInput) {
-        tagsInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addTag('tags_input', 'tags-display', 'tags');
-            }
+    setupTagInput('tags-list', 'tags_input', 'tags');
+    setupTagInput('tags-list-fr', 'tags_fr_input', 'tags_fr');
+    
+    updateHiddenField('tags-list', 'tags');
+    updateHiddenField('tags-list-fr', 'tags_fr');
+    
+    const form = document.querySelector('form.needs-validation');
+    if (form) {
+        form.addEventListener('submit', function() {
+            addTag('tags-list', 'tags_input', 'tags');
+            addTag('tags-list-fr', 'tags_fr_input', 'tags_fr');
         });
     }
-    
-    // French tags
-    const tagsFrInput = document.getElementById('tags_fr_input');
-    if (tagsFrInput) {
-        tagsFrInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addTag('tags_fr_input', 'tags-display-fr', 'tags_fr');
-            }
-        });
-    }
-    
-    // Initialize hidden fields with existing tags
-    updateHiddenField('tags-display', 'tags');
-    updateHiddenField('tags-display-fr', 'tags_fr');
 });
 </script>
 @endsection
@@ -217,71 +338,53 @@ document.addEventListener('DOMContentLoaded', function() {
 
                                 {{-- Tags EN (Multiple) --}}
                                 <div class="col-md-6 mt-3">
-                                    <label for="tags"
+                                    <label for="tags_input"
                                         class="form-label">{{ __('messages.tags_en') ?? 'Tags (EN)' }}</label>
-                                    <div class="tags-input-container">
-                                        <div class="tags-display" id="tags-display">
-                                            @php
-                                                $tagsValue = old('tags', isset($data) ? $data->tags : null);
-                                                if (is_string($tagsValue)) {
-                                                    $tagsValue = json_decode($tagsValue, true);
-                                                }
-                                            @endphp
-                                            @if(!empty($tagsValue) && is_array($tagsValue))
-                                                @foreach($tagsValue as $tag)
-                                                    <span class="tag-item">{{ $tag }} <span class="remove-tag" onclick="removeTag(this)">×</span></span>
-                                                @endforeach
-                                            @endif
+                                    @php
+                                        $tagsRaw = old('tags', isset($data) ? ($data->getRawOriginal('tags') ?? $data->tags) : null);
+                                        $tagsValue = is_string($tagsRaw) ? json_decode($tagsRaw, true) : $tagsRaw;
+                                        if (!is_array($tagsValue)) { $tagsValue = []; }
+                                        $tagsHidden = !empty($tagsValue) ? json_encode(array_values($tagsValue)) : '';
+                                    @endphp
+                                    <div class="tags-input-wrapper form-control {{ $errors->has('tags') ? 'is-invalid' : '' }}" onclick="focusTagInput('tags_input')">
+                                        <div class="tags-list" id="tags-list">
+                                            @foreach($tagsValue as $tag)
+                                                <span class="tag-item" data-value="{{ $tag }}">{{ $tag }}<button type="button" class="remove-tag" onclick="removeTag(this, event)">&times;</button></span>
+                                            @endforeach
                                         </div>
-                                        <input type="text" name="tags_input" id="tags_input"
-                                            class="form-control {{ $errors->has('tags') ? 'is-invalid' : '' }}"
-                                            placeholder="Type and press Enter to add tags">
-                                        @php
-                                            $tagsHidden = old('tags', isset($data) ? $data->tags : null);
-                                            if (is_array($tagsHidden)) {
-                                                $tagsHidden = json_encode($tagsHidden);
-                                            }
-                                        @endphp
+                                        <input type="text" id="tags_input" class="tag-inner-input"
+                                            placeholder="{{ empty($tagsValue) ? 'Type and press Enter to add tags' : 'Add tag...' }}">
                                         <input type="hidden" name="tags" id="tags"
                                             value="{{ $tagsHidden }}">
                                     </div>
                                     @if ($errors->has('tags'))
-                                        <div class="invalid-feedback">{{ $errors->first('tags') }}</div>
+                                        <div class="invalid-feedback d-block">{{ $errors->first('tags') }}</div>
                                     @endif
                                 </div>
 
                                 {{-- Tags FR (Multiple) --}}
                                 <div class="col-md-6 mt-3">
-                                    <label for="tags_fr"
+                                    <label for="tags_fr_input"
                                         class="form-label">{{ __('messages.tags_fr') ?? 'Tags (FR)' }}</label>
-                                    <div class="tags-input-container">
-                                        <div class="tags-display" id="tags-display-fr">
-                                            @php
-                                                $tagsFrValue = old('tags_fr', isset($data) ? $data->tags_fr : null);
-                                                if (is_string($tagsFrValue)) {
-                                                    $tagsFrValue = json_decode($tagsFrValue, true);
-                                                }
-                                            @endphp
-                                            @if(!empty($tagsFrValue) && is_array($tagsFrValue))
-                                                @foreach($tagsFrValue as $tag)
-                                                    <span class="tag-item">{{ $tag }} <span class="remove-tag" onclick="removeTag(this)">×</span></span>
-                                                @endforeach
-                                            @endif
+                                    @php
+                                        $tagsFrRaw = old('tags_fr', isset($data) ? ($data->getRawOriginal('tags_fr') ?? $data->tags_fr) : null);
+                                        $tagsFrValue = is_string($tagsFrRaw) ? json_decode($tagsFrRaw, true) : $tagsFrRaw;
+                                        if (!is_array($tagsFrValue)) { $tagsFrValue = []; }
+                                        $tagsFrHidden = !empty($tagsFrValue) ? json_encode(array_values($tagsFrValue)) : '';
+                                    @endphp
+                                    <div class="tags-input-wrapper form-control {{ $errors->has('tags_fr') ? 'is-invalid' : '' }}" onclick="focusTagInput('tags_fr_input')">
+                                        <div class="tags-list" id="tags-list-fr">
+                                            @foreach($tagsFrValue as $tag)
+                                                <span class="tag-item" data-value="{{ $tag }}">{{ $tag }}<button type="button" class="remove-tag" onclick="removeTag(this, event)">&times;</button></span>
+                                            @endforeach
                                         </div>
-                                        <input type="text" name="tags_fr_input" id="tags_fr_input"
-                                            class="form-control {{ $errors->has('tags_fr') ? 'is-invalid' : '' }}"
-                                            placeholder="Tapez et appuyez sur Entrée pour ajouter des balises">
-                                        @php
-                                            $tagsFrHidden = old('tags_fr', isset($data) ? $data->tags_fr : null);
-                                            if (is_array($tagsFrHidden)) {
-                                                $tagsFrHidden = json_encode($tagsFrHidden);
-                                            }
-                                        @endphp
+                                        <input type="text" id="tags_fr_input" class="tag-inner-input"
+                                            placeholder="{{ empty($tagsFrValue) ? 'Tapez et appuyez sur Entrée pour ajouter des balises' : 'Ajouter une balise...' }}">
                                         <input type="hidden" name="tags_fr" id="tags_fr"
                                             value="{{ $tagsFrHidden }}">
                                     </div>
                                     @if ($errors->has('tags_fr'))
-                                        <div class="invalid-feedback">{{ $errors->first('tags_fr') }}</div>
+                                        <div class="invalid-feedback d-block">{{ $errors->first('tags_fr') }}</div>
                                     @endif
                                 </div>
 

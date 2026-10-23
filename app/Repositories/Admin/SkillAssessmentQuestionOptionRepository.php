@@ -104,11 +104,11 @@ class SkillAssessmentQuestionOptionRepository extends BaseRepository
         foreach ($options as $index => $optionData) {
             // Determine if this option is correct
             $isCorrect = false;
-            if ($correctAnswerIndex !== null && $correctAnswerIndex == $index) {
-                // For radio type - single correct answer
-                $isCorrect = true;
-            } elseif (isset($optionData['is_correct'])) {
-                // For multi-select type - multiple correct answers
+            if ($correctAnswerIndex !== null) {
+                // For radio type - single correct answer ONLY
+                $isCorrect = ((string) $correctAnswerIndex === (string) $index);
+            } elseif (!empty($optionData['is_correct'])) {
+                // For multi-select type - only if explicitly true
                 $isCorrect = true;
             }
 

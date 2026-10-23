@@ -55,24 +55,40 @@
             if (type === 'radio' || type === 'multi_select') {
                 $('#options-section').addClass('active');
             }
-            // Show/hide correct answer column based on type
+            
             if (type === 'radio') {
                 $('.correct-answer-col').show();
                 $('.correct-answer-info-radio').show();
                 $('.correct-answer-info-multi').hide();
+                updateRadioHighlights();
             } else if (type === 'multi_select') {
-                $('.correct-answer-col').show();
+                // Remove correct radio when user selects type is multi
+                $('.correct-answer-col').hide();
                 $('.correct-answer-info-radio').hide();
                 $('.correct-answer-info-multi').show();
+                // Don't show any option green for multi-select
+                $('.option-row').removeClass('correct-answer');
+                $('input[name="correct_answer"]').prop('checked', false);
             } else {
                 $('.correct-answer-col').hide();
+                $('.option-row').removeClass('correct-answer');
+            }
+        }
+
+        function updateRadioHighlights() {
+            var questionType = $('#question_type').val();
+            $('.option-row').removeClass('correct-answer');
+            if (questionType === 'radio') {
+                var checkedRadio = $('input[name="correct_answer"]:checked');
+                if (checkedRadio.length > 0) {
+                    checkedRadio.closest('.option-row').addClass('correct-answer');
+                }
             }
         }
 
         function addOption() {
             var questionType = $('#question_type').val();
-            var inputType = questionType === 'radio' ? 'radio' : 'checkbox';
-            var inputName = questionType === 'radio' ? 'correct_answer' : `options[${optionIndex}][is_correct]`;
+            var isRadio = (questionType === 'radio');
 
             var html = `
                 <div class="option-row" id="option-row-${optionIndex}">
@@ -92,17 +108,17 @@
                             <input type="number" name="options[${optionIndex}][weightage]" 
                                    class="form-control" step="0.01" min="0" max="100" value="0" required>
                         </div>
-                        <div class="col-md-2 correct-answer-col">
+                        <div class="col-md-2 correct-answer-col" style="${isRadio ? '' : 'display: none;'}">
                             <label class="form-label">{{ __('messages.correct_answer') ?? 'Correct' }}</label>
                             <div class="form-check mt-2">
-                                <input class="form-check-input" type="${inputType}" 
-                                       name="${inputName}" 
+                                <input class="form-check-input" type="radio" 
+                                       name="correct_answer" 
                                        value="${optionIndex}"
                                        onchange="highlightCorrectAnswer(this)">
                                 <label class="form-check-label">{{ __('messages.correct') ?? 'Correct' }}</label>
                             </div>
                         </div>
-                        <div class="col-md-3 d-flex align-items-end">
+                        <div class="col-md-2 d-flex align-items-end">
                             <button type="button" class="btn btn-outline-danger" onclick="removeOption(${optionIndex})">
                                 <i class="bi bi-trash"></i> {{ __('messages.remove') ?? 'Remove' }}
                             </button>
@@ -117,23 +133,15 @@
 
         function removeOption(index) {
             $('#option-row-' + index).remove();
+            updateRadioHighlights();
         }
 
         function highlightCorrectAnswer(el) {
             var questionType = $('#question_type').val();
+            $('.option-row').removeClass('correct-answer');
             if (questionType === 'radio') {
-                // Remove highlight from all options
-                $('.option-row').removeClass('correct-answer');
-                // Add highlight to selected option
                 if (el.checked) {
                     $(el).closest('.option-row').addClass('correct-answer');
-                }
-            } else {
-                // For multi-select, toggle the individual option
-                if (el.checked) {
-                    $(el).closest('.option-row').addClass('correct-answer');
-                } else {
-                    $(el).closest('.option-row').removeClass('correct-answer');
                 }
             }
         }
@@ -319,8 +327,25 @@
                                             </div>
                                             <div id="options-container">
                                                 @if (isset($data) && $data->options)
+                                                    @php
+                                                        // For radio type, ensure at most ONE option is marked as correct
+                                                        $selectedRadioIndex = null;
+                                                        if ($data->question_type === 'radio') {
+                                                            foreach ($data->options as $idx => $opt) {
+                                                                if ($opt->is_correct) {
+                                                                    $selectedRadioIndex = $idx;
+                                                                    break;
+                                                                }
+                                                            }
+                                                        }
+                                                    @endphp
                                                     @foreach ($data->options as $index => $option)
-                                                        <div class="option-row {{ $option->is_correct ? 'correct-answer' : '' }}"
+                                                        @php
+                                                            // For radio: only the single selected radio is green
+                                                            // For multi_select: no option is green
+                                                            $isThisCorrect = ($data->question_type === 'radio' && $selectedRadioIndex !== null && $selectedRadioIndex === $index);
+                                                        @endphp
+                                                        <div class="option-row {{ $isThisCorrect ? 'correct-answer' : '' }}"
                                                             id="option-row-{{ $index }}">
                                                             <div class="row align-items-end">
                                                                 <div class="col-md-3">
@@ -350,29 +375,20 @@
                                                                         min="0" max="100"
                                                                         value="{{ $option->weightage }}" required>
                                                                 </div>
-                                                                <div class="col-md-2 correct-answer-col">
+                                                                <div class="col-md-2 correct-answer-col" style="{{ isset($data) && $data->question_type === 'radio' ? '' : 'display:none;' }}">
                                                                     <label
                                                                         class="form-label">{{ __('messages.correct_answer') ?? 'Correct' }}</label>
                                                                     <div class="form-check mt-2">
-                                                                        @if (isset($data) && $data->question_type == 'radio')
-                                                                            <input class="form-check-input" type="radio"
-                                                                                name="correct_answer"
-                                                                                value="{{ $index }}"
-                                                                                {{ $option->is_correct ? 'checked' : '' }}
-                                                                                onchange="highlightCorrectAnswer(this)">
-                                                                        @else
-                                                                            <input class="form-check-input"
-                                                                                type="checkbox"
-                                                                                name="options[{{ $index }}][is_correct]"
-                                                                                value="1"
-                                                                                {{ $option->is_correct ? 'checked' : '' }}
-                                                                                onchange="highlightCorrectAnswer(this)">
-                                                                        @endif
+                                                                        <input class="form-check-input" type="radio"
+                                                                            name="correct_answer"
+                                                                            value="{{ $index }}"
+                                                                            {{ $isThisCorrect ? 'checked' : '' }}
+                                                                            onchange="highlightCorrectAnswer(this)">
                                                                         <label
                                                                             class="form-check-label">{{ __('messages.correct') ?? 'Correct' }}</label>
                                                                     </div>
                                                                 </div>
-                                                                <div class="col-md-3 d-flex align-items-end">
+                                                                <div class="col-md-2 d-flex align-items-end">
                                                                     <button type="button" class="btn btn-outline-danger"
                                                                         onclick="removeOption({{ $index }})">
                                                                         <i class="bi bi-trash"></i>
