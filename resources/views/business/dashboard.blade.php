@@ -199,45 +199,50 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-3">
-                            <h5 class="card-title mb-0">{{ __('messages.skill_assessment_results') }} <span>|
-                                    {{ __('messages.employees_performance') }}</span></h5>
-                            @if ((isset($exam_types) && count($exam_types) > 0) || (isset($exam_templates) && count($exam_templates) > 0))
-                                <div class="d-flex flex-wrap align-items-center gap-2">
-                                    @if (isset($exam_types) && count($exam_types) > 0)
-                                        <div class="d-flex align-items-center">
-                                            <label for="examTypeFilter"
-                                                class="form-label me-2 mb-0 text-nowrap">{{ __('messages.filter_by_exam_type') }}</label>
-                                            <select id="examTypeFilter" class="form-select form-select-sm"
-                                                style="max-width: 200px;">
-                                                <option value="">{{ __('messages.all_exam_types') }}
-                                                </option>
-                                                @foreach ($exam_types as $key => $label)
-                                                    <option value="{{ $key }}"
-                                                        {{ isset($selected_exam_type) && $selected_exam_type == $key ? 'selected' : '' }}>
-                                                        {{ $label }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    @endif
+                            <h5 class="card-title mb-0">
+                                <a href="{{ route('business.skill-assessment.exam-results') }}" class="text-dark text-decoration-none">
+                                    {{ __('messages.skill_assessment_results') }}
+                                </a>
+                                <span>| {{ __('messages.employees_performance') }}</span>
+                            </h5>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <a href="{{ route('business.skill-assessment.exam-results') }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-list-check"></i> {{ __('messages.exam_results') ?? 'Exam Results' }}
+                                </a>
+                                @if (isset($exam_types) && count($exam_types) > 0)
+                                    <div class="d-flex align-items-center">
+                                        <label for="examTypeFilter"
+                                            class="form-label me-2 mb-0 text-nowrap">{{ __('messages.filter_by_exam_type') }}</label>
+                                        <select id="examTypeFilter" class="form-select form-select-sm"
+                                            style="max-width: 200px;">
+                                            <option value="">{{ __('messages.all_exam_types') }}
+                                            </option>
+                                            @foreach ($exam_types as $key => $label)
+                                                <option value="{{ $key }}"
+                                                    {{ isset($selected_exam_type) && $selected_exam_type == $key ? 'selected' : '' }}>
+                                                    {{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @endif
 
-                                    @if (isset($exam_templates) && count($exam_templates) > 0)
-                                        <div class="d-flex align-items-center">
-                                            <label for="examTemplateFilter"
-                                                class="form-label me-2 mb-0 text-nowrap">{{ __('messages.filter_by_exam') }}</label>
-                                            <select id="examTemplateFilter" class="form-select form-select-sm"
-                                                style="max-width: 250px;">
-                                                <option value="">{{ __('messages.all_exams') }}</option>
-                                                @foreach ($exam_templates as $id => $title)
-                                                    <option value="{{ $id }}"
-                                                        {{ $selected_exam_template == $id ? 'selected' : '' }}>
-                                                        {{ $title }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    @endif
-                                </div>
-                            @endif
+                                @if (isset($exam_templates) && count($exam_templates) > 0)
+                                    <div class="d-flex align-items-center">
+                                        <label for="examTemplateFilter"
+                                            class="form-label me-2 mb-0 text-nowrap">{{ __('messages.filter_by_exam') }}</label>
+                                        <select id="examTemplateFilter" class="form-select form-select-sm"
+                                            style="max-width: 250px;">
+                                            <option value="">{{ __('messages.all_exams') }}</option>
+                                            @foreach ($exam_templates as $id => $title)
+                                                <option value="{{ $id }}"
+                                                    {{ $selected_exam_template == $id ? 'selected' : '' }}>
+                                                    {{ $title }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
                         <div style="height: 300px; position: relative;">
                             <canvas id="resultPieChart"></canvas>

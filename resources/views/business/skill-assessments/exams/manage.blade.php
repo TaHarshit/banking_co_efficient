@@ -70,6 +70,12 @@
                                                                 {{ __('messages.view_sections') ?? 'View Sections' }}
                                                                 ({{ $template->sections_count }})
                                                             </a>
+                                                            <a href="{{ route('business.skill-assessment.exam-results') }}?exam_template_id={{ $template->id }}"
+                                                                class="btn btn-sm btn-outline-primary ms-1"
+                                                                title="{{ __('messages.exam_results') ?? 'Exam Results' }}">
+                                                                <i class="bi bi-file-earmark-check"></i>
+                                                                {{ __('messages.exam_results') ?? 'Results' }}
+                                                            </a>
                                                         </td>
                                                         <td>
                                                             <div class="form-check form-switch">

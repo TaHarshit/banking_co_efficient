@@ -9,6 +9,7 @@ use App\Http\Controllers\Business\QuestionController;
 use App\Http\Controllers\Business\SkillAssessmentSectionController;
 use App\Http\Controllers\Business\SkillAssessmentQuestionController;
 use App\Http\Controllers\Business\SkillAssessmentExamTemplateController;
+use App\Http\Controllers\Business\SkillAssessmentExamController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -130,6 +131,13 @@ Route::middleware(['business.auth'])->group(function () {
         Route::POST('/skill-assessment/sections/{sectionId}/questions/import', 'Import')->name('business.skill-assessment.questions.import');
         Route::GET('/skill-assessment/questions/download-example', 'DownloadExample')->name('business.skill-assessment.questions.download-example');
         Route::GET('/skill-assessment/sections/{sectionId}/questions/delete-all', 'DeleteAll')->name('business.skill-assessment.questions.delete-all');
+    });
+
+    // Skill Assessment - Exam Results
+    Route::controller(SkillAssessmentExamController::class)->group(function () {
+        Route::GET('/skill-assessment/exam-results', 'ManageExams')->name('business.skill-assessment.exam-results');
+        Route::GET('/skill-assessment/exam-results/view/{id}', 'ViewExam')->name('business.skill-assessment.exam-results.view');
+        Route::POST('/skill-assessment/exam-results/score-answer', 'ScoreAnswer')->name('business.skill-assessment.exam-results.score');
     });
     // Contact Us Management
     Route::controller(\App\Http\Controllers\Business\ContactUsController::class)->group(function () {

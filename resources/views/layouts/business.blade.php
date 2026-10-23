@@ -203,12 +203,13 @@
                     data-bs-parent="#sidebar-nav">
                     <li>
                         <a href="{{ route('business.skill-assessment.exams') }}"
-                            class="{{ request()->routeIs('business.skill-assessment.exams') || request()->routeIs('business.skill-assessment.exams.*') || request()->routeIs('business.skill-assessment.sections') || request()->routeIs('business.skill-assessment.sections.*') || request()->routeIs('business.skill-assessment.questions') || request()->routeIs('business.skill-assessment.questions.*') ? 'active' : '' }}">
+                            class="{{ (request()->routeIs('business.skill-assessment.exams') || request()->routeIs('business.skill-assessment.exams.*') || request()->routeIs('business.skill-assessment.sections') || request()->routeIs('business.skill-assessment.sections.*') || request()->routeIs('business.skill-assessment.questions') || request()->routeIs('business.skill-assessment.questions.*')) && !request()->routeIs('business.skill-assessment.exam-results*') ? 'active' : '' }}">
                             <i class="bi bi-circle"></i><span>{{ __('messages.exams') ?? 'Exams' }}</span>
                         </a>
                     </li>
                     <li>
-                        <a href="#">
+                        <a href="{{ route('business.skill-assessment.exam-results') }}"
+                            class="{{ request()->routeIs('business.skill-assessment.exam-results*') ? 'active' : '' }}">
                             <i
                                 class="bi bi-circle"></i><span>{{ __('messages.exam_results') ?? 'Exam Results' }}</span>
                         </a>
