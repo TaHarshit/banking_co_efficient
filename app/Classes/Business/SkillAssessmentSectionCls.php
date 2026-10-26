@@ -92,9 +92,11 @@ class SkillAssessmentSectionCls
                 if ($section) {
                     $section->update($data);
                 }
+                logBusinessActivity('Skill Assessment', 'Update Section', $id, "Updated exam section: {$data['title']}", $data, $businessId);
                 $message = __('messages.section_updated');
             } else {
-                SkillAssessmentSection::create($data);
+                $newSec = SkillAssessmentSection::create($data);
+                logBusinessActivity('Skill Assessment', 'Add Section', $newSec->id ?? null, "Added new exam section: {$data['title']}", $data, $businessId);
                 $message = __('messages.section_created');
             }
 
@@ -119,9 +121,12 @@ class SkillAssessmentSectionCls
                 ->where('business_id', $businessId)
                 ->first();
 
+            $title = $section ? $section->title : "ID: $id";
             if ($section) {
                 $section->delete();
             }
+
+            logBusinessActivity('Skill Assessment', 'Delete Section', $id, "Deleted exam section: {$title}", null, $businessId);
 
             Session::flash('message', __('messages.section_deleted'));
             Session::flash('icon', 'success');
@@ -147,10 +152,13 @@ class SkillAssessmentSectionCls
             if ($section) {
                 $section->is_active = $status;
                 $section->save();
+                $statusText = $status ? 'Active' : 'Inactive';
+                logBusinessActivity('Skill Assessment', 'Status Change Section', $id, "Changed exam section status to: {$statusText}", ['status' => $status], $businessId);
             }
             return 1;
         } catch (Exception $e) {
             return 0;
         }
     }
+
 }

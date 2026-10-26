@@ -522,6 +522,8 @@ return [
     // ===========================================
     'activity_logs' => 'Activity Logs',
     'admin_activity_logs' => 'Admin Activity Logs',
+    'business_activity_logs' => 'Bank Activity Logs',
+    'action_by' => 'Performed By',
     'module' => 'Module',
     'all_modules' => 'All Modules',
     'all_admins' => 'All Admins',

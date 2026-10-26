@@ -80,9 +80,11 @@ class SkillAssessmentExamTemplateCls
                 if ($exam) {
                     $exam->update($data);
                 }
+                logBusinessActivity('Skill Assessment', 'Update Exam', $id, "Updated exam template: {$data['title']}", $data, $businessId);
                 $message = __('messages.exam_template_updated') ?? 'Exam template updated successfully!';
             } else {
-                SkillAssessmentExamTemplate::create($data);
+                $newExam = SkillAssessmentExamTemplate::create($data);
+                logBusinessActivity('Skill Assessment', 'Add Exam', $newExam->id ?? null, "Added new exam template: {$data['title']}", $data, $businessId);
                 $message = __('messages.exam_template_created') ?? 'Exam template created successfully!';
             }
 
@@ -107,9 +109,12 @@ class SkillAssessmentExamTemplateCls
                 ->where('business_id', $businessId)
                 ->first();
 
+            $title = $exam ? $exam->title : "ID: $id";
             if ($exam) {
                 $exam->delete();
             }
+
+            logBusinessActivity('Skill Assessment', 'Delete Exam', $id, "Deleted exam template: {$title}", null, $businessId);
 
             Session::flash('message', __('messages.exam_template_deleted') ?? 'Exam template deleted successfully!');
             Session::flash('icon', 'success');
@@ -135,12 +140,15 @@ class SkillAssessmentExamTemplateCls
             if ($exam) {
                 $exam->is_active = $status;
                 $exam->save();
+                $statusText = $status ? 'Active' : 'Inactive';
+                logBusinessActivity('Skill Assessment', 'Status Change Exam', $id, "Changed exam template status to: {$statusText}", ['status' => $status], $businessId);
             }
             return 1;
         } catch (Exception $e) {
             return 0;
         }
     }
+
 
     /**
      * Get next order number

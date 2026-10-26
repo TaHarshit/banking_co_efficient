@@ -124,6 +124,7 @@ class BusinessDashboardController extends Controller
         );
 
         if ($result['success']) {
+            logBusinessActivity('Profile', 'Update', $business->id, "Updated bank profile details (Name: {$request->name})", ['name' => $request->name, 'address' => $request->address], $business->id);
             Session::flash('message', $result['message']);
             Session::flash('icon', 'success');
         } else {
@@ -132,5 +133,6 @@ class BusinessDashboardController extends Controller
         }
 
         return redirect()->route('business.profile');
+
     }
 }

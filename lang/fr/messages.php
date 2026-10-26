@@ -560,6 +560,8 @@ return [
     // ===========================================
     'activity_logs' => 'Journaux d\'activité',
     'admin_activity_logs' => 'Journaux d\'activité de l\'administrateur',
+    'business_activity_logs' => 'Journaux d\'activité de la banque',
+    'action_by' => 'Effectué par',
     'module' => 'Module',
     'all_modules' => 'Tous les modules',
     'all_admins' => 'Tous les administrateurs',

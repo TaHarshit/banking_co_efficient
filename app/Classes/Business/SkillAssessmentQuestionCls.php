@@ -93,9 +93,11 @@ class SkillAssessmentQuestionCls
                 if ($question) {
                     $question->update($data);
                 }
+                logBusinessActivity('Skill Assessment', 'Update Question', $id, "Updated exam question in section ID: {$sectionId}", $data, $businessId);
                 $message = __('messages.question_updated');
             } else {
                 $question = SkillAssessmentQuestion::create($data);
+                logBusinessActivity('Skill Assessment', 'Add Question', $question->id ?? null, "Added new exam question in section ID: {$sectionId}", $data, $businessId);
                 $message = __('messages.question_created');
             }
 
@@ -112,6 +114,7 @@ class SkillAssessmentQuestionCls
             Session::flash('icon', 'success');
 
             return redirect()->route('business.skill-assessment.questions', $sectionId);
+
         } catch (Exception $e) {
             Session::flash('message', __('messages.something_went_wrong') . ': ' . $e->getMessage());
             Session::flash('icon', 'danger');
@@ -172,6 +175,7 @@ class SkillAssessmentQuestionCls
 
             if ($question) {
                 $question->delete();
+                logBusinessActivity('Skill Assessment', 'Delete Question', $id, "Deleted exam question ID: {$id} from section ID: {$sectionId}", null, $businessId);
             }
 
             Session::flash('message', __('messages.question_deleted'));
@@ -198,12 +202,15 @@ class SkillAssessmentQuestionCls
             if ($question) {
                 $question->is_active = $status;
                 $question->save();
+                $statusText = $status ? 'Active' : 'Inactive';
+                logBusinessActivity('Skill Assessment', 'Status Change Question', $id, "Changed exam question status to: {$statusText}", ['status' => $status], $businessId);
             }
             return 1;
         } catch (Exception $e) {
             return 0;
         }
     }
+
 
     /**
      * Export questions to Excel (.xlsx)
@@ -499,9 +506,12 @@ class SkillAssessmentQuestionCls
                 $deletedCount++;
             }
 
+            logBusinessActivity('Skill Assessment', 'Delete All Questions', null, "Deleted all ({$deletedCount}) questions from exam section ID: {$sectionId}", null, $businessId);
+
             Session::flash('message', "Successfully deleted {$deletedCount} questions!");
             Session::flash('icon', 'success');
             return redirect()->route('business.skill-assessment.questions', $sectionId);
+
         } catch (Exception $e) {
             Session::flash('message', 'Delete failed: ' . $e->getMessage());
             Session::flash('icon', 'danger');

@@ -158,4 +158,10 @@ Route::middleware(['business.auth'])->group(function () {
         Route::GET('/policies/delete/{id}', 'destroy')->name('business.policies.destroy');
         Route::POST('/policies/import', 'import')->name('business.policies.import');
     });
+
+    // Business Activity Logs
+    Route::controller(\App\Http\Controllers\Business\BusinessActivityLogController::class)->group(function () {
+        Route::GET('/activity-logs', 'index')->name('business.activity_logs.index');
+    });
 });
+

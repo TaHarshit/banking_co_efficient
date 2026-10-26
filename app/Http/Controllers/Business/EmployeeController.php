@@ -78,13 +78,15 @@ class EmployeeController extends Controller
             return back()->withInput();
         }
 
-        $this->EmployeeRep->Store([
+        $employee = $this->EmployeeRep->Store([
             'business_id' => $business->id,
             'name' => $request->name,
             'email' => $request->email,
             'department' => $request->department,
             'phone' => $request->phone,
         ]);
+
+        logBusinessActivity('Employees', 'Add', $employee->id ?? null, "Added new employee: {$request->name} ({$request->email})", $request->except(['_token']), $business->id);
 
         Session::flash('message', 'Employee added successfully');
         Session::flash('icon', 'success');
@@ -151,6 +153,8 @@ class EmployeeController extends Controller
             'phone' => $request->phone,
         ]);
 
+        logBusinessActivity('Employees', 'Update', $id, "Updated employee: {$request->name} ({$request->email})", $request->except(['_token']), $business->id);
+
         Session::flash('message', 'Employee updated successfully');
         Session::flash('icon', 'success');
         return redirect()->route('business.employees');
@@ -162,9 +166,12 @@ class EmployeeController extends Controller
     public function Delete($id)
     {
         $business = Auth::guard('business')->user();
+        $employee = $this->EmployeeRep->GetEmployee($id, $business->id);
+        $empName = $employee ? $employee->name : "ID: $id";
         $result = $this->EmployeeRep->Delete($id, $business->id);
 
         if ($result) {
+            logBusinessActivity('Employees', 'Delete', $id, "Deleted employee: {$empName}", null, $business->id);
             Session::flash('message', 'Employee deleted successfully');
             Session::flash('icon', 'success');
         } else {
@@ -252,9 +259,12 @@ class EmployeeController extends Controller
 
             $result = $this->EmployeeRep->BulkImport($business->id, $employees);
 
+            logBusinessActivity('Employees', 'Import', null, "Imported {$result['imported']} employees ({$result['skipped']} skipped)", ['imported' => $result['imported'], 'skipped' => $result['skipped']], $business->id);
+
             Session::flash('message', "Import complete! {$result['imported']} imported, {$result['skipped']} skipped");
             Session::flash('icon', 'success');
             return redirect()->route('business.employees');
+
         } catch (\Exception $e) {
             Session::flash('message', 'Error processing file: ' . $e->getMessage());
             Session::flash('icon', 'error');

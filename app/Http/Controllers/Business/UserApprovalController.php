@@ -81,6 +81,8 @@ class UserApprovalController extends Controller
         $user->status = 'active'; // active status
         $user->save();
 
+        logBusinessActivity('Users', 'Approve', $user->id, "Approved user: {$user->name} {$user->surname} ({$user->email})", null, $business->id);
+
         Session::flash('message', 'User approved successfully');
         Session::flash('icon', 'success');
         return redirect()->route('business.users.pending');
@@ -102,6 +104,8 @@ class UserApprovalController extends Controller
             return redirect()->route('business.users.pending');
         }
 
+        $userName = "{$user->name} {$user->surname} ({$user->email})";
+
         // Also remove the employee record if it exists
         \App\Models\Employee::where('business_id', $business->id)
             ->where('email', strtolower($user->email))
@@ -110,6 +114,8 @@ class UserApprovalController extends Controller
         $user->status = 2;
         $user->business_id = null;
         $user->save();
+
+        logBusinessActivity('Users', 'Reject', $id, "Rejected user: {$userName}", null, $business->id);
 
         Session::flash('message', 'User rejected');
         Session::flash('icon', 'success');
@@ -132,6 +138,8 @@ class UserApprovalController extends Controller
             return redirect()->route('business.users');
         }
 
+        $userName = "{$user->name} {$user->surname} ({$user->email})";
+
         // Also remove the employee record if it exists
         \App\Models\Employee::where('business_id', $business->id)
             ->where('email', strtolower($user->email))
@@ -141,8 +149,11 @@ class UserApprovalController extends Controller
         $user->status = 1;
         $user->save();
 
+        logBusinessActivity('Users', 'Remove', $id, "Removed user: {$userName} from business", null, $business->id);
+
         Session::flash('message', 'User removed from business');
         Session::flash('icon', 'success');
         return redirect()->route('business.users');
     }
+
 }

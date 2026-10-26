@@ -216,6 +216,14 @@
                     </li>
                 </ul>
             </li>
+
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('business.activity_logs*') ? '' : 'collapsed' }}"
+                    href="{{ route('business.activity_logs.index') }}">
+                    <i class="bi bi-clock-history"></i>
+                    <span>{{ __('messages.activity_logs') ?? 'Activity Logs' }}</span>
+                </a>
+            </li>
         </ul>
     </aside>
 

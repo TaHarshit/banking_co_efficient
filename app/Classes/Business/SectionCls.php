@@ -81,7 +81,10 @@ class SectionCls
                 'is_active' => $request->has('is_active') ? 1 : 0,
             ];
 
-            $this->SectionRep->StoreSection($data, $id);
+            $savedSection = $this->SectionRep->StoreSection($data, $id);
+            $action = ($id > 0) ? 'Update Section' : 'Add Section';
+            $desc = ($id > 0) ? "Updated section: {$data['title_en']}" : "Added new section: {$data['title_en']}";
+            logBusinessActivity('Personalized Experience', $action, $savedSection->id ?? $id, $desc, $data, $businessId);
 
             $message = ($id > 0)
                 ? __('messages.section_updated')
@@ -104,7 +107,11 @@ class SectionCls
     public function DeleteSection($id, $businessId)
     {
         try {
+            $section = $this->SectionRep->GetSection($id, $businessId);
+            $title = $section ? $section->title_en : "ID: $id";
             $this->SectionRep->DeleteSection($id, $businessId);
+
+            logBusinessActivity('Personalized Experience', 'Delete Section', $id, "Deleted section: {$title}", null, $businessId);
 
             Session::flash('message', __('messages.section_deleted'));
             Session::flash('icon', 'success');
@@ -123,7 +130,11 @@ class SectionCls
     public function UpdateOrder($orderedIds, $businessId)
     {
         try {
-            return $this->SectionRep->UpdateOrder($orderedIds, $businessId);
+            $res = $this->SectionRep->UpdateOrder($orderedIds, $businessId);
+            if ($res) {
+                logBusinessActivity('Personalized Experience', 'Order Update', null, "Updated order of sections", ['order' => $orderedIds], $businessId);
+            }
+            return $res;
         } catch (Exception $e) {
             return false;
         }
@@ -136,11 +147,14 @@ class SectionCls
     {
         try {
             $this->SectionRep->ChangeStatus($id, $status, $businessId);
+            $statusText = $status ? 'Active' : 'Inactive';
+            logBusinessActivity('Personalized Experience', 'Status Change', $id, "Changed section status to: {$statusText}", ['status' => $status], $businessId);
             return 1;
         } catch (Exception $e) {
             return 0;
         }
     }
+
 
     /**
      * Count sections for a business

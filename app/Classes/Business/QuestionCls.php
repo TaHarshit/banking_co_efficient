@@ -83,6 +83,10 @@ class QuestionCls
                 }
             }
 
+            $action = ($id > 0) ? 'Update Question' : 'Add Question';
+            $desc = ($id > 0) ? "Updated question in section ID: {$sectionId}" : "Added new question in section ID: {$sectionId}";
+            logBusinessActivity('Personalized Experience', $action, $question->id ?? $id, $desc, $data, $businessId);
+
             $message = ($id > 0)
                 ? __('messages.question_updated')
                 : __('messages.question_created');
@@ -91,6 +95,7 @@ class QuestionCls
             Session::flash('icon', 'success');
 
             return redirect()->route('business.questions', $sectionId);
+
         } catch (Exception $e) {
             Session::flash('message', __('messages.something_went_wrong'));
             Session::flash('icon', 'danger');
@@ -182,6 +187,8 @@ class QuestionCls
 
             $this->QuestionRep->DeleteQuestion($id, $businessId);
 
+            logBusinessActivity('Personalized Experience', 'Delete Question', $id, "Deleted question ID: {$id} from section ID: {$sectionId}", null, $businessId);
+
             Session::flash('message', __('messages.question_deleted'));
             Session::flash('icon', 'success');
 
@@ -202,7 +209,11 @@ class QuestionCls
     public function UpdateOrder($orderedIds, $businessId)
     {
         try {
-            return $this->QuestionRep->UpdateOrder($orderedIds, $businessId);
+            $res = $this->QuestionRep->UpdateOrder($orderedIds, $businessId);
+            if ($res) {
+                logBusinessActivity('Personalized Experience', 'Order Update', null, "Updated order of questions", ['order' => $orderedIds], $businessId);
+            }
+            return $res;
         } catch (Exception $e) {
             return false;
         }
@@ -215,11 +226,14 @@ class QuestionCls
     {
         try {
             $this->QuestionRep->ChangeStatus($id, $status, $businessId);
+            $statusText = $status ? 'Active' : 'Inactive';
+            logBusinessActivity('Personalized Experience', 'Status Change', $id, "Changed question status to: {$statusText}", ['status' => $status], $businessId);
             return 1;
         } catch (Exception $e) {
             return 0;
         }
     }
+
 
     /**
      * Get question type options
@@ -351,6 +365,7 @@ class QuestionCls
             fclose($fileHandle);
 
             if ($importedCount > 0) {
+                logBusinessActivity('Personalized Experience', 'Import Questions', null, "Imported {$importedCount} questions for section ID: {$sectionId}", ['count' => $importedCount], $businessId);
                 Session::flash('message', "Successfully imported {$importedCount} questions!");
                 Session::flash('icon', 'success');
             }
@@ -408,9 +423,12 @@ class QuestionCls
                 $deletedCount++;
             }
 
+            logBusinessActivity('Personalized Experience', 'Delete All Questions', null, "Deleted all ({$deletedCount}) questions from section ID: {$sectionId}", null, $businessId);
+
             Session::flash('message', __('messages.all_questions_deleted'));
             Session::flash('icon', 'success');
             return redirect()->route('business.questions', $sectionId);
+
         } catch (Exception $e) {
             Session::flash('message', __('messages.something_went_wrong'));
             Session::flash('icon', 'danger');

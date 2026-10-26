@@ -257,3 +257,44 @@ if (!function_exists('logAdminActivity')) {
         }
     }
 }
+
+if (!function_exists('logBusinessActivity')) {
+    /**
+     * Log business/bank activity strictly scoped to their business
+     *
+     * @param string $module
+     * @param string $action
+     * @param int|null $moduleId
+     * @param string|null $description
+     * @param array|null $data
+     * @param int|null $businessId
+     */
+    function logBusinessActivity($module, $action, $moduleId = null, $description = null, $data = null, $businessId = null) {
+        try {
+            $business = auth()->guard('business')->user();
+            $targetBusinessId = $businessId ?? ($business ? $business->id : null);
+
+            if (!$targetBusinessId) {
+                return;
+            }
+
+            $actorId = $business ? $business->id : null;
+            $actorName = $business ? $business->name : null;
+
+            \App\Models\BusinessActivityLog::create([
+                'business_id' => $targetBusinessId,
+                'actor_id' => $actorId,
+                'actor_name' => $actorName,
+                'module' => $module,
+                'action' => $action,
+                'module_id' => $moduleId,
+                'description' => $description,
+                'data' => $data,
+                'ip_address' => request()->ip(),
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to log business activity: ' . $e->getMessage());
+        }
+    }
+}
+

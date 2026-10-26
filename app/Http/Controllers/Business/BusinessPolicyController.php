@@ -134,6 +134,8 @@ class BusinessPolicyController extends Controller
             ]);
         }
 
+        logBusinessActivity('Business Policies', 'Update Guidelines', null, 'Updated bank business policy guidelines/sections', null, $business->id);
+
         return redirect()->route('business.policies.index')
             ->with('success', __('messages.message_updated_successfully'));
     }
@@ -175,8 +177,11 @@ class BusinessPolicyController extends Controller
             ]);
         }
 
+        logBusinessActivity('Business Policies', 'Add', $question->id, "Added policy question in section: {$request->section_name_en}", $request->except(['_token']), $business->id);
+
         return redirect()->route('business.policies.index')
             ->with('success', __('messages.policy_question_created'));
+
     }
 
     public function edit($id)
@@ -226,6 +231,8 @@ class BusinessPolicyController extends Controller
             ]);
         }
 
+        logBusinessActivity('Business Policies', 'Update', $question->id, "Updated policy question in section: {$request->section_name_en}", $request->except(['_token']), $business->id);
+
         return redirect()->route('business.policies.index')
             ->with('success', __('messages.policy_question_updated'));
     }
@@ -237,7 +244,10 @@ class BusinessPolicyController extends Controller
             ->where('business_id', $business->id)
             ->firstOrFail();
 
+        $section = $question->section_name_en ?? $question->section_name;
         $question->delete();
+
+        logBusinessActivity('Business Policies', 'Delete', $id, "Deleted policy question ID: {$id} from section: {$section}", null, $business->id);
 
         return redirect()->route('business.policies.index')
             ->with('success', __('messages.policy_question_deleted'));
@@ -260,6 +270,7 @@ class BusinessPolicyController extends Controller
             // Remove header row
             array_shift($rows);
 
+            $importedCount = 0;
             foreach ($rows as $row) {
                 if (empty($row[0])) continue;
 
@@ -307,7 +318,11 @@ class BusinessPolicyController extends Controller
                         'is_correct' => strtolower(trim($row[14] ?? '')) === 'yes' || $row[14] == 1,
                     ]);
                 }
+
+                $importedCount++;
             }
+
+            logBusinessActivity('Business Policies', 'Import', null, "Imported {$importedCount} policy questions from file: " . $file->getClientOriginalName(), ['count' => $importedCount], $business->id);
 
             return redirect()->route('business.policies.index')
                 ->with('success', __('messages.import') . ' successful!');
@@ -317,3 +332,4 @@ class BusinessPolicyController extends Controller
         }
     }
 }
+
