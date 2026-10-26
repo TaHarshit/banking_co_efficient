@@ -11,7 +11,13 @@
         <li><strong>Name:</strong> {{ $contactData['name'] }}</li>
         <li><strong>Email:</strong> {{ $contactData['email'] }}</li>
         <li><strong>Subject:</strong> {{ $contactData['subject'] }}</li>
+        @if(!empty($contactData['business_name']))
+            <li><strong>Bank / Tenant:</strong> {{ $contactData['business_name'] }} (Code: {{ $contactData['business_code'] ?? 'N/A' }})</li>
+        @else
+            <li><strong>Type:</strong> Central NegoMaster Support (General Inquiry)</li>
+        @endif
     </ul>
+
 
     <h3>Message:</h3>
     <p>{{ $contactData['message'] }}</p>

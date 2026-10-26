@@ -90,6 +90,18 @@
                             </div>
 
                             <div class="col-12 position-relative">
+                                <label for="contact_email" class="form-label">{{ __('messages.contact_email') }}</label>
+                                <input type="email" name="contact_email"
+                                    class="form-control {{ $errors->has('contact_email') ? 'is-invalid' : '' }}" id="contact_email"
+                                    value="{{ old('contact_email', $business->contact_email) }}"
+                                    placeholder="{{ $business->email }}">
+                                <small class="text-muted">{{ __('messages.contact_email_hint') }}</small>
+                                @if ($errors->has('contact_email'))
+                                    <div class="invalid-feedback">{{ $errors->first('contact_email') }}</div>
+                                @endif
+                            </div>
+
+                            <div class="col-12 position-relative">
                                 <label for="business_code"
                                     class="form-label">{{ __('messages.your_business_code') }}</label>
                                 <div class="input-group">

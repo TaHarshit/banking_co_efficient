@@ -7,20 +7,30 @@ use App\Models\ContactUs;
 class ContactUsRepository
 {
     /**
-     * Get all contact requests ordered by latest first.
+     * Get all contact requests with optional filter (central vs specific business)
      */
-    public function GetContacts()
+    public function GetContacts($filter = null)
     {
-        return ContactUs::with('business')->orderBy('created_at', 'desc')->get();
+        $query = ContactUs::with('business')->orderBy('created_at', 'desc');
+
+        if ($filter === 'central') {
+            $query->whereNull('business_id');
+        } elseif (!empty($filter) && $filter !== 'all') {
+            $query->where('business_id', (int) $filter);
+        }
+
+        return $query->get();
     }
+
 
     /**
      * Get a single contact request by ID.
      */
     public function GetContact($id)
     {
-        return ContactUs::with('repliedByUser')->find($id);
+        return ContactUs::with(['repliedByUser', 'business'])->find($id);
     }
+
 
     /**
      * Store a reply for a contact request.

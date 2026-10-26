@@ -45,9 +45,12 @@ class ContactUsController extends Controller
         // We are passing 0 or null as replied_by because of FK constraint to users table logic discussed in repository
         $this->ContactUsRep->ReplyContact($id, $request->reply, null);
 
+        $contact = $this->ContactUsRep->GetContact($id);
+        $businessId = \Illuminate\Support\Facades\Auth::guard('business')->id();
+        logBusinessActivity('Contact Us', 'Reply', $id, "Replied to contact request from: " . ($contact ? "{$contact->name} ({$contact->email})" : "ID: $id"), ['subject' => $contact->subject ?? '', 'reply' => $request->reply], $businessId);
+
         // Send email to the user with the reply content
         try {
-            $contact = $this->ContactUsRep->GetContact($id);
             if ($contact && !empty($contact->email)) {
                 $data = [
                     'name' => $contact->name,
@@ -76,9 +79,17 @@ class ContactUsController extends Controller
 
     public function Delete($id)
     {
+        $businessId = \Illuminate\Support\Facades\Auth::guard('business')->id();
+        $contact = $this->ContactUsRep->GetContact($id);
+        $name = $contact ? "{$contact->name} ({$contact->email})" : "ID: $id";
+
         $this->ContactUsRep->DeleteContact($id);
+
+        logBusinessActivity('Contact Us', 'Delete', $id, "Deleted contact request from: {$name}", null, $businessId);
+
         Session::flash('message', 'Contact request deleted successfully.');
         Session::flash('icon', 'success');
         return redirect()->route('business.contacts');
     }
 }
+

@@ -37,26 +37,78 @@ class ContactUsCls
                 return General::setResponse('VALIDATION_ERROR', 'Message is required');
             }
 
-            // Validate company_id if provided (maps to business_id)
-            if (!empty($postData['company_id'])) {
-                if (!\App\Models\Business::where('id', $postData['company_id'])->exists()) {
-                    return General::setResponse('VALIDATION_ERROR', 'Invalid company ID');
+            // Resolve business_id from multiple possible sources (explicit param, header, or authenticated user)
+            $businessId = null;
+
+            if (!empty($postData['business_id'])) {
+                $businessId = (int) $postData['business_id'];
+            } elseif (!empty($postData['company_id'])) {
+                $businessId = (int) $postData['company_id'];
+            }
+
+            if (!$businessId) {
+                $businessCode = request()->header('business_code')
+                    ?? request()->header('business-code')
+                    ?? ($postData['business_code'] ?? null);
+
+                if (!empty($businessCode)) {
+                    $foundByCode = \App\Models\Business::where('business_code', $businessCode)->first();
+                    if ($foundByCode) {
+                        $businessId = $foundByCode->id;
+                    }
                 }
             }
 
-            // Create contact request
+            if (!$businessId && auth()->check()) {
+                $businessId = auth()->user()->business_id ?? null;
+            }
+
+            // Validate business if provided
+            $business = null;
+            if (!empty($businessId)) {
+                $business = \App\Models\Business::find($businessId);
+                if (!$business) {
+                    return General::setResponse('VALIDATION_ERROR', 'Invalid bank or business ID');
+                }
+            }
+
+            // Create contact request scoped to business (or null for central support)
             $contact = ContactUs::create([
                 'name' => $postData['name'],
                 'email' => $postData['email'],
                 'subject' => $postData['subject'],
                 'message' => $postData['message'],
                 'status' => 'pending',
-                'business_id' => $postData['company_id'] ?? null, // Map input company_id to business_id
+                'business_id' => $business ? $business->id : null,
             ]);
 
-            // Send notification email
+            // Smart Email Routing (PPT Slide 4: Central support routing vs Bank-specific contact)
             try {
-                Mail::to('support@negomaster.ch')->send(new ContactUsNotification($postData));
+                $centralSupportEmail = config('mail.support_address', 'support@negomaster.ch');
+
+                if ($business) {
+                    // Bank-specific routing
+                    $bankContactEmail = !empty($business->contact_email) ? $business->contact_email : $business->email;
+                    $recipientEmail = $bankContactEmail ?: $centralSupportEmail;
+
+                    $notificationData = array_merge($postData, [
+                        'business_name' => $business->name,
+                        'business_code' => $business->business_code,
+                        'routing_type' => 'bank_specific',
+                    ]);
+
+                    $mail = Mail::to($recipientEmail);
+                    if ($recipientEmail !== $centralSupportEmail) {
+                        $mail->bcc($centralSupportEmail);
+                    }
+                    $mail->send(new ContactUsNotification($notificationData));
+                } else {
+                    // Central support routing
+                    $notificationData = array_merge($postData, [
+                        'routing_type' => 'central_support',
+                    ]);
+                    Mail::to($centralSupportEmail)->send(new ContactUsNotification($notificationData));
+                }
             } catch (Exception $mailException) {
                 // Log the error but don't fail the request since the contact is already saved
                 \Illuminate\Support\Facades\Log::error('Failed to send contact us email: ' . $mailException->getMessage());
@@ -69,3 +121,4 @@ class ContactUsCls
         }
     }
 }
+

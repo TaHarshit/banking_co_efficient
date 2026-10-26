@@ -38,13 +38,17 @@ class BusinessRepository extends BaseRepository
             ->first();
     }
 
-    public function StoreBusiness($name, $email, $logo, $address, $status, $id, $subscriptionData = [])
+    public function StoreBusiness($name, $email, $logo, $address, $status, $id, $subscriptionData = [], $contactEmail = null)
     {
         $data = [];
         $data['name'] = $name;
         $data['email'] = $email;
         $data['address'] = $address;
         $data['status'] = $status;
+
+        if ($contactEmail !== null) {
+            $data['contact_email'] = !empty($contactEmail) ? $contactEmail : null;
+        }
 
         // Subscription & Quota fields
         if (array_key_exists('plan_id', $subscriptionData)) {

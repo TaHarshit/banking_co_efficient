@@ -34,13 +34,22 @@
                             </h5>
 
                             <div class="row mb-3">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <strong>{{ __('messages.name') }}:</strong> {{ $contact->name }}
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <strong>{{ __('messages.email') }}:</strong> {{ $contact->email }}
                                 </div>
+                                <div class="col-md-4">
+                                    <strong>{{ __('messages.routing') ?? 'Routing' }}:</strong>
+                                    @if ($contact->business)
+                                        <span class="badge bg-primary">{{ $contact->business->name }} ({{ $contact->business->business_code }})</span>
+                                    @else
+                                        <span class="badge bg-secondary">{{ __('messages.central_support') ?? 'Central Support' }}</span>
+                                    @endif
+                                </div>
                             </div>
+
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <strong>{{ __('messages.date') }}:</strong>

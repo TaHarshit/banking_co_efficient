@@ -20,16 +20,17 @@ class ContactUsCls
     }
 
     /**
-     * Get all contact requests.
+     * Get all contact requests with optional filter.
      */
-    public function GetContacts()
+    public function GetContacts($filter = null)
     {
         try {
-            return $this->ContactUsRep->GetContacts();
+            return $this->ContactUsRep->GetContacts($filter);
         } catch (Exception $e) {
-            return response()->view('error.500', ['message' => $e->getMessage()], 500);
+            return collect();
         }
     }
+
 
     /**
      * Get a single contact request.

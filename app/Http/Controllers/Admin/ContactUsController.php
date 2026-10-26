@@ -16,13 +16,22 @@ class ContactUsController extends Controller
     }
 
     /**
-     * Display list of all contact requests.
+     * Display list of contact requests with optional Central vs Bank filter.
      */
-    public function ManageContacts()
+    public function ManageContacts(Request $request)
     {
-        $contacts = $this->ContactUsCls->GetContacts();
-        return view('contacts.manage', ['contacts' => $contacts, 'page_name' => 'Contact Us']);
+        $filter = $request->query('filter', 'all');
+        $contacts = $this->ContactUsCls->GetContacts($filter);
+        $businesses = \App\Models\Business::select('id', 'name', 'business_code')->orderBy('name')->get();
+
+        return view('contacts.manage', [
+            'contacts' => $contacts,
+            'businesses' => $businesses,
+            'selectedFilter' => $filter,
+            'page_name' => 'Contact Us',
+        ]);
     }
+
 
     /**
      * View a single contact request.

@@ -201,6 +201,8 @@ return [
     'recommended_size' => 'Required size: 200x200px (JPG, PNG)',
     'logo_dimensions' => 'The logo must be exactly 200x200 pixels.',
     'address' => 'Address',
+    'contact_email' => 'Support / Inquiries Email',
+    'contact_email_hint' => 'Optional. Inquiries from bank users will be routed here. Defaults to your business email if left empty.',
     'save_changes' => 'Save Changes',
 
     // ===========================================

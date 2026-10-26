@@ -107,6 +107,7 @@ class BusinessDashboardController extends Controller
     {
         $request->validate([
             'name' => 'required|max:255',
+            'contact_email' => 'nullable|email|max:255',
             'logo' => $request->hasFile('logo') ? 'image|mimes:jpg,jpeg,png|dimensions:width=200,height=200|max:2048' : '',
             'address' => 'nullable|max:1000',
         ], [
@@ -120,11 +121,12 @@ class BusinessDashboardController extends Controller
             $business->id,
             $request->name,
             $logo,
-            $request->address
+            $request->address,
+            $request->contact_email
         );
 
         if ($result['success']) {
-            logBusinessActivity('Profile', 'Update', $business->id, "Updated bank profile details (Name: {$request->name})", ['name' => $request->name, 'address' => $request->address], $business->id);
+            logBusinessActivity('Profile', 'Update', $business->id, "Updated bank profile details (Name: {$request->name})", ['name' => $request->name, 'address' => $request->address, 'contact_email' => $request->contact_email], $business->id);
             Session::flash('message', $result['message']);
             Session::flash('icon', 'success');
         } else {

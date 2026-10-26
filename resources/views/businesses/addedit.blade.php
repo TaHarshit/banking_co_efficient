@@ -114,6 +114,18 @@
                                 </div>
 
                                 <div class="col-12 position-relative">
+                                    <label for="contact_email" class="form-label">{{ __('messages.contact_email') }}</label>
+                                    <input type="email" name="contact_email"
+                                        class="form-control {{ $errors->has('contact_email') ? 'is-invalid' : '' }}" id="contact_email"
+                                        value="{{ isset($data) ? $data->contact_email : old('contact_email') }}"
+                                        placeholder="Optional support/inquiries email">
+                                    <small class="text-muted">{{ __('messages.contact_email_hint') }}</small>
+                                    @if ($errors->has('contact_email'))
+                                        <div class="invalid-feedback">{{ $errors->first('contact_email') }}</div>
+                                    @endif
+                                </div>
+
+                                <div class="col-12 position-relative">
                                     <label for="logo" class="form-label">{{ __('messages.logo') }}</label>
                                     <div class="{{ $errors->has('logo') ? 'is-invalid' : '' }}">
                                         <input type="file" name="logo"

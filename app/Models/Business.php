@@ -20,6 +20,7 @@ class Business extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'contact_email',
         'password',
         'logo',
         'address',
@@ -34,6 +35,7 @@ class Business extends Authenticatable
         'payment_mode',
         'payment_notes',
     ];
+
 
     /**
      * The attributes that should be hidden for serialization.

@@ -201,6 +201,8 @@ return [
     'recommended_size' => 'Taille requise: 200x200px (JPG, PNG)',
     'logo_dimensions' => 'Le logo doit mesurer exactement 200x200 pixels.',
     'address' => 'Adresse',
+    'contact_email' => 'Email d\'assistance / de contact',
+    'contact_email_hint' => 'Optionnel. Les demandes des utilisateurs de la banque seront acheminées ici. Par défaut, votre adresse e-mail professionnelle.',
     'save_changes' => 'Enregistrer les modifications',
 
     // ===========================================

@@ -45,6 +45,7 @@ class BusinessController extends Controller
         $validatedData = $request->validate([
             'name'                    => 'required|max:255',
             'email'                   => 'required|email|max:255|unique:businesses,email' . ($request->id ? ",$request->id,id" : ',NULL,id'),
+            'contact_email'           => 'nullable|email|max:255',
             'logo'                    => $request->hasFile('logo') ? 'image|mimes:jpg,jpeg,png|dimensions:width=200,height=200|max:2048' : '',
             'address'                 => 'nullable|max:1000',
             'plan_id'                 => 'nullable|exists:plans,id',
@@ -74,7 +75,8 @@ class BusinessController extends Controller
             $request->address,
             $request->status ?? 1,
             $request->id ?? 0,
-            $subscriptionData
+            $subscriptionData,
+            $request->contact_email
         );
     }
 

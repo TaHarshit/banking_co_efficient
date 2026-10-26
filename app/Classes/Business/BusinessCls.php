@@ -84,7 +84,7 @@ class BusinessCls
         }
     }
 
-    public function UpdateProfile($id, $name, $logo, $address)
+    public function UpdateProfile($id, $name, $logo, $address, $contactEmail = null)
     {
         try {
             $business = $this->BusinessRep->GetBusiness($id);
@@ -96,7 +96,7 @@ class BusinessCls
                 ];
             }
 
-            $this->BusinessRep->StoreBusiness($name, $business->email, $logo, $address, $business->status, $id);
+            $this->BusinessRep->StoreBusiness($name, $business->email, $logo, $address, $business->status, $id, [], $contactEmail);
 
             return [
                 'success' => true,

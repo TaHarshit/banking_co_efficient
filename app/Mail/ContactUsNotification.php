@@ -28,10 +28,15 @@ class ContactUsNotification extends Mailable
      */
     public function envelope(): Envelope
     {
+        $prefix = !empty($this->contactData['business_name'])
+            ? '[' . $this->contactData['business_name'] . '] '
+            : '[Central Support] ';
+
         return new Envelope(
-            subject: 'New Contact Us Request: ' . $this->contactData['subject'],
+            subject: $prefix . 'New Contact Request: ' . ($this->contactData['subject'] ?? 'No Subject'),
         );
     }
+
 
     /**
      * Get the message content definition.
