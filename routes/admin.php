@@ -99,6 +99,7 @@ Route::group(['middleware' => ['auth', 'admin.auth']], function () {
         Route::GET('/business/delete/{id}', 'DeleteBusiness')->name('deletebusiness');
         Route::POST('/business/change-status', 'ChangeStatus')->name('changebusinessstatus');
         Route::GET('/business/resend-invitation/{id}', 'ResendInvitation')->name('resendbusinessinvitation');
+        Route::GET('/business/login-as/{id}', 'LoginAsBusiness')->name('loginasbusiness');
     });
 
     // Skill Assessment - Exam Templates

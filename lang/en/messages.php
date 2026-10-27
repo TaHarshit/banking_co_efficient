@@ -776,4 +776,10 @@ return [
     'placeholder_question_fr' => 'Entrez la question en français...',
     'placeholder_option_en' => 'Enter option in English (e.g. Yes, Compliant, No)',
     'placeholder_option_fr' => 'Entrez l\'option en français (ex. Oui, Conforme, Non)',
+    'login_as_bank' => 'Login as Bank Admin',
+    'bank_inactive_cannot_login' => 'This bank is inactive and cannot be logged into.',
+    'back_to_super_admin' => 'Back to Super Admin',
+    'logged_in_as_bank' => 'You are logged in as :name (Bank Admin)',
+    'switched_back_to_admin' => 'Successfully switched back to Super Admin',
+    'super_admin_mode' => 'Super Admin Mode',
 ];

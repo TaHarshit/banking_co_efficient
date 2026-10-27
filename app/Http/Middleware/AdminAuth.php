@@ -22,8 +22,13 @@ class AdminAuth
 
         // Prevent business users from accessing admin panel
         if (auth()->guard('business')->check()) {
-            auth()->guard('business')->logout();
-            return redirect()->route('business.login')->with('error', 'Please use business login');
+            if (session()->has('admin_impersonate_id')) {
+                session()->forget('admin_impersonate_id');
+                auth()->guard('business')->logout();
+            } else {
+                auth()->guard('business')->logout();
+                return redirect()->route('business.login')->with('error', 'Please use business login');
+            }
         }
 
         return $next($request);

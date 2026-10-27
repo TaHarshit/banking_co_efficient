@@ -66,7 +66,7 @@
                                                     <th style="min-width: 150px; white-space: nowrap;">{{ __('messages.validity_period') }}</th>
                                                     <th style="min-width: 120px; white-space: nowrap;">{{ __('messages.quota_seats') }}</th>
                                                     <th>{{ __('messages.status') }}</th>
-                                                    <th style="min-width: 130px; width: 130px; text-align: center; white-space: nowrap;">{{ __('messages.action') }}</th>
+                                                    <th style="min-width: 160px; width: 160px; text-align: center; white-space: nowrap;">{{ __('messages.action') }}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -132,8 +132,20 @@
                                                                     value="{{ $val->id }}">
                                                             </div>
                                                         </td>
-                                                        <td class="text-nowrap" style="min-width: 130px; text-align: left;">
+                                                        <td class="text-nowrap" style="min-width: 160px; text-align: left;">
                                                             <div class="d-inline-flex align-items-center justify-content-center gap-2">
+                                                                @if ($val->status == 1)
+                                                                    <a href="{{ route('loginasbusiness', ['id' => $val->id]) }}"
+                                                                        style="font-size: 20px; color:#28a745 !important"
+                                                                        class="text-success" title="{{ __('messages.login_as_bank') }}">
+                                                                        <i class="bi bi-box-arrow-in-right"></i>
+                                                                    </a>
+                                                                @else
+                                                                    <span style="font-size: 20px; color:#c0c0c0; cursor: not-allowed;"
+                                                                        title="{{ __('messages.bank_inactive_cannot_login') }}">
+                                                                        <i class="bi bi-box-arrow-in-right"></i>
+                                                                    </span>
+                                                                @endif
                                                                 <a href="{{ route('updatebusiness', ['id' => $val->id]) }}"
                                                                     style="font-size: 20px; color:#00ACEF !important"
                                                                     class="text-primary" title="{{ __('messages.edit') }}">

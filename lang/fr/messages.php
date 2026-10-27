@@ -808,4 +808,10 @@ return [
     'placeholder_question_fr' => 'Entrez la question en français...',
     'placeholder_option_en' => 'Entrez l\'option en anglais (ex. Yes, Compliant, No)',
     'placeholder_option_fr' => 'Entrez l\'option en français (ex. Oui, Conforme, Non)',
+    'login_as_bank' => 'Se connecter en tant qu\'administrateur de banque',
+    'bank_inactive_cannot_login' => 'Cette banque est inactive et la connexion est impossible.',
+    'back_to_super_admin' => 'Retour au Super Admin',
+    'logged_in_as_bank' => 'Vous êtes connecté en tant que :name (Admin Banque)',
+    'switched_back_to_admin' => 'Retour au Super Admin effectué avec succès',
+    'super_admin_mode' => 'Mode Super Admin',
 ];

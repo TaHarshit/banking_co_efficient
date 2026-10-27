@@ -38,6 +38,7 @@ Route::controller(BusinessAuthController::class)->group(function () {
     Route::POST('/forgot-password', 'SendResetLink')->name('business.password.email');
     Route::GET('/setup-password/{token}', 'ShowPasswordSetupForm')->name('business.password.setup');
     Route::POST('/setup-password', 'SetupPassword')->name('business.password.setup.submit');
+    Route::GET('/leave-impersonate', 'LeaveImpersonate')->name('business.leave_impersonate');
 });
 
 // Protected routes (authentication required)

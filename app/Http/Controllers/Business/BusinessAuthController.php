@@ -113,9 +113,34 @@ class BusinessAuthController extends Controller
 
     public function Logout()
     {
+        if (Session::has('admin_impersonate_id')) {
+            $adminId = Session::pull('admin_impersonate_id');
+            Auth::guard('business')->logout();
+            Auth::guard('web')->loginUsingId($adminId);
+
+            Session::flash('message', __('messages.switched_back_to_admin'));
+            Session::flash('icon', 'success');
+            return redirect()->route('managebusinesses');
+        }
+
         Auth::guard('business')->logout();
         Session::flash('message', 'Logged out successfully');
         Session::flash('icon', 'success');
+        return redirect()->route('business.login');
+    }
+
+    public function LeaveImpersonate()
+    {
+        if (Session::has('admin_impersonate_id')) {
+            $adminId = Session::pull('admin_impersonate_id');
+            Auth::guard('business')->logout();
+            Auth::guard('web')->loginUsingId($adminId);
+
+            Session::flash('message', __('messages.switched_back_to_admin'));
+            Session::flash('icon', 'success');
+            return redirect()->route('managebusinesses');
+        }
+
         return redirect()->route('business.login');
     }
 }

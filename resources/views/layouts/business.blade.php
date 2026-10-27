@@ -53,6 +53,16 @@
 
         <nav class="header-nav ms-auto">
             <ul class="d-flex align-items-center">
+                @if (session()->has('admin_impersonate_id'))
+                    <li class="nav-item pe-3">
+                        <a href="{{ route('business.leave_impersonate') }}"
+                            class="btn btn-sm btn-danger d-flex align-items-center gap-1 shadow-sm fw-semibold"
+                            title="{{ __('messages.back_to_super_admin') }}">
+                            <i class="bi bi-box-arrow-left"></i>
+                            <span class="d-none d-sm-inline">{{ __('messages.back_to_super_admin') }}</span>
+                        </a>
+                    </li>
+                @endif
                 <!-- Language Switcher -->
                 <li class="nav-item dropdown pe-3">
                     <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#"
@@ -120,6 +130,17 @@
                         <li>
                             <hr class="dropdown-divider">
                         </li>
+                        @if (session()->has('admin_impersonate_id'))
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center text-danger fw-semibold" href="{{ route('business.leave_impersonate') }}">
+                                    <i class="bi bi-box-arrow-left"></i>
+                                    <span>{{ __('messages.back_to_super_admin') }}</span>
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                        @endif
                         <li>
                             <a class="dropdown-item d-flex align-items-center" href="{{ route('business.logout') }}">
                                 <i class="bi bi-box-arrow-right"></i>
@@ -228,6 +249,21 @@
     </aside>
 
     <main id="main" class="main">
+        @if (session()->has('admin_impersonate_id'))
+            <div class="alert alert-warning border-0 shadow-sm d-flex flex-wrap align-items-center justify-content-between mb-4 py-2 px-3 rounded-3"
+                style="background: linear-gradient(90deg, #fff3cd 0%, #ffeaa7 100%); color: #856404;">
+                <div class="d-flex align-items-center gap-2 mb-1 mb-md-0">
+                    <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-shield-lock-fill me-1"></i>{{ __('messages.super_admin_mode') }}</span>
+                    <span class="fw-semibold">
+                        {{ __('messages.logged_in_as_bank', ['name' => auth()->guard('business')->user()->name]) }}
+                    </span>
+                </div>
+                <a href="{{ route('business.leave_impersonate') }}" class="btn btn-danger btn-sm d-flex align-items-center gap-1 fw-bold shadow-sm">
+                    <i class="bi bi-box-arrow-left"></i>
+                    <span>{{ __('messages.back_to_super_admin') }}</span>
+                </a>
+            </div>
+        @endif
         @yield('content')
     </main>
 

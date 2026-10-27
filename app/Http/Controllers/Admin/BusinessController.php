@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Classes\Admin\BusinessCls;
 use App\Http\Controllers\Controller;
+use App\Models\Business;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class BusinessController extends Controller
@@ -88,5 +90,36 @@ class BusinessController extends Controller
     public function ResendInvitation($id)
     {
         return $this->BusinessCls->ResendInvitation($id);
+    }
+
+    public function LoginAsBusiness($id)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $business = Business::find($id);
+        if (!$business) {
+            Session::flash('message', __('messages.something_went_wrong'));
+            Session::flash('icon', 'error');
+            return redirect()->route('managebusinesses');
+        }
+
+        if ($business->status != 1) {
+            Session::flash('message', __('messages.bank_inactive_cannot_login'));
+            Session::flash('icon', 'warning');
+            return redirect()->route('managebusinesses');
+        }
+
+        // Store admin ID in session to allow returning
+        session()->put('admin_impersonate_id', Auth::id());
+
+        // Login as business
+        Auth::guard('business')->login($business);
+
+        Session::flash('message', __('messages.logged_in_as_bank', ['name' => $business->name]));
+        Session::flash('icon', 'success');
+
+        return redirect()->route('business.dashboard');
     }
 }
