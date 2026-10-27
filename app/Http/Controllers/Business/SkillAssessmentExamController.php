@@ -47,6 +47,19 @@ class SkillAssessmentExamController extends Controller
             });
         }
 
+        // Filter by department (scoped by manager department if assigned)
+        $managerDept = session('manager_department');
+        if (session('business_role') === 'manager' && !empty($managerDept) && !$request->filled('all_departments')) {
+            $query->whereHas('user', function ($q) use ($managerDept) {
+                $q->where('department', $managerDept);
+            });
+        } elseif ($request->filled('department')) {
+            $dept = trim($request->department);
+            $query->whereHas('user', function ($q) use ($dept) {
+                $q->where('department', $dept);
+            });
+        }
+
         // Filter by status
         if ($request->filled('status')) {
             $query->where('status', $request->status);

@@ -45,6 +45,7 @@ class BusinessCls
     public function Login($email, $password, $remember = false)
     {
         try {
+            // 1. First attempt: Bank Admin (Business account)
             if (Auth::guard('business')->attempt(['email' => $email, 'password' => $password], $remember)) {
                 $business = Auth::guard('business')->user();
 
@@ -56,17 +57,57 @@ class BusinessCls
                     ];
                 }
 
+                session(['business_role' => 'admin']);
+                session()->forget(['manager_id', 'manager_name', 'manager_email', 'manager_department']);
+
                 return [
                     'success' => true,
                     'message' => 'Login successful',
                     'business' => $business
                 ];
-            } else {
+            }
+
+            // 2. Second attempt: Bank Manager
+            $manager = \App\Models\BankManager::with('business')->where('email', $email)->first();
+            if ($manager && \Illuminate\Support\Facades\Hash::check($password, $manager->password)) {
+                if ($manager->status != 1) {
+                    return [
+                        'success' => false,
+                        'message' => 'Your manager account is inactive. Please contact your bank administrator.'
+                    ];
+                }
+
+                if (!$manager->business || $manager->business->status != 1) {
+                    return [
+                        'success' => false,
+                        'message' => 'Your bank account is inactive. Please contact administrator.'
+                    ];
+                }
+
+                // Log into business guard with tenant business context
+                Auth::guard('business')->login($manager->business, $remember);
+
+                // Set Bank Manager session variables
+                session([
+                    'business_role'      => 'manager',
+                    'manager_id'         => $manager->id,
+                    'manager_name'       => $manager->name,
+                    'manager_email'      => $manager->email,
+                    'manager_department' => $manager->department,
+                ]);
+
                 return [
-                    'success' => false,
-                    'message' => 'Invalid email or password'
+                    'success' => true,
+                    'message' => 'Login successful',
+                    'business' => $manager->business,
+                    'is_manager' => true
                 ];
             }
+
+            return [
+                'success' => false,
+                'message' => 'Invalid email or password'
+            ];
         } catch (Exception $e) {
             return [
                 'success' => false,

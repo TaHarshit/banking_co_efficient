@@ -184,6 +184,14 @@ class Business extends Authenticatable
     }
 
     /**
+     * Get bank managers belonging to this business
+     */
+    public function managers()
+    {
+        return $this->hasMany(BankManager::class, 'business_id');
+    }
+
+    /**
      * Get sections belonging to this business
      */
     public function sections()

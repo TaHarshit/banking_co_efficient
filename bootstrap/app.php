@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'basicFilter' => \App\Http\Middleware\VerifyApiMiddleware::class,
             'business.auth' => \App\Http\Middleware\BusinessAuth::class,
             'admin.auth' => \App\Http\Middleware\AdminAuth::class,
+            'business.admin_only' => \App\Http\Middleware\EnsureBankAdmin::class,
         ]);
 
         // Add SetLocale middleware to web group for language switching

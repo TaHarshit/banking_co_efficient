@@ -103,6 +103,9 @@ class BusinessAuthController extends Controller
         $result = $this->BusinessCls->Login($request->email, $request->password, $remember);
 
         if ($result['success']) {
+            if (session('business_role') === 'manager') {
+                return redirect()->route('business.skill-assessment.exam-results');
+            }
             return redirect()->route('business.dashboard');
         } else {
             Session::flash('message', $result['message']);
@@ -113,6 +116,8 @@ class BusinessAuthController extends Controller
 
     public function Logout()
     {
+        session()->forget(['business_role', 'manager_id', 'manager_name', 'manager_email', 'manager_department']);
+
         if (Session::has('admin_impersonate_id')) {
             $adminId = Session::pull('admin_impersonate_id');
             Auth::guard('business')->logout();
@@ -131,6 +136,8 @@ class BusinessAuthController extends Controller
 
     public function LeaveImpersonate()
     {
+        session()->forget(['business_role', 'manager_id', 'manager_name', 'manager_email', 'manager_department']);
+
         if (Session::has('admin_impersonate_id')) {
             $adminId = Session::pull('admin_impersonate_id');
             Auth::guard('business')->logout();
