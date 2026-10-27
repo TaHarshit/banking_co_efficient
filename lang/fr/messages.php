@@ -68,6 +68,11 @@ return [
     'terms_and_conditions' => 'Conditions générales (English)',
     'privacy_policy_fr' => 'Politique de confidentialité French',
     'terms_and_conditions_fr' => 'Conditions générales French',
+    'privacy_policy_nav' => 'Politique de confidentialité',
+    'bank_privacy_policy_desc' => 'Personnalisez la politique de confidentialité affichée aux candidats et employés de votre institution dans l\'application mobile. Si vide, la politique globale de la plateforme s\'applique.',
+    'custom_policy_active' => 'Politique personnalisée active',
+    'using_default_policy' => 'Utilisation de la politique par défaut de la plateforme',
+    'privacy_policy_updated' => 'Politique de confidentialité mise à jour avec succès.',
 
     // ===========================================
     // Actions courantes

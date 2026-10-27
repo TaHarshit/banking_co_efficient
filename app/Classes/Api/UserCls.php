@@ -19,6 +19,7 @@ use App\Repositories\Api\ProfileImageRepository;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Business;
 
 class UserCls
 {
@@ -366,10 +367,48 @@ class UserCls
         }
     }
 
-    public function GetSetting()
+    public function GetSetting($postData = [], $request = null)
     {
         try {
             $response = $this->SettingRep->GetSettings(1);
+
+            // Determine if a business is specified or authenticated
+            $business = null;
+
+            // 1. Check if business_code is in request or postData
+            $businessCode = $request ? ($request->header('business_code') ?? $request->header('business-code') ?? $request->input('business_code')) : ($postData['business_code'] ?? null);
+            if (!empty($businessCode)) {
+                $business = Business::where('business_code', $businessCode)->first();
+            }
+
+            // 2. Check if business_id is explicitly passed in request or postData
+            if (!$business) {
+                $businessId = $request ? ($request->header('business_id') ?? $request->header('business-id') ?? $request->input('business_id')) : ($postData['business_id'] ?? null);
+                if (!empty($businessId)) {
+                    $business = Business::find($businessId);
+                }
+            }
+
+            // 3. Check if user is authenticated (e.g. via token or api guard)
+            if (!$business) {
+                $user = Auth::guard('api')->user() ?? Auth::user();
+                if ($user && !empty($user->business_id)) {
+                    $business = Business::find($user->business_id);
+                }
+            }
+
+            // If a business is found and has custom privacy policy, override the global privacy policy
+            if ($business && $response) {
+                $enText = preg_replace('/[\s\x{00a0}]+/u', '', html_entity_decode(strip_tags($business->privacy_policy ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                if ($enText !== '') {
+                    $response->privacy_policy = $business->privacy_policy;
+                }
+
+                $frText = preg_replace('/[\s\x{00a0}]+/u', '', html_entity_decode(strip_tags($business->privacy_policy_fr ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                if ($frText !== '') {
+                    $response->privacy_policy_fr = $business->privacy_policy_fr;
+                }
+            }
 
             $data   = General::setResponse('SUCCESS', "Setting Get successfully.");
             $data['data'] = $response;

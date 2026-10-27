@@ -69,7 +69,7 @@ class UserController extends Controller
     public function GetSetting(Request $request)
     {
         $postData     = General::stripRequest($request->all());
-        $data         = $this->UserCls->GetSetting($postData);
+        $data         = $this->UserCls->GetSetting($postData, $request);
         return get_response($request, $data);
     }
 

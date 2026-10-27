@@ -180,6 +180,12 @@ Route::middleware(['business.auth'])->group(function () {
         Route::controller(\App\Http\Controllers\Business\BusinessActivityLogController::class)->group(function () {
             Route::GET('/activity-logs', 'index')->name('business.activity_logs.index');
         });
+
+        // Business Settings / Privacy Policy
+        Route::controller(\App\Http\Controllers\Business\BusinessSettingController::class)->group(function () {
+            Route::GET('/privacy-policy', 'privacyPolicy')->name('business.privacy_policy');
+            Route::POST('/privacy-policy', 'updatePrivacyPolicy')->name('business.privacy_policy.update');
+        });
     });
 });
 

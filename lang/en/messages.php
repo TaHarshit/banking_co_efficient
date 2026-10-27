@@ -68,6 +68,11 @@ return [
     'terms_and_conditions' => 'Terms and Conditions (English)',
     'privacy_policy_fr' => 'Privacy Policy French',
     'terms_and_conditions_fr' => 'Terms and Conditions French',
+    'privacy_policy_nav' => 'Privacy Policy',
+    'bank_privacy_policy_desc' => 'Customize the privacy policy shown to candidates and employees of your institution in the mobile application. If left empty, the global platform policy applies.',
+    'custom_policy_active' => 'Custom Policy Active',
+    'using_default_policy' => 'Using Default Platform Policy',
+    'privacy_policy_updated' => 'Privacy policy updated successfully.',
 
     // ===========================================
     // Common Actions

@@ -28,6 +28,8 @@ class Business extends Authenticatable
         'business_code',
         'business_policies_message',
         'policy_sections',
+        'privacy_policy',
+        'privacy_policy_fr',
         'plan_id',
         'subscription_start_date',
         'subscription_end_date',

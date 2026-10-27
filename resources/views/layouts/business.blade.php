@@ -279,6 +279,14 @@
                         <span>{{ __('messages.activity_logs') ?? 'Activity Logs' }}</span>
                     </a>
                 </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('business.privacy_policy*') ? '' : 'collapsed' }}"
+                        href="{{ route('business.privacy_policy') }}">
+                        <i class="bi bi-shield-lock"></i>
+                        <span>{{ __('messages.privacy_policy_nav') ?? 'Privacy Policy' }}</span>
+                    </a>
+                </li>
             @endif
         </ul>
     </aside>
