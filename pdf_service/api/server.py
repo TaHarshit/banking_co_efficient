@@ -2606,6 +2606,10 @@ def ask_post(request: QuestionRequest, accept_language: str | None = Header(defa
 def process_question(query: str, history: list = [], target_lang: str | None = None):
     start_time = time.time()
     try:
+        # Enforce maximum query length (700 chars) to prevent CPU latency and timeout
+        if query and len(query) > 700:
+            query = query[:700].strip()
+
         # Determine output language first
         output_lang = None
         if target_lang:

@@ -25,11 +25,14 @@ class PdfQuestionController extends Controller
         set_time_limit(120);
 
         try {
-            // Validate the request (allow up to 2000 chars for longer questions)
+            // Validate the request with appropriate character limit (max 700 chars)
             $validated = $request->validate([
-                'question' => 'required|string|min:3|max:2000',
+                'question' => 'required|string|min:3|max:700',
                 'chat_session_id' => 'nullable|exists:chat_sessions,id,user_id,' . Auth::id(),
                 'history' => 'nullable|array'
+            ], [
+                'question.max' => 'Your question is too long (maximum 700 characters). Please keep it concise to avoid timeouts.',
+                'question.min' => 'Please enter at least 3 characters for your question.'
             ]);
 
             $question = $validated['question'];
@@ -141,7 +144,8 @@ class PdfQuestionController extends Controller
                 return get_response($request, $apiResponse);
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
-            $apiResponse = General::setResponse('VALIDATION_ERROR', 'Validation failed');
+            $firstError = collect($e->errors())->flatten()->first() ?? 'Validation failed';
+            $apiResponse = General::setResponse('VALIDATION_ERROR', $firstError);
             $apiResponse['errors'] = $e->errors();
 
             return get_response($request, $apiResponse);
