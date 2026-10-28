@@ -16,6 +16,7 @@ class SkillAssessmentExamTemplateCls
     {
         try {
             return SkillAssessmentExamTemplate::where('business_id', $businessId)
+                ->withCount('sections')
                 ->orderBy('order')
                 ->get();
         } catch (Exception $e) {

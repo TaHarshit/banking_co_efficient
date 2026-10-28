@@ -68,7 +68,7 @@
                                                                 class="btn btn-sm btn-info">
                                                                 <i class="bi bi-list-ul"></i>
                                                                 {{ __('messages.view_sections') ?? 'View Sections' }}
-                                                                ({{ $template->sections_count }})
+                                                                ({{ $template->sections_count ?? 0 }})
                                                             </a>
                                                             <a href="{{ route('business.skill-assessment.exam-results') }}?exam_template_id={{ $template->id }}"
                                                                 class="btn btn-sm btn-outline-primary ms-1"
@@ -116,10 +116,35 @@
             </div>
         </div>
     </section>
+
+    <!-- Confirm Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ __('messages.confirm_delete') ?? 'Confirm Delete' }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {{ __('messages.confirm_delete_exam') ?? 'Are you sure? All sections and questions in this exam will also be deleted.' }}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                        data-bs-dismiss="modal">{{ __('messages.cancel') ?? 'Cancel' }}</button>
+                    <a href="#" id="confirm_url" class="btn btn-danger">{{ __('messages.delete') ?? 'Delete' }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('customjs')
     <script type="text/javascript">
+        function showConfirmToast(url) {
+            $('#confirm_url').attr('href', url);
+            $('#confirmModal').modal('show');
+        }
+
         function update_status(el) {
             if (el.checked) {
                 var status = 1;
