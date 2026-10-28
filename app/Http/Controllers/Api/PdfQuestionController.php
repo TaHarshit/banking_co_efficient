@@ -21,10 +21,13 @@ class PdfQuestionController extends Controller
      */
     public function ask(Request $request)
     {
+        // Allow PHP sufficient execution time for long AI completions
+        set_time_limit(120);
+
         try {
-            // Validate the request
+            // Validate the request (allow up to 2000 chars for longer questions)
             $validated = $request->validate([
-                'question' => 'required|string|min:3|max:500',
+                'question' => 'required|string|min:3|max:2000',
                 'chat_session_id' => 'nullable|exists:chat_sessions,id,user_id,' . Auth::id(),
                 'history' => 'nullable|array'
             ]);
@@ -61,6 +64,7 @@ class PdfQuestionController extends Controller
 
             // Get Python service URL from environment or use default
             $pythonServiceUrl = config('services.pdf_service.url');
+            $timeoutSeconds   = (int) config('services.pdf_service.timeout', 90);
 
             // Log the request
             Log::info('PDF Question API called', [
@@ -71,8 +75,8 @@ class PdfQuestionController extends Controller
             // Retrieve client language preference
             $locale = $request->input('lang', $request->header('Accept-Language', 'en'));
 
-            // Call the Python microservice
-            $response = Http::timeout(60)->withHeaders([
+            // Call the Python microservice with configured timeout (default 90s)
+            $response = Http::timeout($timeoutSeconds)->connectTimeout(10)->withHeaders([
                 'Accept-Language' => $locale
             ])->post($pythonServiceUrl, [
                 'question' => $question,
@@ -142,12 +146,17 @@ class PdfQuestionController extends Controller
 
             return get_response($request, $apiResponse);
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            Log::error('PDF Service Connection Error', [
+            Log::error('PDF Service Connection/Timeout Error', [
                 'url' => $pythonServiceUrl,
                 'error' => $e->getMessage()
             ]);
 
-            $apiResponse = General::setResponse('OTHER_ERROR', 'Cannot connect to PDF service (' . $pythonServiceUrl . '). Error: ' . $e->getMessage());
+            $isTimeout = str_contains($e->getMessage(), 'timed out') || str_contains($e->getMessage(), '28');
+            $errorMessage = $isTimeout
+                ? 'The AI assistant took too long to respond. Please try simplifying your question or asking in shorter sentences.'
+                : 'Cannot connect to PDF service (' . $pythonServiceUrl . '). Error: ' . $e->getMessage();
+
+            $apiResponse = General::setResponse('OTHER_ERROR', $errorMessage);
 
             return get_response($request, $apiResponse);
         } catch (\Exception $e) {

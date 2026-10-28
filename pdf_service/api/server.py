@@ -1249,6 +1249,10 @@ def hybrid_search(query: str, target_lang: str | None, limit: int = 15) -> list:
         t for t in re.findall(r'\b\w{3,}\b', query_lower)
         if t not in HYBRID_STOP_WORDS
     ]
+    # For long queries, keep top 8 most distinct/longest tokens to avoid excessive string matching
+    if len(query_tokens) > 8:
+        query_tokens = sorted(query_tokens, key=len, reverse=True)[:8]
+
     if query_tokens and len(query_tokens) >= 2:
         print(f"[HYBRID] Keyword search tokens: {query_tokens}", flush=True)
         for c in CHUNKS_DATA:
@@ -2848,6 +2852,8 @@ Context:
             model=AI_CHAT_MODEL,
             messages=messages,
             temperature=0.3,
+            max_tokens=1024,
+            timeout=50.0,
         )
         print(f"[PERF] /ask - AI Generation: {time.time()-t0:.3f}s", flush=True)
 
