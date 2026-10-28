@@ -4,10 +4,22 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Mail\Message;
 
-// Redirect legacy /admin and /admin/* URLs to root domain
-Route::any('/admin/{any?}', function ($any = null) {
-    return redirect('/' . ($any ?? ''));
-})->where('any', '.*');
+use App\Http\Controllers\Business\BusinessAuthController;
+
+// Root URL: Business Login
+Route::controller(BusinessAuthController::class)->group(function () {
+    Route::GET('/', 'ShowLoginForm')->name('business.login');
+    Route::POST('/login', 'Login')->name('business.login.submit');
+    Route::POST('/', 'Login');
+});
+
+// Redirect /business to dashboard if authenticated, or login
+Route::get('/business', function () {
+    if (auth()->guard('business')->check()) {
+        return redirect()->route('business.dashboard');
+    }
+    return redirect()->route('business.login');
+});
 
 
 Route::Get('/test-mail', function (\Illuminate\Http\Request $request) {

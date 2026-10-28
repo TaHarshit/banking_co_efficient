@@ -13,10 +13,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: function () {
             Route::middleware('web')
+                ->prefix('admin')
                 ->group(base_path('routes/admin.php'));
         },
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->redirectGuestsTo(function (\Illuminate\Http\Request $request) {
+            if ($request->is('admin*')) {
+                return route('login');
+            }
+            return route('business.login');
+        });
+
         $middleware->alias([
             'basicFilter' => \App\Http\Middleware\VerifyApiMiddleware::class,
             'business.auth' => \App\Http\Middleware\BusinessAuth::class,

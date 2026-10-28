@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\PdfController;
 
 Route::controller(UserController::class)->group(function () {
     Route::GET('/', 'index')->name('login');
+    Route::GET('/login', 'index')->name('admin.login');
     Route::POST('/user/sign-in', 'Signin')->name('signin');
     Route::GET('/error/404', 'Error404')->name('error404');
 });

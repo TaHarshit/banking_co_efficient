@@ -33,8 +33,10 @@ Route::get('/locale/{locale}', function ($locale) {
 
 // Public routes (no authentication required)
 Route::controller(BusinessAuthController::class)->group(function () {
-    Route::GET('/login', 'ShowLoginForm')->name('business.login');
-    Route::POST('/login', 'Login')->name('business.login.submit');
+    Route::GET('/login', function () {
+        return redirect()->route('business.login');
+    });
+    Route::POST('/login', 'Login');
     Route::GET('/forgot-password', 'ShowForgotForm')->name('business.password.request');
     Route::POST('/forgot-password', 'SendResetLink')->name('business.password.email');
     Route::GET('/setup-password/{token}', 'ShowPasswordSetupForm')->name('business.password.setup');
