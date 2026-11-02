@@ -91,9 +91,13 @@ class UserRepository extends BaseRepository
         return $this->model->whereIn('id', $user_list)->get();
     }
 
-    public function DeleteAccount($delete)
+    public function DeleteAccount($delete = null)
     {
-        return $this->model->where('id', auth()->user()->id)->update($delete);
+        $user = auth()->user();
+        if ($user) {
+            return $user->delete();
+        }
+        return false;
     }
 
     public function UpdateSubscription($plan_id)

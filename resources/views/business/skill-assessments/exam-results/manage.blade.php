@@ -179,7 +179,6 @@
                                                             class="badge {{ $exam->percentage >= 70 ? 'bg-success' : ($exam->percentage >= 40 ? 'bg-warning' : 'bg-danger') }}">
                                                             {{ number_format($exam->percentage, 1) }}%
                                                         </span>
-                                                        <small class="text-muted d-block font-monospace">{{ __('messages.score_1_5') }}: {{ number_format($exam->score_scale_5, 2) }}</small>
                                                     </td>
                                                     <td>
                                                         @if ($exam->status == 'in_progress')

@@ -51,9 +51,6 @@
                     document.getElementById('total_score').textContent = data.exam.total_score;
                     document.getElementById('percentage').textContent = parseFloat(data.exam.percentage).toFixed(
                         1) + '%';
-                    if (document.getElementById('score_scale_5') && data.exam.score_scale_5 !== undefined) {
-                        document.getElementById('score_scale_5').textContent = parseFloat(data.exam.score_scale_5).toFixed(2);
-                    }
                     document.getElementById('exam_status').textContent = data.exam.status.charAt(0).toUpperCase() +
                         data.exam.status.slice(1);
                 } else {
@@ -129,14 +126,6 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th>{{ __('messages.score_1_5_scale') }}</th>
-                                    <td>
-                                        <span id="score_scale_5" class="fw-bold text-primary">
-                                            {{ number_format($exam->score_scale_5, 2) }}
-                                        </span> / 5.0
-                                    </td>
-                                </tr>
-                                <tr>
                                     <th>{{ __('messages.status') ?? 'Status' }}</th>
                                     <td><span id="exam_status">{{ ucfirst($exam->status) }}</span></td>
                                 </tr>
@@ -144,39 +133,7 @@
                         </div>
                     </div>
 
-                    @if(!empty($exam->section_scores))
-                        <div class="card mt-3">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ __('messages.section_wise_scores') }}</h5>
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-sm align-middle">
-                                        <thead>
-                                            <tr>
-                                                <th>{{ __('messages.section') }}</th>
-                                                <th>{{ __('messages.score') }}</th>
-                                                <th>%</th>
-                                                <th>{{ __('messages.scale_1_5') }}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($exam->section_scores as $sec)
-                                                <tr>
-                                                    <td><strong>{{ $sec['section_title'] }}</strong></td>
-                                                    <td>{{ $sec['total_score'] }} / {{ $sec['max_score'] }}</td>
-                                                    <td>
-                                                        <span class="badge {{ $sec['percentage'] >= 70 ? 'bg-success' : ($sec['percentage'] >= 40 ? 'bg-warning' : 'bg-danger') }}">
-                                                            {{ number_format($sec['percentage'], 1) }}%
-                                                        </span>
-                                                    </td>
-                                                    <td><span class="fw-bold">{{ number_format($sec['score_scale_5'], 2) }}</span> / 5.0</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
+
                 </div>
                 <div class="col-lg-8">
                     <div class="card">
