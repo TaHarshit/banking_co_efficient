@@ -532,16 +532,23 @@ class UserCls
                     ->delete();
             }
 
-            // Clean up related data without direct ON DELETE CASCADE (GDPR right to erasure)
-            \Illuminate\Support\Facades\DB::table('book_access_logs')->where('user_id', $user->id)->delete();
-            \Illuminate\Support\Facades\DB::table('user_subscriptions')->where('user_id', $user->id)->delete();
+            // Invalidate sessions and tokens
             \Illuminate\Support\Facades\DB::table('sessions')->where('user_id', $user->id)->delete();
+            $user->tokens()->delete();
 
-            // Permanently delete user record. Foreign keys with ON DELETE CASCADE will automatically
-            // delete all skill assessment exams, exam answers, client cases, responses, notifications, and ai jobs.
-            $this->UserRep->DeleteAccount();
+            $delete = [
+                'name'          => 'deleted_user',
+                'email'         => $user->email . '-user_deleted',
+                'profile_image' => null,
+                'device_token'  => null,
+                'api_token'     => null,
+                'business_id'   => null,
+                'status'        => 'deleted',
+            ];
 
-            $data = General::setResponse('SUCCESS', "Account and all associated personal data have been permanently deleted in accordance with GDPR.");
+            $this->UserRep->DeleteAccount($delete);
+
+            $data = General::setResponse('SUCCESS', "User deleted successfully.");
             $data['data'] = (object)[];
             return $data;
         } catch (Exception $e) {

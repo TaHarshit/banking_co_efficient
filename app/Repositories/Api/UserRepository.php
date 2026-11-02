@@ -94,10 +94,15 @@ class UserRepository extends BaseRepository
     public function DeleteAccount($delete = null)
     {
         $user = auth()->user();
-        if ($user) {
-            return $user->delete();
+        if (!$user) {
+            return false;
         }
-        return false;
+
+        if (is_array($delete)) {
+            return $this->model->where('id', $user->id)->update($delete);
+        }
+
+        return $user->delete();
     }
 
     public function UpdateSubscription($plan_id)
