@@ -21,12 +21,14 @@ class UserRepository extends BaseRepository
 
     public function GetUsers($filter = '')
     {
-        $query = $this->model->where('user_type', 2);
+        $query = $this->model->newQuery();
 
-        if ($filter === 'individual') {
-            $query->whereNull('business_id');
+        if ($filter === 'admin') {
+            $query->where('user_type', 1);
+        } elseif ($filter === 'individual') {
+            $query->where('user_type', 2)->whereNull('business_id');
         } elseif (!empty($filter)) {
-            $query->where('business_id', $filter);
+            $query->where('user_type', 2)->where('business_id', $filter);
         }
 
         return $query->get();
@@ -47,36 +49,38 @@ class UserRepository extends BaseRepository
         return $this->model->where('email', $email)->first();
     }
 
-    public function StoreUser($name, $surname, $email, $password, $phone_no, $status, $id, $username = null, $job_title = null, $institution = null, $department = null, $year_of_experience = null, $business_id = null)
+    public function StoreUser($name, $surname, $email, $password, $phone_no, $status, $id, $username = null, $job_title = null, $institution = null, $department = null, $year_of_experience = null, $business_id = null, $user_type = 2)
     {
         $data                   = [];
         $data['name']           = $name;
         $data['surname']        = $surname;
         $data['phone_no']       = $phone_no;
         $data['email']          = $email;
-        $data['user_type']      = '2';
+        $data['user_type']      = !empty($user_type) ? (string)$user_type : '2';
         $data['status']         = $status;
         $data['username']       = $username;
         $data['job_title']      = $job_title;
         $data['institution']    = $institution;
         $data['department']     = $department;
         $data['year_of_experience'] = $year_of_experience;
-        $data['business_id']    = $business_id;
+        $data['business_id']    = ($data['user_type'] == '1') ? null : $business_id;
 
         if (!empty($password)) {
             $data['password'] = Hash::make($password);
         }
 
+        $logType = ($data['user_type'] == '1') ? 'Admin' : 'User';
+
         if ($id > 0) {
             $update = $this->model->where('id', $id)->update($data);
             if ($update) {
-                logAdminActivity('User', 'Update', $id, "Updated user: $name $surname", $data);
+                logAdminActivity($logType, 'Update', $id, "Updated $logType: $name $surname", $data);
             }
             return $update;
         } else {
             $user = $this->model->create($data);
             if ($user) {
-                logAdminActivity('User', 'Add', $user->id, "Added new user: $name $surname", $data);
+                logAdminActivity($logType, 'Add', $user->id, "Added new $logType: $name $surname", $data);
             }
             return $user;
         }

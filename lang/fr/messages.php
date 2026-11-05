@@ -646,6 +646,7 @@ return [
     'back_to_login' => 'Retour à la connexion',
     'passwords_do_not_match' => 'Les mots de passe ne correspondent pas',
     'leave_blank_keep_password' => 'Laissez vide pour conserver le mot de passe actuel.',
+    'leave_blank_auto_generate' => 'Laissez vide pour générer automatiquement le mot de passe.',
     'password_auto_generated_notice' => 'Le mot de passe sera généré automatiquement et envoyé à l\'adresse e-mail de l\'utilisateur.',
 
     // ===========================================

@@ -188,6 +188,7 @@ class UserController extends Controller
             'phone_no'      => 'required|max:20',
             'email'         => 'required|email|max:255|unique:users,email' . ($request->id ? ",$request->id,id" : ',NULL,id'),
             'password'      => $request->id > 0 ? 'nullable|max:255' : 'nullable', // Password will be auto-generated for new users
+            'user_type'     => 'nullable|in:1,2',
             'job_title'     => 'nullable|max:255',
             'institution'   => 'nullable|max:255',
             'department'    => 'nullable|max:255',
@@ -197,7 +198,7 @@ class UserController extends Controller
         ]);
 
         $password = $request->password;
-        if ($request->id <= 0) {
+        if ($request->id <= 0 && empty($password)) {
             $password = \Illuminate\Support\Str::random(10);
         }
 
@@ -214,7 +215,8 @@ class UserController extends Controller
             $request->institution,
             $request->department,
             $request->year_of_experience,
-            $request->business_id
+            $request->business_id,
+            $request->input('user_type', 2)
         );
     }
 

@@ -8,16 +8,42 @@
         function togglePasswordVisibility(inputId, iconId) {
             var input = document.getElementById(inputId);
             var icon = document.getElementById(iconId);
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('bi-eye-slash');
-                icon.classList.add('bi-eye');
-            } else {
-                input.type = 'password';
-                icon.classList.remove('bi-eye');
-                icon.classList.add('bi-eye-slash');
+            if (input && icon) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('bi-eye-slash');
+                    icon.classList.add('bi-eye');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('bi-eye');
+                    icon.classList.add('bi-eye-slash');
+                }
             }
         }
+
+        function handleUserTypeChange() {
+            var userTypeSelect = document.getElementById('user_type');
+            var businessContainer = document.getElementById('business_id_container');
+            if (userTypeSelect && businessContainer) {
+                if (userTypeSelect.value === '1') {
+                    businessContainer.style.display = 'none';
+                    var businessSelect = document.getElementById('business_id');
+                    if (businessSelect) {
+                        businessSelect.value = '';
+                    }
+                } else {
+                    businessContainer.style.display = '';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var userTypeSelect = document.getElementById('user_type');
+            if (userTypeSelect) {
+                userTypeSelect.addEventListener('change', handleUserTypeChange);
+                handleUserTypeChange();
+            }
+        });
     </script>
 @endsection
 @include('partials.headerfiles')
@@ -94,6 +120,21 @@
                                 </div>
 
                                 <div class="col-md-6">
+                                    <label for="user_type" class="form-label">{{ __('messages.user_type') }} <span class="text-danger">*</span></label>
+                                    <select name="user_type" id="user_type" class="form-select @error('user_type') is-invalid @enderror" required>
+                                        <option value="2" {{ (isset($data) && (string)$data->user_type === '2') || old('user_type') === '2' || (!isset($data) && old('user_type') === null) ? 'selected' : '' }}>
+                                            {{ __('messages.user') }}
+                                        </option>
+                                        <option value="1" {{ (isset($data) && (string)$data->user_type === '1') || old('user_type') === '1' ? 'selected' : '' }}>
+                                            {{ __('messages.admin') }}
+                                        </option>
+                                    </select>
+                                    @error('user_type')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="col-md-6" id="business_id_container">
                                     <label for="business_id" class="form-label">{{ __('messages.select_business') }}</label>
                                     <select name="business_id" id="business_id" class="form-select @error('business_id') is-invalid @enderror">
                                         <option value="">{{ __('messages.no_business_individual') }}</option>
@@ -173,9 +214,22 @@
                                         @enderror
                                     </div>
                                 @else
-                                    <div class="col-12 mt-4">
-                                        <div class="alert alert-info border-info d-flex align-items-center">
-                                            <i class="bi bi-info-circle me-2 fs-4"></i>
+                                    <div class="col-md-6">
+                                        <label for="password" class="form-label">{{ __('messages.password') }}</label>
+                                        <div class="input-group">
+                                            <input type="password" name="password" class="form-control @error('password') is-invalid @enderror" id="password">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility('password', 'passwordToggleIcon')">
+                                                <i class="bi bi-eye-slash" id="passwordToggleIcon"></i>
+                                            </button>
+                                        </div>
+                                        <small class="text-muted">{{ __('messages.leave_blank_auto_generate') }}</small>
+                                        @error('password')
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-12 mt-3">
+                                        <div class="alert alert-info border-info d-flex align-items-center mb-0">
+                                            <i class="bi bi-info-circle me-2 fs-5"></i>
                                             <div>
                                                 {{ __('messages.password_auto_generated_notice') }}
                                             </div>

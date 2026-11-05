@@ -608,6 +608,7 @@ return [
     'back_to_login' => 'Back to login',
     'passwords_do_not_match' => 'Passwords do not match',
     'leave_blank_keep_password' => 'Leave blank to keep current password.',
+    'leave_blank_auto_generate' => 'Leave blank to auto-generate password.',
     'password_auto_generated_notice' => 'Password will be automatically generated and sent to the user\'s email address.',
 
     // ===========================================

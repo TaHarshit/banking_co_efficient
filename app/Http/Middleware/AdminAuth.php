@@ -20,6 +20,12 @@ class AdminAuth
             return redirect()->route('login')->with('error', 'Please login to access admin panel');
         }
 
+        // Only admins (user_type 1) can access admin panel
+        if (auth()->user()->user_type != 1) {
+            auth()->guard('web')->logout();
+            return redirect()->route('login')->with('error', 'Access denied. Administrator privileges required.');
+        }
+
         // Prevent business users from accessing admin panel
         if (auth()->guard('business')->check()) {
             if (session()->has('admin_impersonate_id')) {

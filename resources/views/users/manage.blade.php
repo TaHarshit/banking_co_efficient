@@ -54,6 +54,9 @@
                                     <select name="company" id="companyFilter" class="form-select w-auto"
                                         onchange="this.form.submit()">
                                         <option value="">{{ __('messages.all_users') }}</option>
+                                        <option value="admin"
+                                            {{ isset($current_filter) && $current_filter == 'admin' ? 'selected' : '' }}>
+                                            {{ __('messages.admin') }}</option>
                                         <option value="individual"
                                             {{ isset($current_filter) && $current_filter == 'individual' ? 'selected' : '' }}>
                                             {{ __('messages.individual_users') }}</option>
@@ -94,7 +97,9 @@
                                                     <tr>
                                                         <td>{{ $i }}</td>
                                                         <td>
-                                                            @if (empty($val->business_id))
+                                                            @if ($val->user_type == 1 || strtolower((string)$val->user_type) === 'admin')
+                                                                <span class="badge bg-danger">{{ __('messages.admin') }}</span>
+                                                            @elseif (empty($val->business_id))
                                                                 <span class="badge bg-secondary">{{ __('messages.individual') }}</span>
                                                             @else
                                                                 <span class="badge bg-info text-dark">{{ __('messages.company') }}:
@@ -116,10 +121,12 @@
                                                             <a href="{{route('updateuser',['id'=>$val->id])}}" style="font-size: 20px; color:#00ACEF !important" class="text-primary">
                                                                 <i class="bi bi-pencil-fill"></i>
                                                             </a>
-                                                            <a href="javascript:void(0);"
-                                                                style="font-size: 20px; color:#EE6C4D !important;"
-                                                                onclick="return showConfirmToast('{{ route('deleteuser', ['id' => $val->id]) }}')"
-                                                                class="text-danger"><i class="bi bi-trash-fill"></i></a>
+                                                            @if (Auth::id() != $val->id)
+                                                                <a href="javascript:void(0);"
+                                                                    style="font-size: 20px; color:#EE6C4D !important;"
+                                                                    onclick="return showConfirmToast('{{ route('deleteuser', ['id' => $val->id]) }}')"
+                                                                    class="text-danger"><i class="bi bi-trash-fill"></i></a>
+                                                            @endif
                                                         </td>
                                                     </tr>
                                                     @php

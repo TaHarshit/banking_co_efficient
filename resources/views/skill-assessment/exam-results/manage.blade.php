@@ -144,7 +144,7 @@
                                                     <th>#</th>
                                                     <th>{{ __('messages.user') ?? 'User' }}</th>
                                                     <th>{{ __('messages.exams') ?? 'Exam' }}</th>
-                                                    <th>{{ __('messages.score') ?? 'Score' }}</th>
+                                                    {{-- <th>{{ __('messages.score') ?? 'Score' }}</th> --}}
                                                     <th>{{ __('messages.percentage') ?? 'Percentage' }}</th>
                                                     <th>{{ __('messages.status') ?? 'Status' }}</th>
                                                     <th>{{ __('messages.submitted_at') ?? 'Submitted At' }}</th>
@@ -175,7 +175,7 @@
                                                                 <span class="badge bg-secondary">N/A</span>
                                                             @endif
                                                         </td>
-                                                        <td>{{ $exam->total_score }} / {{ $exam->max_score }}</td>
+                                                        {{-- <td>{{ $exam->total_score }} / {{ $exam->max_score }}</td> --}}
                                                         <td>
                                                             <span
                                                                 class="badge {{ $exam->percentage >= 70 ? 'bg-success' : ($exam->percentage >= 40 ? 'bg-warning' : 'bg-danger') }}">

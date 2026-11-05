@@ -33,20 +33,17 @@ class UserCls
             if (Auth::attempt(['email' => $postData->email, 'password' => $postData->password], $remember_me)) {
 
                 if (Auth::user()->user_type == 1) {
-                    return redirect()->route('dashboard');
-                } elseif (Auth::user()->user_type == 2) {
                     if (!in_array(Auth::user()->status, [1, '1', 'active'], false)) {
-                        $msg = (Auth::user()->status == 2 || Auth::user()->status === 'pending') ? 'Your account is pending approval.' : 'Your account has been rejected.';
                         auth()->guard('web')->logout();
-                        Session::flash('message', $msg);
+                        Session::flash('message', 'Your account is inactive.');
                         Session::flash('icon', 'warning');
                         return redirect()->route('login');
                     }
                     return redirect()->route('dashboard');
                 } else {
                     auth()->guard('web')->logout();
-                    Session::flash('message', 'User not found OR username/password is wrong');
-                    Session::flash('icon', 'warning');
+                    Session::flash('message', 'Access denied. Only administrators can log in to the admin panel.');
+                    Session::flash('icon', 'danger');
                     return redirect()->route('login');
                 }
             } else {
@@ -112,7 +109,9 @@ class UserCls
                 $col = 1;
 
                 $userType = '';
-                if (empty($user->business_id)) {
+                if ($user->user_type == 1) {
+                    $userType = 'Admin';
+                } elseif (empty($user->business_id)) {
                     $userType = 'Individual';
                 } else {
                     $userType = 'Company: ' . ($user->business ? $user->business->name : 'N/A');
@@ -167,6 +166,11 @@ class UserCls
     public function DeleteUser($id)
     {
         try {
+            if (Auth::id() == $id) {
+                Session::flash('message', 'You cannot delete your own account');
+                Session::flash('icon', 'warning');
+                return redirect()->route('manageusers');
+            }
 
             $this->UserRep->deleteUser($id);
             Session::flash('message', 'User deleted successfully');
@@ -219,7 +223,7 @@ class UserCls
         }
     }
 
-    public function StoreUser($name, $surname, $email, $password, $phone_no, $status, $id, $username = null, $job_title = null, $institution = null, $department = null, $year_of_experience = null, $business_id = null)
+    public function StoreUser($name, $surname, $email, $password, $phone_no, $status, $id, $username = null, $job_title = null, $institution = null, $department = null, $year_of_experience = null, $business_id = null, $user_type = 2)
     {
 
         try {
@@ -241,7 +245,7 @@ class UserCls
             //         $ImageName  = $UserObj->profile_image;
             //     }
             // }
-            $response   = $this->UserRep->StoreUser($name, $surname, $email, $password, $phone_no, $status, $id, $username, $job_title, $institution, $department, $year_of_experience, $business_id);
+            $response   = $this->UserRep->StoreUser($name, $surname, $email, $password, $phone_no, $status, $id, $username, $job_title, $institution, $department, $year_of_experience, $business_id, $user_type);
             
             if ($id <= 0 && $response) {
                 // Generate password reset token
@@ -256,7 +260,8 @@ class UserCls
                 }
             }
 
-            $message    = ($id > 0) ? 'User updated successfully' : 'User added successfully and welcome email sent';
+            $entityType = ($user_type == 1) ? 'Admin' : 'User';
+            $message    = ($id > 0) ? "$entityType updated successfully" : "$entityType added successfully and welcome email sent";
             Session::flash('message', $message);
             Session::flash('icon', 'success');
             return redirect()->route('manageusers');
