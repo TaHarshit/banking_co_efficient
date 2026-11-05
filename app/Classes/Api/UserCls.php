@@ -536,9 +536,56 @@ class UserCls
             \Illuminate\Support\Facades\DB::table('sessions')->where('user_id', $user->id)->delete();
             $user->tokens()->delete();
 
+            // Delete physical profile image from storage if exists
+            if (!empty($user->profile_image) && \Illuminate\Support\Facades\Storage::exists('public/profile_image/' . $user->profile_image)) {
+                \Illuminate\Support\Facades\Storage::delete('public/profile_image/' . $user->profile_image);
+            }
+
+            // GDPR Option A: Purge user's personal related records
+            \App\Models\ChatHistory::where('user_id', $user->id)->delete();
+            \App\Models\ChatSession::where('user_id', $user->id)->delete();
+
+            $caseIds = \App\Models\ClientCase::where('user_id', $user->id)->pluck('id');
+            if ($caseIds->isNotEmpty()) {
+                \App\Models\AiJob::whereIn('case_id', $caseIds)->delete();
+            }
+            \App\Models\AiJob::where('user_id', $user->id)->delete();
+            \App\Models\ClientCase::where('user_id', $user->id)->delete();
+            \App\Models\Client::where('user_id', $user->id)->delete();
+
+            \App\Models\UserResponse::where('user_id', $user->id)->delete();
+            \App\Models\SkillAssessmentExam::where('user_id', $user->id)->delete();
+            \App\Models\Notification::where('user_id', $user->id)->delete();
+
+            if (\Illuminate\Support\Facades\Schema::hasTable('book_access_logs')) {
+                \Illuminate\Support\Facades\DB::table('book_access_logs')->where('user_id', $user->id)->delete();
+            }
+
+            // Detach user from subscription records to preserve financial records while removing personal linkage
+            \App\Models\UserSubscriptions::where('user_id', $user->id)->update(['user_id' => null]);
+
+            $timestamp = time();
+            $uniqueId  = \Illuminate\Support\Str::random(8);
+
+            // Fully anonymized unique email - removes all personal data from email column
+            $deletedEmail = 'deleted_' . $timestamp . '_' . $uniqueId . '@deleted.local';
+
             $delete = [
                 'name'          => 'deleted_user',
-                'email'         => $user->email . '-user_deleted',
+                'surname'       => null,
+                'email'         => $deletedEmail,
+                'username'      => null,
+                'phone_no'      => null,
+                'dob'           => null,
+                'country_code'  => null,
+                'apple_id'      => null,
+                'google_id'     => null,
+                'job_title'     => null,
+                'institution'   => null,
+                'department'    => null,
+                'year_of_experience' => null,
+                'password'      => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(32)),
+                'remember_token'=> null,
                 'profile_image' => null,
                 'device_token'  => null,
                 'api_token'     => null,

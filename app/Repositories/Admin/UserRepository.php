@@ -116,7 +116,28 @@ class UserRepository extends BaseRepository
     public function deleteUser($id)
     {
         $user = $this->model->find($id);
-        $name = $user ? "$user->name $user->surname" : "ID: $id";
+        if (!$user) {
+            return false;
+        }
+
+        $name = "$user->name $user->surname";
+
+        // Remove the associated employee record to free up the business quota
+        if ($user->business_id) {
+            \App\Models\Employee::where('business_id', $user->business_id)
+                ->where('email', strtolower($user->email))
+                ->delete();
+        }
+
+        // Delete physical profile image from storage if exists
+        if (!empty($user->profile_image) && \Illuminate\Support\Facades\Storage::exists('public/profile_image/' . $user->profile_image)) {
+            \Illuminate\Support\Facades\Storage::delete('public/profile_image/' . $user->profile_image);
+        }
+
+        // Invalidate sessions and personal access tokens
+        \Illuminate\Support\Facades\DB::table('sessions')->where('user_id', $id)->delete();
+        $user->tokens()->delete();
+
         $delete = $this->model->where('id', $id)->delete();
         if ($delete) {
             logAdminActivity('User', 'Delete', $id, "Deleted user: $name");
