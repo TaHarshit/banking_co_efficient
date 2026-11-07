@@ -312,32 +312,13 @@ class ClientCaseCls
 
             $response = General::setResponse('SUCCESS', 'Case study sections retrieved successfully.');
 
-            // Information flag
-            $response['is_business_user'] = $isBusinessUser;
-            $response['business_name']    = $businessName;
+            // 1. Global policies added by Super Admin (always returned)
+            $response['global_policies'] = $globalPolicySections;
 
-            // Generic / Super Admin policies (Always sent to both individual & business users)
-            $response['global_policy_message']  = $globalPolicyMessage;
-            $response['global_policy_sections'] = $globalPolicySections;
+            // 2. Business policies added by Business Admin (if added, else blank [])
+            $response['business_policies'] = $businessPolicySections;
 
-            // Business policies (Sent if user belongs to business, empty [] / null if individual or not added)
-            $response['business_policy_message']  = $businessPolicyMessage;
-            $response['business_policy_sections'] = $businessPolicySections;
-
-            // Structured groupings for convenience
-            $response['super_admin_policies'] = [
-                'policy_message'  => $globalPolicyMessage,
-                'policy_sections' => $globalPolicySections,
-            ];
-            $response['business_policies'] = [
-                'business_id'     => $businessId,
-                'business_name'   => $businessName,
-                'policy_message'  => $businessPolicyMessage,
-                'policy_sections' => $businessPolicySections,
-            ];
-
-            // Backwards compatibility for existing app builds reading policy_sections directly
-            $response['policy_message']  = $globalPolicyMessage;
+            // Retained for backward compatibility
             $response['policy_sections'] = $globalPolicySections;
 
             $response['data'] = $grouped;
