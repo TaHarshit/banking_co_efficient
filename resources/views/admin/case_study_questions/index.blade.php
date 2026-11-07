@@ -352,6 +352,7 @@
                     </div>
 
                     <!-- Card 2: Policy Questions -->
+                    {{-- 
                     <div class="card shadow-sm">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3 pt-3 flex-wrap gap-2">
@@ -449,6 +450,7 @@
                             </div>
                         </div>
                     </div>
+                     --}}
                 </div>
             </div>
         </section>

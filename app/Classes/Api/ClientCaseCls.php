@@ -192,93 +192,102 @@ class ClientCaseCls
         }
     }
 
+    /**
+     * Helper to format raw policy sections or fallback plain message into structured bilingual policy objects.
+     */
+    private function formatPolicySections($rawSections, ?string $policyMessage, string $locale = 'en'): array
+    {
+        if (!empty($rawSections) && is_array($rawSections)) {
+            return collect($rawSections)->map(function ($sec, $idx) use ($locale) {
+                $titleEn = $sec['title_en'] ?? ($sec['title'] ?? '');
+                $titleFr = $sec['title_fr'] ?? ($sec['title'] ?? '');
+                $localizedTitle = $locale === 'fr'
+                    ? ($titleFr ?: $titleEn)
+                    : ($titleEn ?: $titleFr);
+
+                $rawPoints = $sec['points'] ?? [];
+                $localizedPoints = [];
+                $pointsDetails = [];
+
+                foreach ($rawPoints as $pt) {
+                    if (is_array($pt)) {
+                        $ptEn = trim((string)($pt['en'] ?? ($pt['fr'] ?? '')));
+                        $ptFr = trim((string)($pt['fr'] ?? ($pt['en'] ?? '')));
+                        $chosen = $locale === 'fr' ? ($ptFr ?: $ptEn) : ($ptEn ?: $ptFr);
+                        if ($chosen !== '') {
+                            $localizedPoints[] = $chosen;
+                            $pointsDetails[] = ['en' => $ptEn, 'fr' => $ptFr];
+                        }
+                    } else {
+                        $pStr = trim((string)$pt);
+                        if ($pStr !== '') {
+                            $localizedPoints[] = $pStr;
+                            $pointsDetails[] = ['en' => $pStr, 'fr' => $pStr];
+                        }
+                    }
+                }
+
+                return [
+                    'id'             => $sec['id'] ?? ($idx + 1),
+                    'title'          => $localizedTitle,
+                    'title_en'       => $titleEn,
+                    'title_fr'       => $titleFr,
+                    'points'         => $localizedPoints,
+                    'points_details' => $pointsDetails,
+                ];
+            })->filter(function ($sec) {
+                return $sec['title'] !== '' || !empty($sec['points']);
+            })->values()->all();
+        } elseif (!empty($policyMessage)) {
+            $lines = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string)$policyMessage)), fn($l) => $l !== ''));
+            return [
+                [
+                    'id'             => 1,
+                    'title'          => $locale === 'fr' ? 'Lignes directrices sur les politiques' : 'Policy Guidelines',
+                    'title_en'       => 'Policy Guidelines',
+                    'title_fr'       => 'Lignes directrices sur les politiques',
+                    'points'         => $lines,
+                    'points_details' => array_map(fn($line) => ['en' => $line, 'fr' => $line], $lines),
+                ],
+            ];
+        }
+
+        return [];
+    }
+
     public function GetCaseStudySections($locale = 'en', $businessId = null)
     {
         try {
             app()->setLocale($locale);
 
-            $policyMessage = null;
-            $rawSections = [];
+            // 1. Fetch Super Admin Generic (Global) Policies from Settings
+            $settings = \App\Models\Settings::first();
+            $globalRawSections = $settings?->policy_sections ?? [];
+            $globalPolicyMessage = $settings?->business_policies_message;
+            $globalPolicySections = $this->formatPolicySections($globalRawSections, $globalPolicyMessage, $locale);
 
-            // 1. If businessId provided, check if the business has custom policy sections or message
+            // 2. Fetch Business Policies if user belongs to a business
+            $businessPolicySections = [];
+            $businessPolicyMessage = null;
+            $businessName = null;
+            $isBusinessUser = !empty($businessId);
+
             if ($businessId) {
                 $business = \App\Models\Business::find($businessId);
-                $bSections = $business?->policy_sections;
-                $bMessage = $business?->business_policies_message;
+                if ($business) {
+                    $businessName = $business->name;
+                    $bSections = $business->policy_sections;
+                    $bMessage = $business->business_policies_message;
 
-                $hasCustomBusinessContent = (!empty($bSections) && is_array($bSections)) || !empty(trim((string)$bMessage));
-                if ($hasCustomBusinessContent) {
-                    $rawSections = $bSections;
-                    $policyMessage = $bMessage;
-                }
-            }
-
-            // 2. If no business-specific policies exist (individual user or business without custom policies),
-            // fall back to global default policy sections configured in Settings by Super Admin
-            if (empty($rawSections) && empty($policyMessage)) {
-                $settings = \App\Models\Settings::first();
-                if ($settings) {
-                    $rawSections = $settings->policy_sections;
-                    $policyMessage = $settings->business_policies_message;
-                }
-            }
-
-            $policySections = [];
-            if (!empty($rawSections) && is_array($rawSections)) {
-                $policySections = collect($rawSections)->map(function ($sec, $idx) use ($locale) {
-                    $titleEn = $sec['title_en'] ?? ($sec['title'] ?? '');
-                    $titleFr = $sec['title_fr'] ?? ($sec['title'] ?? '');
-                    $localizedTitle = $locale === 'fr'
-                        ? ($titleFr ?: $titleEn)
-                        : ($titleEn ?: $titleFr);
-
-                    $rawPoints = $sec['points'] ?? [];
-                    $localizedPoints = [];
-                    $pointsDetails = [];
-
-                    foreach ($rawPoints as $pt) {
-                        if (is_array($pt)) {
-                            $ptEn = trim((string)($pt['en'] ?? ($pt['fr'] ?? '')));
-                            $ptFr = trim((string)($pt['fr'] ?? ($pt['en'] ?? '')));
-                            $chosen = $locale === 'fr' ? ($ptFr ?: $ptEn) : ($ptEn ?: $ptFr);
-                            if ($chosen !== '') {
-                                $localizedPoints[] = $chosen;
-                                $pointsDetails[] = ['en' => $ptEn, 'fr' => $ptFr];
-                            }
-                        } else {
-                            $pStr = trim((string)$pt);
-                            if ($pStr !== '') {
-                                $localizedPoints[] = $pStr;
-                                $pointsDetails[] = ['en' => $pStr, 'fr' => $pStr];
-                            }
-                        }
+                    $hasCustomBusinessContent = (!empty($bSections) && is_array($bSections)) || !empty(trim((string)$bMessage));
+                    if ($hasCustomBusinessContent) {
+                        $businessPolicyMessage = $bMessage;
+                        $businessPolicySections = $this->formatPolicySections($bSections, $bMessage, $locale);
                     }
-
-                    return [
-                        'id'             => $sec['id'] ?? ($idx + 1),
-                        'title'          => $localizedTitle,
-                        'title_en'       => $titleEn,
-                        'title_fr'       => $titleFr,
-                        'points'         => $localizedPoints,
-                        'points_details' => $pointsDetails,
-                    ];
-                })->filter(function ($sec) {
-                    return $sec['title'] !== '' || !empty($sec['points']);
-                })->values()->all();
-            } elseif (!empty($policyMessage)) {
-                $lines = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string)$policyMessage)), fn($l) => $l !== ''));
-                $policySections = [
-                    [
-                        'id'             => 1,
-                        'title'          => $locale === 'fr' ? 'Lignes directrices sur les politiques' : 'Policy Guidelines',
-                        'title_en'       => 'Policy Guidelines',
-                        'title_fr'       => 'Lignes directrices sur les politiques',
-                        'points'         => $lines,
-                        'points_details' => array_map(fn($line) => ['en' => $line, 'fr' => $line], $lines),
-                    ],
-                ];
+                }
             }
 
+            // 3. Retrieve Case Study Questions (if any)
             $questions = $this->caseStudyQuestionRepository->getAllSectionsWithQuestions($businessId);
 
             $grouped = $questions->groupBy('section_name')->map(function ($sectionQuestions, $sectionName) use ($locale) {
@@ -301,10 +310,37 @@ class ClientCaseCls
                 ];
             })->values();
 
-            $response                   = General::setResponse('SUCCESS', 'Case study sections retrieved successfully.');
-            $response['policy_message']  = $policyMessage;
-            $response['policy_sections'] = $policySections;
-            $response['data']           = $grouped;
+            $response = General::setResponse('SUCCESS', 'Case study sections retrieved successfully.');
+
+            // Information flag
+            $response['is_business_user'] = $isBusinessUser;
+            $response['business_name']    = $businessName;
+
+            // Generic / Super Admin policies (Always sent to both individual & business users)
+            $response['global_policy_message']  = $globalPolicyMessage;
+            $response['global_policy_sections'] = $globalPolicySections;
+
+            // Business policies (Sent if user belongs to business, empty [] / null if individual or not added)
+            $response['business_policy_message']  = $businessPolicyMessage;
+            $response['business_policy_sections'] = $businessPolicySections;
+
+            // Structured groupings for convenience
+            $response['super_admin_policies'] = [
+                'policy_message'  => $globalPolicyMessage,
+                'policy_sections' => $globalPolicySections,
+            ];
+            $response['business_policies'] = [
+                'business_id'     => $businessId,
+                'business_name'   => $businessName,
+                'policy_message'  => $businessPolicyMessage,
+                'policy_sections' => $businessPolicySections,
+            ];
+
+            // Backwards compatibility for existing app builds reading policy_sections directly
+            $response['policy_message']  = $globalPolicyMessage;
+            $response['policy_sections'] = $globalPolicySections;
+
+            $response['data'] = $grouped;
 
             return $response;
         } catch (Exception $e) {

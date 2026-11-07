@@ -122,6 +122,9 @@ class ClientCaseController extends Controller
         }
 
         $businessId = $request->user()?->business_id;
+        if (!$businessId) {
+            $businessId = $request->query('business_id') ?? $request->header('business_id') ?? $request->header('business-id');
+        }
         $data = $this->clientCaseCls->GetCaseStudySections($locale, $businessId);
         return get_response($request, $data);
     }
