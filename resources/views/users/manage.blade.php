@@ -216,7 +216,7 @@
                                                         <input type="checkbox" id="selectAllUsers" class="form-check-input" title="{{ __('messages.select_all') }}">
                                                     </th>
                                                     <th>#</th>
-                                                    <th>{{ __('messages.user_type') }}</th>
+                                                    <th>{{ __('messages.profile') }} / {{ __('messages.user_type') }}</th>
                                                     <th>{{ __('messages.name') }}</th>
                                                     <th>{{ __('messages.email') }}</th>
                                                     <th>{{ __('messages.status') }}</th>
@@ -239,7 +239,7 @@
                                                         <td>{{ $i }}</td>
                                                         <td>
                                                             @if ($val->user_type == 1 || strtolower((string)$val->user_type) === 'admin')
-                                                                <span class="badge bg-danger">{{ __('messages.admin') }}</span>
+                                                                <span class="badge bg-danger"><i class="bi bi-shield-lock-fill me-1"></i>{{ __('messages.admin') }}</span>
                                                             @elseif (empty($val->business_id))
                                                                 <span class="badge bg-secondary">{{ __('messages.individual') }}</span>
                                                             @else

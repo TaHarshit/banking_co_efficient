@@ -135,6 +135,11 @@ class User extends Authenticatable
      */
     public function isSubscriptionActive(): bool
     {
+        // Admins have an active subscription tier for system testing
+        if ((int)$this->user_type === 1) {
+            return true;
+        }
+
         if ($this->isUnderBusiness()) {
             return $this->business ? $this->business->isSubscriptionActive() : false;
         }
@@ -170,6 +175,12 @@ class User extends Authenticatable
      */
     public function getActivePlan(): ?Plans
     {
+        // 0. Admin testing tier
+        if ((int)$this->user_type === 1) {
+            return Plans::where('status', 1)->orderBy('price', 'desc')->first()
+                ?? Plans::first();
+        }
+
         // 1. Business plan inheritance
         if ($this->isUnderBusiness() && $this->business && $this->business->isSubscriptionActive()) {
             return $this->business->plan;
@@ -213,6 +224,11 @@ class User extends Authenticatable
      */
     public function isUnlimited(): bool
     {
+        // Admins have unlimited analysis generations to test system assessments & policies
+        if ((int)$this->user_type === 1) {
+            return true;
+        }
+
         if ($this->isUnderBusiness() && $this->business && $this->business->isSubscriptionActive()) {
             return true;
         }

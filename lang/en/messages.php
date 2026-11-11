@@ -28,6 +28,7 @@ return [
     'users' => 'Users',
     'my_profile' => 'My Profile',
     'admin' => 'Admin',
+    'profile' => 'Profile',
     'home' => 'Home',   
     'settings' => 'Settings',
 

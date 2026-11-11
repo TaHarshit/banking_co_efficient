@@ -167,8 +167,26 @@ class UserCls
             if (Auth::attempt(['email' => $postData['email'], 'password' => $postData['password']], false)) {
                 $userStatus = Auth::user()->status;
 
-                // Check for active status ('active' = active)
-                // if ($userStatus == 'active') {
+                // Validate user account status
+                if ($userStatus === 'deleted') {
+                    Auth::logout();
+                    return General::setResponse('VALIDATION_ERROR', 'This account has been deleted.');
+                }
+
+                if ($userStatus === 'pending' || $userStatus === 2 || $userStatus === '2') {
+                    Auth::logout();
+                    return General::setResponse('VALIDATION_ERROR', 'Your account is pending approval from the business administrator.');
+                }
+
+                if ($userStatus === 'rejected') {
+                    Auth::logout();
+                    return General::setResponse('VALIDATION_ERROR', 'Your account has been rejected. Please contact the business administrator.');
+                }
+
+                if (!in_array($userStatus, ['active', 1, '1'], false)) {
+                    Auth::logout();
+                    return General::setResponse('VALIDATION_ERROR', 'Your account is inactive please contact to admin.');
+                }
 
                 DB::beginTransaction();
                 $user = $this->UserRep->GetUser(Auth::user()->id);
@@ -186,25 +204,13 @@ class UserCls
 
                 unset($user['profile_images']);
 
-
                 $this->UserRep->UpdateApiToken($token->token, $user->id);
-
 
                 DB::commit();
 
                 $data = General::setResponse('SUCCESS', "You have successfully login!");
                 $data['data'] = $this->formatUserData($user);
                 return $data;
-                // } elseif ($userStatus == 'pending') {
-                //     Auth::logout();
-                //     return General::setResponse('VALIDATION_ERROR', 'Your account is pending approval from the business administrator.');
-                // } elseif ($userStatus == 'rejected') {
-                //     Auth::logout();
-                //     return General::setResponse('VALIDATION_ERROR', 'Your account has been rejected. Please contact the business administrator.');
-                // } else {
-                //     Auth::logout();
-                //     return General::setResponse('VALIDATION_ERROR', 'Your account is inactive please contact to admin.');
-                // }
             } else {
                 return General::setResponse('VALIDATION_ERROR', 'Email or password is incorrect.');
             }

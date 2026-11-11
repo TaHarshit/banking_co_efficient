@@ -21,7 +21,7 @@ class AdminAuth
         }
 
         // Only admins (user_type 1) can access admin panel
-        if (auth()->user()->user_type != 1) {
+        if (auth()->user()->user_type != 1 && strtolower((string)auth()->user()->user_type) !== 'admin') {
             auth()->guard('web')->logout();
             return redirect()->route('login')->with('error', 'Access denied. Administrator privileges required.');
         }

@@ -28,6 +28,7 @@ return [
     'users' => 'Utilisateurs',
     'my_profile' => 'Mon profil',
     'admin' => 'Administrateur',
+    'profile' => 'Profil',
     'home' => 'Accueil',
     'settings' => 'Paramètres',
 

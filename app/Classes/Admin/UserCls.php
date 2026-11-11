@@ -32,7 +32,7 @@ class UserCls
             $remember_me = $postData->has('remember_me') ? true : false;
             if (Auth::attempt(['email' => $postData->email, 'password' => $postData->password], $remember_me)) {
 
-                if (Auth::user()->user_type == 1) {
+                if (Auth::user()->user_type == 1 || strtolower((string)Auth::user()->user_type) === 'admin') {
                     if (!in_array(Auth::user()->status, [1, '1', 'active'], false)) {
                         auth()->guard('web')->logout();
                         Session::flash('message', 'Your account is inactive.');
@@ -109,7 +109,7 @@ class UserCls
                 $col = 1;
 
                 $userType = '';
-                if ($user->user_type == 1) {
+                if ($user->user_type == 1 || strtolower((string)$user->user_type) === 'admin') {
                     $userType = 'Admin';
                 } elseif (empty($user->business_id)) {
                     $userType = 'Individual';
