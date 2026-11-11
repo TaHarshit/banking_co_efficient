@@ -120,7 +120,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="user_type" class="form-label">{{ __('messages.profile') }} / {{ __('messages.user_type') }} <span class="text-danger">*</span></label>
+                                    <label for="user_type" class="form-label">{{ __('messages.profile') ?? 'Profile' }} / {{ __('messages.user_type') ?? 'User Type' }} <span class="text-danger">*</span></label>
                                     <select name="user_type" id="user_type" class="form-select @error('user_type') is-invalid @enderror" required>
                                         <option value="2" {{ (isset($data) && (string)$data->user_type === '2') || old('user_type') === '2' || (!isset($data) && old('user_type') === null) ? 'selected' : '' }}>
                                             {{ __('messages.user') }}

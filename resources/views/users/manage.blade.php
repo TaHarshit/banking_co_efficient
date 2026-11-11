@@ -216,7 +216,7 @@
                                                         <input type="checkbox" id="selectAllUsers" class="form-check-input" title="{{ __('messages.select_all') }}">
                                                     </th>
                                                     <th>#</th>
-                                                    <th>{{ __('messages.profile') }} / {{ __('messages.user_type') }}</th>
+                                                    <th>{{ __('messages.profile') ?? 'Profile' }} / {{ __('messages.user_type') ?? 'User Type' }}</th>
                                                     <th>{{ __('messages.name') }}</th>
                                                     <th>{{ __('messages.email') }}</th>
                                                     <th>{{ __('messages.status') }}</th>

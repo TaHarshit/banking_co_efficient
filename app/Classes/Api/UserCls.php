@@ -191,16 +191,19 @@ class UserCls
                 DB::beginTransaction();
                 $user = $this->UserRep->GetUser(Auth::user()->id);
 
-                if ($postData['device_token'] != "") {
-                    $this->UserRep->UpdateDeviceToken($postData['device_token'], $postData['platform'], $user->id);
+                $deviceToken = $postData['device_token'] ?? '';
+                $platform    = $postData['platform'] ?? '';
+
+                if ($deviceToken !== "") {
+                    $this->UserRep->UpdateDeviceToken($deviceToken, $platform, $user->id);
                 }
                 // $user->tokens()->delete();
 
                 $token                      = $user->createToken(env('API_KEY', ''))->accessToken;
 
                 $user['api_token']          = $token->token;
-                $user['device_token']       = $postData['device_token'];
-                $user['platform']           = $postData['platform'];
+                $user['device_token']       = $deviceToken;
+                $user['platform']           = $platform;
 
                 unset($user['profile_images']);
 
