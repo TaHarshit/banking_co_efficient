@@ -156,4 +156,107 @@ class UserApprovalController extends Controller
         return redirect()->route('business.users');
     }
 
+    /**
+     * Handle bulk actions for business users
+     */
+    public function BulkAction(Request $request)
+    {
+        $request->validate([
+            'action' => 'required|in:remove,approve,reject',
+            'user_ids' => 'required',
+        ]);
+
+        $business = Auth::guard('business')->user();
+        $userIds = $request->user_ids;
+        if (is_string($userIds)) {
+            $decoded = json_decode($userIds, true);
+            $userIds = is_array($decoded) ? $decoded : array_filter(explode(',', $userIds));
+        }
+
+        $userIds = array_values(array_filter((array)$userIds, function ($id) {
+            return (int)$id > 0;
+        }));
+
+        if (empty($userIds)) {
+            Session::flash('message', 'No users selected');
+            Session::flash('icon', 'warning');
+            return redirect()->back();
+        }
+
+        $action = $request->action;
+        $count = 0;
+
+        if ($action === 'remove') {
+            $users = User::whereIn('id', $userIds)
+                ->where('business_id', $business->id)
+                ->get();
+
+            foreach ($users as $user) {
+                \App\Models\Employee::where('business_id', $business->id)
+                    ->where('email', strtolower($user->email))
+                    ->delete();
+
+                $user->business_id = null;
+                $user->status = 1;
+                $user->save();
+
+                logBusinessActivity('Users', 'Remove', $user->id, "Removed user: {$user->name} {$user->surname} ({$user->email}) from business", null, $business->id);
+                $count++;
+            }
+
+            Session::flash('message', "$count user(s) removed from business successfully");
+            Session::flash('icon', 'success');
+        } elseif ($action === 'approve') {
+            if (!$business->isSubscriptionActive()) {
+                Session::flash('message', 'Cannot approve users: Business subscription is not active or has expired.');
+                Session::flash('icon', 'error');
+                return redirect()->back();
+            }
+
+            $users = User::whereIn('id', $userIds)
+                ->where('business_id', $business->id)
+                ->get();
+
+            foreach ($users as $user) {
+                $isExistingEmployee = \App\Models\Employee::where('business_id', $business->id)
+                    ->where('email', strtolower($user->email))
+                    ->exists();
+
+                if (!$isExistingEmployee && $business->getRemainingQuota() <= 0) {
+                    break;
+                }
+
+                $user->status = 'active';
+                $user->save();
+                logBusinessActivity('Users', 'Approve', $user->id, "Approved user: {$user->name} {$user->surname} ({$user->email})", null, $business->id);
+                $count++;
+            }
+
+            Session::flash('message', "$count user(s) approved successfully");
+            Session::flash('icon', 'success');
+        } elseif ($action === 'reject') {
+            $users = User::whereIn('id', $userIds)
+                ->where('business_id', $business->id)
+                ->get();
+
+            foreach ($users as $user) {
+                \App\Models\Employee::where('business_id', $business->id)
+                    ->where('email', strtolower($user->email))
+                    ->delete();
+
+                $user->status = 2;
+                $user->business_id = null;
+                $user->save();
+
+                logBusinessActivity('Users', 'Reject', $user->id, "Rejected user: {$user->name} {$user->surname} ({$user->email})", null, $business->id);
+                $count++;
+            }
+
+            Session::flash('message', "$count user(s) rejected successfully");
+            Session::flash('icon', 'success');
+        }
+
+        return redirect()->back();
+    }
+
 }

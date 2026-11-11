@@ -111,9 +111,9 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="phone_no" class="form-label">{{ __('messages.phone_number') }} <span class="text-danger">*</span></label>
+                                    <label for="phone_no" class="form-label">{{ __('messages.phone_number') }}</label>
                                     <input type="text" name="phone_no" class="form-control @error('phone_no') is-invalid @enderror" id="phone_no"
-                                        value="{{ isset($data) ? $data->phone_no : old('phone_no') }}" required>
+                                        value="{{ isset($data) ? $data->phone_no : old('phone_no') }}">
                                     @error('phone_no')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror

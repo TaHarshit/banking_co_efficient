@@ -181,6 +181,87 @@ class UserCls
         }
     }
 
+    public function BulkAction(string $action, array $userIds, $businessId = null, $status = null)
+    {
+        try {
+            $currentUserId = Auth::id();
+            // Filter out current logged in user so they cannot delete or alter themselves
+            $userIds = array_values(array_filter($userIds, function ($id) use ($currentUserId) {
+                return (int)$id > 0 && (int)$id !== (int)$currentUserId;
+            }));
+
+            if (empty($userIds)) {
+                Session::flash('message', 'No valid users selected');
+                Session::flash('icon', 'warning');
+                return redirect()->back();
+            }
+
+            if ($action === 'delete') {
+                $count = 0;
+                foreach ($userIds as $id) {
+                    if ($this->UserRep->deleteUser($id)) {
+                        $count++;
+                    }
+                }
+                Session::flash('message', "$count user(s) deleted successfully");
+                Session::flash('icon', 'success');
+            } elseif ($action === 'assign_company') {
+                $business = !empty($businessId) ? \App\Models\Business::find($businessId) : null;
+                $businessName = $business ? $business->name : 'Individual';
+
+                $count = 0;
+                foreach ($userIds as $id) {
+                    $user = $this->UserRep->GetUser($id);
+                    if ($user && (int)$user->user_type !== 1) { // Do not assign admin to business
+                        // If user was previously assigned to a different business, clean up old employee record
+                        if ($user->business_id && (int)$user->business_id !== (int)$businessId) {
+                            \App\Models\Employee::where('business_id', $user->business_id)
+                                ->where('email', strtolower($user->email))
+                                ->delete();
+                        }
+
+                        // If assigning to a business, ensure employee record exists
+                        if (!empty($businessId)) {
+                            $exists = \App\Models\Employee::where('business_id', $businessId)
+                                ->where('email', strtolower($user->email))
+                                ->exists();
+                            if (!$exists) {
+                                \App\Models\Employee::create([
+                                    'business_id' => $businessId,
+                                    'name' => $user->name . ($user->surname ? ' ' . $user->surname : ''),
+                                    'email' => strtolower($user->email),
+                                    'department' => $user->department,
+                                    'phone' => $user->phone_no,
+                                ]);
+                            }
+                        }
+
+                        $user->business_id = !empty($businessId) ? $businessId : null;
+                        $user->save();
+                        $count++;
+                    }
+                }
+                Session::flash('message', "$count user(s) updated to company: $businessName");
+                Session::flash('icon', 'success');
+            } elseif ($action === 'change_status') {
+                $statusVal = (int)$status;
+                $count = 0;
+                foreach ($userIds as $id) {
+                    if ($this->UserRep->ChangeStatus($id, $statusVal)) {
+                        $count++;
+                    }
+                }
+                $statusLabel = $statusVal === 1 ? 'activated' : 'deactivated';
+                Session::flash('message', "$count user(s) $statusLabel successfully");
+                Session::flash('icon', 'success');
+            }
+
+            return redirect()->back();
+        } catch (Exception $e) {
+            return response()->view('error.500', ['message' => $e->getMessage()], 500);
+        }
+    }
+
     public function updateProfile($request, $image, $id)
     {
         try {

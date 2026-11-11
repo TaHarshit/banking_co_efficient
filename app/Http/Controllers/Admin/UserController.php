@@ -130,7 +130,7 @@ class UserController extends Controller
             'name'          => 'required|max:100',
             'surname'       => 'required|max:100',
             'username'      => 'nullable|max:100|unique:users,username' . ($request->id ? ",$request->id,id" : ''),
-            'phone_no'      => 'required|max:20',
+            'phone_no'      => 'nullable|max:20',
             'email'         => 'required|email|max:255|unique:users,email' . ($request->id ? ",$request->id,id" : ',NULL,id'),
             'password'      => $request->id <= 0 ? 'required|' : '|' . 'max:255',
             'job_title'     => 'nullable|max:255',
@@ -185,7 +185,7 @@ class UserController extends Controller
             'name'          => 'required|max:100',
             'surname'       => 'required|max:100',
             'username'      => 'nullable|max:100|unique:users,username' . ($request->id ? ",$request->id,id" : ''),
-            'phone_no'      => 'required|max:20',
+            'phone_no'      => 'nullable|max:20',
             'email'         => 'required|email|max:255|unique:users,email' . ($request->id ? ",$request->id,id" : ',NULL,id'),
             'password'      => $request->id > 0 ? 'nullable|max:255' : 'nullable', // Password will be auto-generated for new users
             'user_type'     => 'nullable|in:1,2',
@@ -218,6 +218,24 @@ class UserController extends Controller
             $request->business_id,
             $request->input('user_type', 2)
         );
+    }
+
+    public function BulkAction(Request $request)
+    {
+        $request->validate([
+            'action' => 'required|in:delete,assign_company,change_status',
+            'user_ids' => 'required',
+            'business_id' => 'nullable|exists:businesses,id',
+            'status' => 'nullable|in:0,1',
+        ]);
+
+        $userIds = $request->user_ids;
+        if (is_string($userIds)) {
+            $decoded = json_decode($userIds, true);
+            $userIds = is_array($decoded) ? $decoded : array_filter(explode(',', $userIds));
+        }
+
+        return $this->UserCls->BulkAction($request->action, (array)$userIds, $request->business_id, $request->status);
     }
 
     public function ChangeStatus(Request $request)

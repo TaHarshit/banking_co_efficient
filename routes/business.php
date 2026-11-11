@@ -92,6 +92,7 @@ Route::middleware(['business.auth'])->group(function () {
         // User Management & Approval
         Route::controller(UserApprovalController::class)->group(function () {
             Route::GET('/users', 'AllUsers')->name('business.users');
+            Route::POST('/users/bulk-action', 'BulkAction')->name('business.users.bulkaction');
             Route::GET('/users/pending', 'PendingUsers')->name('business.users.pending');
             Route::GET('/users/approve/{id}', 'Approve')->name('business.users.approve');
             Route::GET('/users/reject/{id}', 'Reject')->name('business.users.reject');

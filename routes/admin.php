@@ -56,6 +56,7 @@ Route::group(['middleware' => ['auth', 'admin.auth']], function () {
         Route::GET('/user/create', 'CreateUser')->name('createuser');
         Route::GET('/user/update/{id}', 'UpdateUser')->name('updateuser');
         Route::GET('/user/delete/{id}', 'DeleteUser')->name('deleteuser');
+        Route::POST('/user/bulk-action', 'BulkAction')->name('user.bulkaction');
         Route::POST('/user/store', 'StoreUser')->name('storeuser');
         Route::POST('user/change-status', 'ChangeStatus')->name('changeuserstatus');
     });
