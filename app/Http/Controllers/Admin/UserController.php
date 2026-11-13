@@ -14,6 +14,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\User;
 use App\Models\Business;
 use App\Models\ContactUs;
 use App\Models\Question;
@@ -52,6 +53,28 @@ class UserController extends Controller
         $recent_businesses = Business::withCount('users')->orderBy('id', 'desc')->take(5)->get();
         $recent_contacts   = ContactUs::orderBy('id', 'desc')->take(5)->get();
         
+        // Filter for latest users joined (7, 15, 30, 60 days)
+        $user_days = (string) $request->query('user_days', '30');
+        if (!in_array($user_days, ['7', '15', '30', '60'], true)) {
+            $user_days = '30';
+        }
+
+        $startDate = Carbon::now()->subDays((int)$user_days)->startOfDay();
+        $latest_users = User::with('business')
+            ->where('created_at', '>=', $startDate)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Handle AJAX request for dynamic filter updates without full page reload
+        if ($request->ajax() || $request->wantsJson() || $request->has('ajax')) {
+            $html = view('partials.dashboard_latest_users_table', compact('latest_users'))->render();
+            return response()->json([
+                'success' => true,
+                'count'   => $latest_users->count(),
+                'html'    => $html,
+            ]);
+        }
+
         // Get exam templates and exam types for filter dropdowns
         $selected_exam_type = $request->query('exam_type');
         $exam_template_id = $request->query('exam_template_id');
@@ -94,6 +117,8 @@ class UserController extends Controller
             'case_study_question_count' => $case_study_question_count,
             'recent_businesses' => $recent_businesses,
             'recent_contacts'   => $recent_contacts,
+            'latest_users'      => $latest_users,
+            'user_days'         => $user_days,
             'exam_stats'        => $exam_stats,
             'exam_templates'    => $exam_templates,
             'exam_types'        => $exam_types,

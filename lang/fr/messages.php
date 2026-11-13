@@ -850,4 +850,12 @@ return [
     'leave_blank_keep_current' => 'Laissez vide pour conserver le mot de passe actuel',
     'bank_manager_mode' => 'Mode Gestionnaire',
     'access_restricted_admin_only' => 'Accès réservé aux administrateurs de la banque.',
+    'latest_users_joined' => 'Derniers utilisateurs inscrits',
+    'last_7_days' => '7 derniers jours',
+    'last_15_days' => '15 derniers jours',
+    'last_30_days' => '30 derniers jours',
+    'last_60_days' => '60 derniers jours',
+    'no_users_joined_in_period' => 'Aucun utilisateur inscrit pendant cette période.',
+    'filter_by_period' => 'Filtrer par période',
+    'joined_date' => 'Date d\'inscription',
 ];

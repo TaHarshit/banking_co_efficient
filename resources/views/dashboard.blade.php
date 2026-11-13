@@ -545,6 +545,114 @@
                             </div>
                         </div><!-- End Result Pie Chart -->
 
+                        <!-- Latest Users Joined -->
+                        <div class="col-12" id="latest-users-section">
+                            <div class="card recent-sales overflow-auto">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-3 pb-2">
+                                        <h5 class="card-title m-0 p-0">
+                                            <i class="bi bi-person-check me-1 text-primary"></i>
+                                            {{ __('messages.latest_users_joined') }}
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-2" id="latestUsersCountBadge">
+                                                {{ $latest_users->count() }} {{ __('messages.users') }}
+                                            </span>
+                                        </h5>
+                                        <div class="d-flex align-items-center">
+                                            <div class="spinner-border spinner-border-sm text-primary me-2 d-none" id="latestUsersLoading" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <label for="userDaysFilter" class="form-label me-2 mb-0 fw-semibold text-muted small text-nowrap">
+                                                <i class="bi bi-funnel me-1"></i>{{ __('messages.filter_by_period') }}
+                                            </label>
+                                            <select id="userDaysFilter" class="form-select form-select-sm" style="width: 170px;">
+                                                <option value="7" {{ $user_days == '7' ? 'selected' : '' }}>{{ __('messages.last_7_days') }}</option>
+                                                <option value="15" {{ $user_days == '15' ? 'selected' : '' }}>{{ __('messages.last_15_days') }}</option>
+                                                <option value="30" {{ $user_days == '30' ? 'selected' : '' }}>{{ __('messages.last_30_days') }}</option>
+                                                <option value="60" {{ $user_days == '60' ? 'selected' : '' }}>{{ __('messages.last_60_days') }}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div id="latestUsersTableWrapper" style="transition: opacity 0.2s ease;">
+                                        @include('partials.dashboard_latest_users_table', ['latest_users' => $latest_users])
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- End Latest Users Joined -->
+
+                        <script>
+                            document.addEventListener("DOMContentLoaded", () => {
+                                let latestUsersDt = null;
+
+                                function initLatestUsersTable() {
+                                    const tableEl = document.getElementById('latestUsersTable');
+                                    if (tableEl && typeof simpleDatatables !== 'undefined') {
+                                        if (latestUsersDt) {
+                                            try { latestUsersDt.destroy(); } catch (err) {}
+                                            latestUsersDt = null;
+                                        }
+                                        const hasData = tableEl.querySelectorAll('tbody tr').length > 0 &&
+                                                        !tableEl.querySelector('tbody tr td[colspan]');
+                                        if (hasData) {
+                                            latestUsersDt = new simpleDatatables.DataTable(tableEl, {
+                                                perPage: 10,
+                                                perPageSelect: [10, 25, 50],
+                                            });
+                                        }
+                                    }
+                                }
+
+                                initLatestUsersTable();
+
+                                const userDaysFilter = document.getElementById('userDaysFilter');
+                                const wrapper = document.getElementById('latestUsersTableWrapper');
+                                const countBadge = document.getElementById('latestUsersCountBadge');
+                                const loadingSpinner = document.getElementById('latestUsersLoading');
+
+                                if (userDaysFilter) {
+                                    userDaysFilter.addEventListener('change', function() {
+                                        const days = this.value;
+
+                                        if (wrapper) wrapper.style.opacity = '0.4';
+                                        if (loadingSpinner) loadingSpinner.classList.remove('d-none');
+                                        userDaysFilter.disabled = true;
+
+                                        const url = new URL("{{ route('dashboard') }}", window.location.origin);
+                                        url.searchParams.set('user_days', days);
+                                        url.searchParams.set('ajax', '1');
+
+                                        fetch(url.toString(), {
+                                            headers: {
+                                                'X-Requested-With': 'XMLHttpRequest',
+                                                'Accept': 'application/json'
+                                            }
+                                        })
+                                        .then(res => res.json())
+                                        .then(data => {
+                                            if (data && data.success) {
+                                                if (wrapper) wrapper.innerHTML = data.html;
+                                                if (countBadge) countBadge.textContent = `${data.count} {{ __('messages.users') }}`;
+                                                initLatestUsersTable();
+
+                                                // Update browser URL query string without reloading or scrolling
+                                                const currentUrl = new URL(window.location);
+                                                currentUrl.searchParams.set('user_days', days);
+                                                window.history.replaceState({}, '', currentUrl.toString());
+                                            }
+                                        })
+                                        .catch(err => {
+                                            console.error('Failed to update users table:', err);
+                                        })
+                                        .finally(() => {
+                                            if (wrapper) wrapper.style.opacity = '1';
+                                            if (loadingSpinner) loadingSpinner.classList.add('d-none');
+                                            userDaysFilter.disabled = false;
+                                        });
+                                    });
+                                }
+                            });
+                        </script>
+
                         <!-- Recent Businesses -->
                         <div class="col-12">
                             <div class="card recent-sales overflow-auto">

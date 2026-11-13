@@ -818,4 +818,12 @@ return [
     'leave_blank_keep_current' => 'Leave blank to keep current password',
     'bank_manager_mode' => 'Manager Mode',
     'access_restricted_admin_only' => 'Access restricted to Bank Administrators.',
+    'latest_users_joined' => 'Latest Users Joined',
+    'last_7_days' => 'Last 7 Days',
+    'last_15_days' => 'Last 15 Days',
+    'last_30_days' => 'Last 30 Days',
+    'last_60_days' => 'Last 60 Days',
+    'no_users_joined_in_period' => 'No users joined in this period.',
+    'filter_by_period' => 'Filter by Period',
+    'joined_date' => 'Joined Date',
 ];
