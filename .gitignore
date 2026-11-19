@@ -19,3 +19,5 @@ yarn-error.log
 /.idea
 /.vscode
 /api-log
+/screenshots
+/storage/framework/*.php

@@ -2,24 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\General\General;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\App;
-use Illuminate\Validation\Rule;
-use Illuminate\Http\Request;
 use App\Classes\Admin\UserCls;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use App\Models\User;
 use App\Models\Business;
+use App\Models\CaseStudyQuestion;
 use App\Models\ContactUs;
 use App\Models\Question;
 use App\Models\SkillAssessmentQuestion;
-use App\Models\CaseStudyQuestion;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -36,42 +29,45 @@ class UserController extends Controller
         if (Auth::check()) {
             return redirect()->route('dashboard');
         }
+
         return view('index', ['page_name' => 'Login']);
     }
 
     public function dashboard(Request $request)
     {
-        $user_count  = $this->UserCls->GetUsers()->count();
+        $user_count = $this->UserCls->GetUsers()->count();
         $admin_count = $this->UserCls->GetAdmins()->count();
 
         $business_count = Business::count();
-        $contact_count  = ContactUs::count();
+        $contact_count = ContactUs::count();
         $personalized_question_count = Question::whereNull('business_id')->count();
         $exam_question_count = SkillAssessmentQuestion::count();
         $case_study_question_count = CaseStudyQuestion::count();
 
         $recent_businesses = Business::withCount('users')->orderBy('id', 'desc')->take(5)->get();
-        $recent_contacts   = ContactUs::orderBy('id', 'desc')->take(5)->get();
-        
+        $recent_contacts = ContactUs::orderBy('id', 'desc')->take(5)->get();
+
         // Filter for latest users joined (7, 15, 30, 60 days)
         $user_days = (string) $request->query('user_days', '30');
-        if (!in_array($user_days, ['7', '15', '30', '60'], true)) {
+        if (! in_array($user_days, ['7', '15', '30', '60'], true)) {
             $user_days = '30';
         }
 
-        $startDate = Carbon::now()->subDays((int)$user_days)->startOfDay();
+        $startDate = Carbon::now()->subDays((int) $user_days)->startOfDay();
         $latest_users = User::with('business')
             ->where('created_at', '>=', $startDate)
             ->orderBy('created_at', 'desc')
             ->get();
+        $businesses_by_email = Business::all()->keyBy(fn ($b) => strtolower(trim($b->email)));
 
         // Handle AJAX request for dynamic filter updates without full page reload
         if ($request->ajax() || $request->wantsJson() || $request->has('ajax')) {
-            $html = view('partials.dashboard_latest_users_table', compact('latest_users'))->render();
+            $html = view('partials.dashboard_latest_users_table', compact('latest_users', 'businesses_by_email'))->render();
+
             return response()->json([
                 'success' => true,
-                'count'   => $latest_users->count(),
-                'html'    => $html,
+                'count' => $latest_users->count(),
+                'html' => $html,
             ]);
         }
 
@@ -98,8 +94,13 @@ class UserController extends Controller
 
         // Filter exam templates by selected exam type (if any). 'global' => business_id NULL, 'business' => has business_id
         $exam_templates = $all_templates->filter(function ($t) use ($selected_exam_type) {
-            if (!$selected_exam_type) return true;
-            if ($selected_exam_type === 'global') return !$t->business_id;
+            if (! $selected_exam_type) {
+                return true;
+            }
+            if ($selected_exam_type === 'global') {
+                return ! $t->business_id;
+            }
+
             return (bool) $t->business_id;
         })->pluck('title', 'id')->toArray();
 
@@ -107,63 +108,68 @@ class UserController extends Controller
         $exam_stats = \App\Models\SkillAssessmentExam::getPercentageStats(null, $exam_template_id, $selected_exam_type);
 
         return view('dashboard', [
-            'page_name'         => 'Dashboard',
-            'user_count'        => $user_count,
-            'admin_count'       => $admin_count,
-            'business_count'    => $business_count,
-            'contact_count'     => $contact_count,
+            'page_name' => 'Dashboard',
+            'user_count' => $user_count,
+            'admin_count' => $admin_count,
+            'business_count' => $business_count,
+            'contact_count' => $contact_count,
             'personalized_question_count' => $personalized_question_count,
             'exam_question_count' => $exam_question_count,
             'case_study_question_count' => $case_study_question_count,
             'recent_businesses' => $recent_businesses,
-            'recent_contacts'   => $recent_contacts,
-            'latest_users'      => $latest_users,
-            'user_days'         => $user_days,
-            'exam_stats'        => $exam_stats,
-            'exam_templates'    => $exam_templates,
-            'exam_types'        => $exam_types,
+            'recent_contacts' => $recent_contacts,
+            'latest_users' => $latest_users,
+            'businesses_by_email' => $businesses_by_email,
+            'user_days' => $user_days,
+            'exam_stats' => $exam_stats,
+            'exam_templates' => $exam_templates,
+            'exam_types' => $exam_types,
             'selected_exam_template' => $exam_template_id,
-            'selected_exam_type' => $selected_exam_type
+            'selected_exam_type' => $selected_exam_type,
         ]);
     }
 
     public function Signin(Request $request)
     {
         $validatedData = $request->validate([
-            'email'     => 'required|email',
-            'password'  => 'required'
+            'email' => 'required|email',
+            'password' => 'required',
         ]);
+
         return $this->UserCls->Signin($request);
     }
 
     public function logout(Request $request)
     {
         auth()->guard('web')->logout();
+
         return redirect()->route('login');
     }
 
     public function EditProfile(Request $request)
     {
         $data = $this->UserCls->GetUser(Auth::user()->id);
+
         return view('users.editprofile', ['data' => $data, 'page_name' => 'Settings']);
     }
 
     public function updateProfile(Request $request)
     {
 
-        $validatedData  = $request->validate([
-            'name'          => 'required|max:100',
-            'surname'       => 'required|max:100',
-            'username'      => 'nullable|max:100|unique:users,username' . ($request->id ? ",$request->id,id" : ''),
-            'phone_no'      => 'nullable|max:20',
-            'email'         => 'required|email|max:255|unique:users,email' . ($request->id ? ",$request->id,id" : ',NULL,id'),
-            'password'      => $request->id <= 0 ? 'required|' : '|' . 'max:255',
-            'job_title'     => 'nullable|max:255',
-            'institution'   => 'nullable|max:255',
-            'department'    => 'nullable|max:255',
+        $validatedData = $request->validate([
+            'name' => 'required|max:100',
+            'surname' => 'required|max:100',
+            'username' => 'nullable|max:100|unique:users,username'.($request->id ? ",$request->id,id" : ''),
+            'phone_no' => 'nullable|max:20',
+            'email' => 'required|email|max:255|unique:users,email'.($request->id ? ",$request->id,id" : ',NULL,id'),
+            'password' => $request->id <= 0 ? 'required|' : '|'.'max:255',
+            'job_title' => 'nullable|max:255',
+            'institution' => 'nullable|max:255',
+            'department' => 'nullable|max:255',
             'year_of_experience' => 'nullable|max:255',
         ]);
         $image = $request->file('profile_image');
+
         return $this->UserCls->updateProfile($request, $image, $request->id);
     }
 
@@ -172,23 +178,28 @@ class UserController extends Controller
         $filter = $request->query('company', '');
         $users = $this->UserCls->GetUsers($filter);
         $businesses = Business::where('status', 1)->get();
+        $businesses_by_email = Business::all()->keyBy(fn ($b) => strtolower(trim($b->email)));
+
         return view('users.manage', [
             'users' => $users,
             'page_name' => 'Users',
             'businesses' => $businesses,
-            'current_filter' => $filter
+            'businesses_by_email' => $businesses_by_email,
+            'current_filter' => $filter,
         ]);
     }
 
     public function ExportUsers(Request $request)
     {
         $filter = $request->query('company', '');
+
         return $this->UserCls->ExportUsers($filter);
     }
 
     public function CreateUser()
     {
         $businesses = Business::where('status', 1)->get();
+
         return view('users.addedit', compact('businesses'));
     }
 
@@ -196,6 +207,7 @@ class UserController extends Controller
     {
         $data = $this->UserCls->GetUser($id);
         $businesses = Business::where('status', 1)->get();
+
         return view('users.addedit', compact('data', 'businesses'));
     }
 
@@ -207,19 +219,19 @@ class UserController extends Controller
     public function StoreUser(Request $request)
     {
         $validatedData = $request->validate([
-            'name'          => 'required|max:100',
-            'surname'       => 'required|max:100',
-            'username'      => 'nullable|max:100|unique:users,username' . ($request->id ? ",$request->id,id" : ''),
-            'phone_no'      => 'nullable|max:20',
-            'email'         => 'required|email|max:255|unique:users,email' . ($request->id ? ",$request->id,id" : ',NULL,id'),
-            'password'      => $request->id > 0 ? 'nullable|max:255' : 'nullable', // Password will be auto-generated for new users
-            'user_type'     => 'nullable|in:1,2',
-            'job_title'     => 'nullable|max:255',
-            'institution'   => 'nullable|max:255',
-            'department'    => 'nullable|max:255',
+            'name' => 'required|max:100',
+            'surname' => 'required|max:100',
+            'username' => 'nullable|max:100|unique:users,username'.($request->id ? ",$request->id,id" : ''),
+            'phone_no' => 'nullable|max:20',
+            'email' => 'required|email|max:255|unique:users,email'.($request->id ? ",$request->id,id" : ',NULL,id'),
+            'password' => $request->id > 0 ? 'nullable|max:255' : 'nullable', // Password will be auto-generated for new users
+            'user_type' => 'nullable|in:1,2',
+            'job_title' => 'nullable|max:255',
+            'institution' => 'nullable|max:255',
+            'department' => 'nullable|max:255',
             'year_of_experience' => 'nullable|max:255',
-            'business_id'   => 'nullable|exists:businesses,id',
-            'status'        => 'required|in:0,1'
+            'business_id' => 'nullable|exists:businesses,id',
+            'status' => 'required|in:0,1',
         ]);
 
         $password = $request->password;
@@ -228,12 +240,12 @@ class UserController extends Controller
         }
 
         return $this->UserCls->StoreUser(
-            $request->name, 
-            $request->surname, 
-            $request->email, 
-            $password, 
-            $request->phone_no, 
-            $request->status, 
+            $request->name,
+            $request->surname,
+            $request->email,
+            $password,
+            $request->phone_no,
+            $request->status,
             $request->id,
             $request->username,
             $request->job_title,
@@ -260,7 +272,7 @@ class UserController extends Controller
             $userIds = is_array($decoded) ? $decoded : array_filter(explode(',', $userIds));
         }
 
-        return $this->UserCls->BulkAction($request->action, (array)$userIds, $request->business_id, $request->status);
+        return $this->UserCls->BulkAction($request->action, (array) $userIds, $request->business_id, $request->status);
     }
 
     public function ChangeStatus(Request $request)

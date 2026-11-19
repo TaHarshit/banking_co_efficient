@@ -2,23 +2,20 @@
 
 namespace App\Classes\Admin;
 
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 use App\Repositories\Admin\UserRepository;
 use Exception;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Session;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class UserCls
 {
-
     protected $UserRep;
+
     protected $ProfileImgRep;
 
     public function __construct(UserRepository $UserRep)
@@ -32,23 +29,27 @@ class UserCls
             $remember_me = $postData->has('remember_me') ? true : false;
             if (Auth::attempt(['email' => $postData->email, 'password' => $postData->password], $remember_me)) {
 
-                if (Auth::user()->user_type == 1 || strtolower((string)Auth::user()->user_type) === 'admin') {
-                    if (!in_array(Auth::user()->status, [1, '1', 'active'], false)) {
+                if (Auth::user()->user_type == 1 || strtolower((string) Auth::user()->user_type) === 'admin') {
+                    if (! in_array(Auth::user()->status, [1, '1', 'active'], false)) {
                         auth()->guard('web')->logout();
                         Session::flash('message', 'Your account is inactive.');
                         Session::flash('icon', 'warning');
+
                         return redirect()->route('login');
                     }
+
                     return redirect()->route('dashboard');
                 } else {
                     auth()->guard('web')->logout();
                     Session::flash('message', 'Access denied. Only administrators can log in to the admin panel.');
                     Session::flash('icon', 'danger');
+
                     return redirect()->route('login');
                 }
             } else {
                 Session::flash('message', 'Username/Password is wrong');
                 Session::flash('icon', 'warning');
+
                 return redirect()->route('login');
             }
         } catch (Exception $e) {
@@ -79,12 +80,15 @@ class UserCls
         try {
             $users = $this->UserRep->GetUsers($filter);
 
-            $spreadsheet = new Spreadsheet();
+            $spreadsheet = new Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
 
             $headers = [
                 'ID' => 'id',
                 'User Type' => 'user_type',
+                'Bank / Business Admin' => 'bank_name',
+                'Bank Admin Email' => 'bank_email',
+                'Bank Code' => 'bank_code',
                 'First Name' => 'name',
                 'Last Name' => 'surname',
                 'Email' => 'email',
@@ -99,27 +103,39 @@ class UserCls
             $col = 1;
             foreach ($headers as $label => $key) {
                 $columnString = Coordinate::stringFromColumnIndex($col);
-                $sheet->setCellValue($columnString . '1', $label);
+                $sheet->setCellValue($columnString.'1', $label);
                 $sheet->getColumnDimension($columnString)->setAutoSize(true);
                 $col++;
             }
+
+            $businesses = \App\Models\Business::all();
+            $businessesByEmail = $businesses->keyBy(fn ($b) => strtolower(trim($b->email)));
+            $bankAdminEmails = $businessesByEmail->keys()->all();
 
             $row = 2;
             foreach ($users as $user) {
                 $col = 1;
 
+                $isBankAdmin = in_array(strtolower(trim($user->email)), $bankAdminEmails, true);
+                $business = $user->business ?? $businessesByEmail->get(strtolower(trim($user->email)));
+
                 $userType = '';
-                if ($user->user_type == 1 || strtolower((string)$user->user_type) === 'admin') {
-                    $userType = 'Admin';
-                } elseif (empty($user->business_id)) {
-                    $userType = 'Individual';
+                if ($user->user_type == 1 || strtolower((string) $user->user_type) === 'admin') {
+                    $userType = 'Super Admin';
+                } elseif ($isBankAdmin) {
+                    $userType = 'Bank Admin (Also User)';
+                } elseif (! empty($user->business_id) || $business) {
+                    $userType = 'Bank User';
                 } else {
-                    $userType = 'Company: ' . ($user->business ? $user->business->name : 'N/A');
+                    $userType = 'Individual';
                 }
 
                 $data = [
                     'id' => $user->id,
                     'user_type' => $userType,
+                    'bank_name' => $business ? $business->name : ($user->user_type == 1 ? 'Central Admin' : 'Individual'),
+                    'bank_email' => $business ? $business->email : '',
+                    'bank_code' => $business ? $business->business_code : '',
                     'name' => $user->name,
                     'surname' => $user->surname,
                     'email' => $user->email,
@@ -132,24 +148,25 @@ class UserCls
                 ];
 
                 foreach ($headers as $label => $key) {
-                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($col) . $row, $data[$key]);
+                    $sheet->setCellValue(Coordinate::stringFromColumnIndex($col).$row, $data[$key]);
                     $col++;
                 }
                 $row++;
             }
 
-            $filterName = empty($filter) ? 'all' : ($filter === 'individual' ? 'individual' : 'company_' . $filter);
-            $fileName = 'users_' . $filterName . '_' . date('Y-m-d') . '.xlsx';
+            $filterName = empty($filter) ? 'all' : ($filter === 'individual' ? 'individual' : 'company_'.$filter);
+            $fileName = 'users_'.$filterName.'_'.date('Y-m-d').'.xlsx';
 
             $writer = new Xlsx($spreadsheet);
 
             header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment; filename="' . urlencode($fileName) . '"');
+            header('Content-Disposition: attachment; filename="'.urlencode($fileName).'"');
             $writer->save('php://output');
             exit;
         } catch (Exception $e) {
-            Session::flash('message', 'Something went wrong: ' . $e->getMessage());
+            Session::flash('message', 'Something went wrong: '.$e->getMessage());
             Session::flash('icon', 'danger');
+
             return redirect()->back();
         }
     }
@@ -169,12 +186,14 @@ class UserCls
             if (Auth::id() == $id) {
                 Session::flash('message', 'You cannot delete your own account');
                 Session::flash('icon', 'warning');
+
                 return redirect()->route('manageusers');
             }
 
             $this->UserRep->deleteUser($id);
             Session::flash('message', 'User deleted successfully');
             Session::flash('icon', 'success');
+
             return redirect()->route('manageusers');
         } catch (Exception $e) {
             return response()->view('error.500', ['message' => $e->getMessage()], 500);
@@ -187,12 +206,13 @@ class UserCls
             $currentUserId = Auth::id();
             // Filter out current logged in user so they cannot delete or alter themselves
             $userIds = array_values(array_filter($userIds, function ($id) use ($currentUserId) {
-                return (int)$id > 0 && (int)$id !== (int)$currentUserId;
+                return (int) $id > 0 && (int) $id !== (int) $currentUserId;
             }));
 
             if (empty($userIds)) {
                 Session::flash('message', 'No valid users selected');
                 Session::flash('icon', 'warning');
+
                 return redirect()->back();
             }
 
@@ -206,29 +226,29 @@ class UserCls
                 Session::flash('message', "$count user(s) deleted successfully");
                 Session::flash('icon', 'success');
             } elseif ($action === 'assign_company') {
-                $business = !empty($businessId) ? \App\Models\Business::find($businessId) : null;
+                $business = ! empty($businessId) ? \App\Models\Business::find($businessId) : null;
                 $businessName = $business ? $business->name : 'Individual';
 
                 $count = 0;
                 foreach ($userIds as $id) {
                     $user = $this->UserRep->GetUser($id);
-                    if ($user && (int)$user->user_type !== 1) { // Do not assign admin to business
+                    if ($user && (int) $user->user_type !== 1) { // Do not assign admin to business
                         // If user was previously assigned to a different business, clean up old employee record
-                        if ($user->business_id && (int)$user->business_id !== (int)$businessId) {
+                        if ($user->business_id && (int) $user->business_id !== (int) $businessId) {
                             \App\Models\Employee::where('business_id', $user->business_id)
                                 ->where('email', strtolower($user->email))
                                 ->delete();
                         }
 
                         // If assigning to a business, ensure employee record exists
-                        if (!empty($businessId)) {
+                        if (! empty($businessId)) {
                             $exists = \App\Models\Employee::where('business_id', $businessId)
                                 ->where('email', strtolower($user->email))
                                 ->exists();
-                            if (!$exists) {
+                            if (! $exists) {
                                 \App\Models\Employee::create([
                                     'business_id' => $businessId,
-                                    'name' => $user->name . ($user->surname ? ' ' . $user->surname : ''),
+                                    'name' => $user->name.($user->surname ? ' '.$user->surname : ''),
                                     'email' => strtolower($user->email),
                                     'department' => $user->department,
                                     'phone' => $user->phone_no,
@@ -236,7 +256,7 @@ class UserCls
                             }
                         }
 
-                        $user->business_id = !empty($businessId) ? $businessId : null;
+                        $user->business_id = ! empty($businessId) ? $businessId : null;
                         $user->save();
                         $count++;
                     }
@@ -244,7 +264,7 @@ class UserCls
                 Session::flash('message', "$count user(s) updated to company: $businessName");
                 Session::flash('icon', 'success');
             } elseif ($action === 'change_status') {
-                $statusVal = (int)$status;
+                $statusVal = (int) $status;
                 $count = 0;
                 foreach ($userIds as $id) {
                     if ($this->UserRep->ChangeStatus($id, $statusVal)) {
@@ -272,7 +292,7 @@ class UserCls
             //         Storage::delete('public/profile_image/'.Auth::user()->profile_image);
             //     }
 
-            //     $ImageName = rand().time().'.'.$image->getClientOriginalExtension();  
+            //     $ImageName = rand().time().'.'.$image->getClientOriginalExtension();
             //     $image->storeAs('public/profile_image', $ImageName);
 
             // } else {
@@ -280,10 +300,10 @@ class UserCls
             // }
 
             $this->UserRep->updateProfile(
-                $request->name, 
-                $request->surname, 
-                $request->email, 
-                $request->phone_no, 
+                $request->name,
+                $request->surname,
+                $request->email,
+                $request->phone_no,
                 $id,
                 $request->username,
                 $request->job_title,
@@ -291,13 +311,14 @@ class UserCls
                 $request->department,
                 $request->year_of_experience
             );
-            
-            if (trim($request->password) != "" && $id > 0) {
+
+            if (trim($request->password) != '' && $id > 0) {
                 $this->UserRep->changePassword($request->password, $id);
             }
 
             Session::flash('message', 'Profile edited successfully');
             Session::flash('icon', 'success');
+
             return redirect()->route('setting');
         } catch (Exception $e) {
             return response()->view('error.500', ['message' => $e->getMessage()], 500);
@@ -326,25 +347,26 @@ class UserCls
             //         $ImageName  = $UserObj->profile_image;
             //     }
             // }
-            $response   = $this->UserRep->StoreUser($name, $surname, $email, $password, $phone_no, $status, $id, $username, $job_title, $institution, $department, $year_of_experience, $business_id, $user_type);
-            
+            $response = $this->UserRep->StoreUser($name, $surname, $email, $password, $phone_no, $status, $id, $username, $job_title, $institution, $department, $year_of_experience, $business_id, $user_type);
+
             if ($id <= 0 && $response) {
                 // Generate password reset token
                 $token = Password::createToken($response);
-                
+
                 // Send welcome email
                 try {
                     Mail::to($email)->send(new \App\Mail\UserWelcomeMail($response, $password, $token));
                 } catch (\Exception $e) {
                     // Log the error but continue
-                    \Illuminate\Support\Facades\Log::error("Failed to send welcome email to $email: " . $e->getMessage());
+                    \Illuminate\Support\Facades\Log::error("Failed to send welcome email to $email: ".$e->getMessage());
                 }
             }
 
             $entityType = ($user_type == 1) ? 'Admin' : 'User';
-            $message    = ($id > 0) ? "$entityType updated successfully" : "$entityType added successfully and welcome email sent";
+            $message = ($id > 0) ? "$entityType updated successfully" : "$entityType added successfully and welcome email sent";
             Session::flash('message', $message);
             Session::flash('icon', 'success');
+
             return redirect()->route('manageusers');
         } catch (Exception $e) {
             return response()->view('error.500', ['message' => $e->getMessage()], 500);

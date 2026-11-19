@@ -29,7 +29,7 @@ return [
     'my_profile' => 'My Profile',
     'admin' => 'Admin',
     'profile' => 'Profile',
-    'home' => 'Home',   
+    'home' => 'Home',
     'settings' => 'Settings',
 
     // ===========================================
@@ -826,4 +826,15 @@ return [
     'no_users_joined_in_period' => 'No users joined in this period.',
     'filter_by_period' => 'Filter by Period',
     'joined_date' => 'Joined Date',
+    'associated_bank_admin' => 'Bank / Business Admin',
+    'bank_admin' => 'Bank Admin',
+    'bank_admins' => 'Bank Admins',
+    'primary_bank_admin' => 'Bank Admin',
+    'bank_member' => 'Bank Member',
+    'bank_staff' => 'Bank User',
+    'no_bank_associated' => 'Individual (No Bank)',
+    'central_super_admin' => 'Central Super Admin',
+    'bank_admin_email' => 'Bank Admin Email',
+    'also_regular_user' => '+ Regular User Profile',
+    'primary_admin_account' => 'Primary Bank Admin',
 ];

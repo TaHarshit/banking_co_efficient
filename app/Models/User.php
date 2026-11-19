@@ -3,12 +3,12 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Mail\UserForgotPasswordMail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\UserForgotPasswordMail;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
@@ -97,9 +97,9 @@ class User extends Authenticatable
     public function getAiBehaviorProfile()
     {
         $responses = $this->responses()->with('question', 'option')->get();
-        
+
         if ($responses->isEmpty()) {
-            return "No behavioral profile data available for this user.";
+            return 'No behavioral profile data available for this user.';
         }
 
         $profile = "USER BEHAVIORAL PROFILE:\n";
@@ -127,7 +127,39 @@ class User extends Authenticatable
      */
     public function isUnderBusiness(): bool
     {
-        return !empty($this->business_id);
+        return ! empty($this->business_id) || $this->isBankAdmin();
+    }
+
+    /**
+     * Check if user's email is registered as a bank admin in businesses table.
+     */
+    public function isBankAdmin(): bool
+    {
+        if (empty($this->email)) {
+            return false;
+        }
+
+        if ($this->relationLoaded('business') && $this->business && strtolower(trim($this->business->email)) === strtolower(trim($this->email))) {
+            return true;
+        }
+
+        return Business::where('email', strtolower(trim($this->email)))->exists();
+    }
+
+    /**
+     * Get the business that this user administers (matching their email in businesses table).
+     */
+    public function getAdministeredBusinessAttribute(): ?Business
+    {
+        if (empty($this->email)) {
+            return null;
+        }
+
+        if ($this->relationLoaded('business') && $this->business && strtolower(trim($this->business->email)) === strtolower(trim($this->email))) {
+            return $this->business;
+        }
+
+        return Business::where('email', strtolower(trim($this->email)))->first();
     }
 
     /**
@@ -136,7 +168,7 @@ class User extends Authenticatable
     public function isSubscriptionActive(): bool
     {
         // Admins have an active subscription tier for system testing
-        if ((int)$this->user_type === 1) {
+        if ((int) $this->user_type === 1) {
             return true;
         }
 
@@ -176,7 +208,7 @@ class User extends Authenticatable
     public function getActivePlan(): ?Plans
     {
         // 0. Admin testing tier
-        if ((int)$this->user_type === 1) {
+        if ((int) $this->user_type === 1) {
             return Plans::where('status', 1)->orderBy('price', 'desc')->first()
                 ?? Plans::first();
         }
@@ -208,7 +240,7 @@ class User extends Authenticatable
      */
     public function getRemainingFreeAnalyses(): int
     {
-        return max(0, 3 - (int)$this->free_analyses_used);
+        return max(0, 3 - (int) $this->free_analyses_used);
     }
 
     /**
@@ -216,7 +248,7 @@ class User extends Authenticatable
      */
     public function getPaidCredits(): int
     {
-        return max(0, (int)$this->paid_analyses_credits);
+        return max(0, (int) $this->paid_analyses_credits);
     }
 
     /**
@@ -225,7 +257,7 @@ class User extends Authenticatable
     public function isUnlimited(): bool
     {
         // Admins have unlimited analysis generations to test system assessments & policies
-        if ((int)$this->user_type === 1) {
+        if ((int) $this->user_type === 1) {
             return true;
         }
 
