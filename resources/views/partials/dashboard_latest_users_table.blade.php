@@ -86,11 +86,7 @@
                                         </span>
                                     @endif
                                 </div>
-                                @if (!empty($biz->email) && !$isBankAdmin)
-                                    <small class="text-muted d-block" style="font-size: 0.72rem;">
-                                        <i class="bi bi-person-badge text-primary me-1"></i>{{ $biz->email }}
-                                    </small>
-                                @endif
+
                             </div>
                         </div>
                     @elseif ($user->user_type == 1 || strtolower((string)$user->user_type) === 'admin')
