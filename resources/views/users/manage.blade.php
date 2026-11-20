@@ -400,7 +400,7 @@
                                                                                 </span>
                                                                             @endif
                                                                         </div>
-                                                                        @if (!empty($biz->email))
+                                                                        @if (!empty($biz->email) && !$isBankAdmin)
                                                                             <small class="text-muted mt-1 text-nowrap" style="font-size: 0.75rem;" title="{{ __('messages.bank_admin_email') ?? 'Bank Admin Email' }}">
                                                                                 <i class="bi bi-person-badge text-primary me-1"></i>{{ $biz->email }}
                                                                             </small>
