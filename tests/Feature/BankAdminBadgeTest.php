@@ -32,7 +32,7 @@ class BankAdminBadgeTest extends TestCase
             'email' => 'superadmin@example.com',
             'password' => Hash::make('password123'),
             'user_type' => '1',
-            'status' => '1',
+            'status' => 'active',
         ]);
 
         $this->business = Business::create([
@@ -51,7 +51,7 @@ class BankAdminBadgeTest extends TestCase
             'password' => Hash::make('password123'),
             'user_type' => '2',
             'business_id' => $this->business->id,
-            'status' => '1',
+            'status' => 'active',
         ]);
 
         // Regular employee under the bank
@@ -62,7 +62,7 @@ class BankAdminBadgeTest extends TestCase
             'password' => Hash::make('password123'),
             'user_type' => '2',
             'business_id' => $this->business->id,
-            'status' => '1',
+            'status' => 'active',
         ]);
 
         // Individual user with no bank
@@ -73,7 +73,7 @@ class BankAdminBadgeTest extends TestCase
             'password' => Hash::make('password123'),
             'user_type' => '2',
             'business_id' => null,
-            'status' => '1',
+            'status' => 'active',
         ]);
     }
 

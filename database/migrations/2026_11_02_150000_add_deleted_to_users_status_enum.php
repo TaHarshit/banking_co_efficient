@@ -10,7 +10,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE users MODIFY COLUMN status ENUM('active', 'pending', 'rejected', 'deleted') NOT NULL DEFAULT 'active'");
+        // MySQL-only: SQLite does not support ALTER TABLE ... MODIFY COLUMN with ENUM
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE users MODIFY COLUMN status ENUM('active', 'pending', 'rejected', 'deleted') NOT NULL DEFAULT 'active'");
+        }
     }
 
     /**
@@ -18,6 +21,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE users MODIFY COLUMN status ENUM('active', 'pending', 'rejected') NOT NULL DEFAULT 'active'");
+        // MySQL-only: SQLite does not support ALTER TABLE ... MODIFY COLUMN with ENUM
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE users MODIFY COLUMN status ENUM('active', 'pending', 'rejected') NOT NULL DEFAULT 'active'");
+        }
     }
 };

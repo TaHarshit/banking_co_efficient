@@ -18,8 +18,11 @@ return new class extends Migration
             }
         });
 
-        DB::statement("ALTER TABLE `ai_jobs` MODIFY `case_id` BIGINT UNSIGNED NULL");
-        DB::statement("ALTER TABLE `ai_jobs` MODIFY `job_type` ENUM('analyze_case', 'generate_plan', 'summarize_cases') NOT NULL");
+        // MySQL-only: SQLite does not support ALTER TABLE ... MODIFY
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE `ai_jobs` MODIFY `case_id` BIGINT UNSIGNED NULL");
+            DB::statement("ALTER TABLE `ai_jobs` MODIFY `job_type` ENUM('analyze_case', 'generate_plan', 'summarize_cases') NOT NULL");
+        }
     }
 
     /**
@@ -33,7 +36,10 @@ return new class extends Migration
             }
         });
 
-        DB::statement("ALTER TABLE `ai_jobs` MODIFY `job_type` ENUM('analyze_case', 'generate_plan') NOT NULL");
-        DB::statement("ALTER TABLE `ai_jobs` MODIFY `case_id` BIGINT UNSIGNED NOT NULL");
+        // MySQL-only: SQLite does not support ALTER TABLE ... MODIFY
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE `ai_jobs` MODIFY `job_type` ENUM('analyze_case', 'generate_plan') NOT NULL");
+            DB::statement("ALTER TABLE `ai_jobs` MODIFY `case_id` BIGINT UNSIGNED NOT NULL");
+        }
     }
 };
