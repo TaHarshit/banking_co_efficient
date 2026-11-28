@@ -231,9 +231,20 @@
     <div class="section">
         <h2>Action Plan</h2>
         @if(is_array($plan['action_plan']))
-            @foreach($plan['action_plan'] as $key => $action)
+            @php
+                $actionSteps = $plan['action_plan'];
+                // Sort steps by their numeric key or by a 'step'/'order' field inside each item
+                if (array_is_list($actionSteps) || array_key_exists(0, $actionSteps)) {
+                    // Numeric-keyed array: sort by key ascending (1,2,3...)
+                    ksort($actionSteps);
+                } elseif (count($actionSteps) > 0 && is_array(reset($actionSteps)) && isset(reset($actionSteps)['step'])) {
+                    // Objects with a 'step' field: sort by that field
+                    uasort($actionSteps, fn($a, $b) => (int)($a['step'] ?? 0) <=> (int)($b['step'] ?? 0));
+                }
+            @endphp
+            @foreach($actionSteps as $key => $action)
                 @if(is_array($action))
-                    <h3>{{ is_numeric($key) ? 'Step ' . ($key + 1) : ucfirst(str_replace('_', ' ', $key)) }}</h3>
+                    <h3>{{ is_numeric($key) ? 'Step ' . ($loop->index + 1) : ucfirst(str_replace('_', ' ', $key)) }}</h3>
                     <ul>
                         @foreach($action as $subKey => $subAction)
                             <li>
