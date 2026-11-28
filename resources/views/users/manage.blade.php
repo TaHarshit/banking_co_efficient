@@ -316,10 +316,10 @@
                                                         <td>{{ $i }}</td>
                                                         <td>
                                                             <div class="d-flex align-items-center">
-                                                                <div class="avatar-sm me-2 d-flex align-items-center justify-content-center rounded-circle bg-light text-primary fw-bold border" 
+                                                                {{-- <div class="avatar-sm me-2 d-flex align-items-center justify-content-center rounded-circle bg-light text-primary fw-bold border" 
                                                                      style="width: 32px; height: 32px; font-size: 0.85rem; flex-shrink: 0;">
                                                                     {{ strtoupper(substr($val->name ?? 'U', 0, 1)) }}
-                                                                </div>
+                                                                </div> --}}
                                                                 <div>
                                                                     <span class="fw-semibold text-dark">{{ $val->name . ' ' . $val->surname }}</span>
                                                                     @if(!empty($val->job_title) || !empty($val->department))
