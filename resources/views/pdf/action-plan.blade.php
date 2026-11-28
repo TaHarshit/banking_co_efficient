@@ -233,13 +233,22 @@
         @if(is_array($plan['action_plan']))
             @php
                 $actionSteps = $plan['action_plan'];
-                // Sort steps by their numeric key or by a 'step'/'order' field inside each item
+                // Extract the first number found in a key name, e.g. "phase_3_after" → 3, "step_1" → 1
+                $extractKeyOrder = function(string $key): int {
+                    preg_match('/(\d+)/', $key, $m);
+                    return isset($m[1]) ? (int)$m[1] : PHP_INT_MAX;
+                };
+
                 if (array_is_list($actionSteps) || array_key_exists(0, $actionSteps)) {
-                    // Numeric-keyed array: sort by key ascending (1,2,3...)
-                    ksort($actionSteps);
+                    // Purely numeric-keyed array: sort by key ascending (0,1,2…)
+                    ksort($actionSteps, SORT_NUMERIC);
                 } elseif (count($actionSteps) > 0 && is_array(reset($actionSteps)) && isset(reset($actionSteps)['step'])) {
-                    // Objects with a 'step' field: sort by that field
+                    // Each item has an explicit 'step' field: sort by it
                     uasort($actionSteps, fn($a, $b) => (int)($a['step'] ?? 0) <=> (int)($b['step'] ?? 0));
+                } else {
+                    // String keys like "phase_1_prep", "phase_3_after", "step_2_during":
+                    // extract the first number from the key and sort ascending
+                    uksort($actionSteps, fn($a, $b) => $extractKeyOrder($a) <=> $extractKeyOrder($b));
                 }
             @endphp
             @foreach($actionSteps as $key => $action)
